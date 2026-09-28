@@ -166,8 +166,9 @@ jobs:
       - name: Build release body (changelog section + checksums)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          # heading looks like "## [1.0.0] — 2026-09-28"; match the bracketed prefix
           awk -v ver="$VERSION" '
-            $0 == "## [" ver "]" {found=1; next}
+            $0 ~ ("^## \\[" ver "\\]") {found=1; next}
             found && /^## \[/ {exit}
             found {print}
           ' CHANGELOG.md > release-body.md
