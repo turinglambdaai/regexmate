@@ -88,7 +88,8 @@ jobs:
       - name: Smoke the bundled binary
         shell: bash
         run: |
-          EXE=stage/regexmate
+          # unix distribute uses bin/ layout; windows stays flat
+          EXE=stage/bin/regexmate
           [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/regexmate.exe
           "$EXE" --version
           "$EXE" validate '^\d{3}-\d{4}$'
