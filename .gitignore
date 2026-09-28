@@ -1,4 +1,5 @@
 *.zo
 compiled/
-*.svg
+/build/
+/dist/
 .trae/

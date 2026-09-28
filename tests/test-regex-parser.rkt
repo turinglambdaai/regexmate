@@ -1,171 +1,105 @@
 #lang racket
 
 (require rackunit
-         "../core/ast.rkt"
-         "../core/regex-parser.rkt")
+         "../core/regex-parser.rkt"
+         "../core/ast.rkt")
 
 (define regex-parser-tests
   (test-suite
-   "正则解析器测试"
+   "regex parser"
 
-   ;; 字面量
-   (test-case "解析字面量"
-     (define ast (parse-regex "a"))
-     (check-true (re-literal? ast))
-     (check-equal? (re-literal-char ast) #\a))
+   ;; atoms
+   (test-case "atoms"
+     (check-equal? (parse-regex "a") (re-literal #\a))
+     (check-equal? (parse-regex ".") (re-any))
+     (check-equal? (parse-regex "^") (re-anchor 'start))
+     (check-equal? (parse-regex "$") (re-anchor 'end)))
 
-   (test-case "解析多字面量序列"
-     (define ast (parse-regex "abc"))
-     (check-true (re-sequence? ast))
-     (check-equal? (length (re-sequence-elements ast)) 3))
+   ;; quantifiers
+   (test-case "quantifiers"
+     (check-equal? (parse-regex "a*") (re-quantifier (re-literal #\a) 0 #f #t))
+     (check-equal? (parse-regex "a+") (re-quantifier (re-literal #\a) 1 #f #t))
+     (check-equal? (parse-regex "a?") (re-quantifier (re-literal #\a) 0 1 #t))
+     (check-equal? (parse-regex "a*?") (re-quantifier (re-literal #\a) 0 #f #f))
+     (check-equal? (parse-regex "a+?") (re-quantifier (re-literal #\a) 1 #f #f))
+     (check-equal? (parse-regex "a??") (re-quantifier (re-literal #\a) 0 1 #f))
+     (check-equal? (parse-regex "a{3}") (re-quantifier (re-literal #\a) 3 3 #t))
+     (check-equal? (parse-regex "a{2,}") (re-quantifier (re-literal #\a) 2 #f #t))
+     (check-equal? (parse-regex "a{2,5}?") (re-quantifier (re-literal #\a) 2 5 #f))
+     (check-equal? (parse-regex "\t*") (re-quantifier (re-literal #\tab) 0 #f #t)))
 
-   ;; 任意字符
-   (test-case "解析点号"
-     (define ast (parse-regex "."))
-     (check-true (re-any? ast)))
+   ;; sequences and alternation
+   (test-case "sequences and alternation"
+     (check-equal? (parse-regex "abc")
+                   (re-sequence (list (re-literal #\a) (re-literal #\b) (re-literal #\c))))
+     (check-equal? (parse-regex "a|b")
+                   (re-alternation (re-literal #\a) (re-literal #\b)))
+     (check-equal? (parse-regex "ab|cd")
+                   (re-alternation (re-sequence (list (re-literal #\a) (re-literal #\b)))
+                                   (re-sequence (list (re-literal #\c) (re-literal #\d)))))
+     (check-equal? (parse-regex "") (re-sequence '())))
 
-   ;; 转义序列
-   (test-case "解析 \\d"
-     (define ast (parse-regex "\\d"))
-     (check-true (re-escape? ast))
-     (check-equal? (re-escape-type ast) 'digit))
+   ;; character classes
+   (test-case "character classes"
+     (check-equal? (parse-regex "[abc]")
+                   (re-char-class (list #\a #\b #\c) #f))
+     (check-equal? (parse-regex "[^a-z]")
+                   (re-char-class (list (cons #\a #\z)) #t))
+     (check-equal? (parse-regex "[a-]")
+                   (re-char-class (list #\a #\-) #f))
+     (check-equal? (parse-regex "[\\d]")
+                   (re-char-class (list (list 'class 'digit)) #f))
+     (check-equal? (parse-regex "[[:alpha:][:digit:]]")
+                   (re-char-class (list (list 'posix 'alpha) (list 'posix 'digit)) #f))
+     (check-equal? (parse-regex "[\\]]")
+                   (re-char-class (list #\]) #f)))
 
-   (test-case "解析 \\w"
-     (define ast (parse-regex "\\w"))
-     (check-true (re-escape? ast))
-     (check-equal? (re-escape-type ast) 'word))
+   ;; escapes
+   (test-case "escapes"
+     (check-equal? (parse-regex "\\d") (re-escape 'digit))
+     (check-equal? (parse-regex "\\D") (re-escape 'non-digit))
+     (check-equal? (parse-regex "\\w") (re-escape 'word))
+     (check-equal? (parse-regex "\\s") (re-escape 'space))
+     (check-equal? (parse-regex "\\b") (re-escape 'word-boundary))
+     (check-equal? (parse-regex "\\B") (re-escape 'non-word-boundary))
+     (check-equal? (parse-regex "\\n") (re-literal #\newline))
+     (check-equal? (parse-regex "\\\\") (re-literal #\\))
+     (check-equal? (parse-regex "\\1") (re-backref 1))
+     (check-equal? (parse-regex "\\9") (re-backref 9))
+     (check-equal? (parse-regex "\\p{L}") (re-unicode-class 'L #f))
+     (check-equal? (parse-regex "\\P{L}") (re-unicode-class 'L #t))
+     (check-equal? (parse-regex "\\p{Greek}") (re-unicode-class 'Greek #f))
+     (check-equal? (parse-regex "a\\zb")
+                   (re-sequence (list (re-literal #\a) (re-literal #\z) (re-literal #\b)))))
 
-   (test-case "解析 \\s"
-     (define ast (parse-regex "\\s"))
-     (check-true (re-escape? ast))
-     (check-equal? (re-escape-type ast) 'space))
+   ;; groups
+   (test-case "groups"
+     (check-equal? (parse-regex "(a)") (re-group (re-literal #\a) #t #f #f))
+     (check-equal? (parse-regex "(?:a)") (re-group (re-literal #\a) #f #f #f))
+     (check-equal? (parse-regex "(?i:a)") (re-group (re-literal #\a) #f #f "i"))
+     (check-equal? (parse-regex "(?is:a)") (re-group (re-literal #\a) #f #f "is"))
+     (check-equal? (parse-regex "(?-i:a)") (re-group (re-literal #\a) #f #f "-i")))
 
-   (test-case "解析 \\D \\W \\S"
-     (check-equal? (re-escape-type (parse-regex "\\D")) 'non-digit)
-     (check-equal? (re-escape-type (parse-regex "\\W")) 'non-word)
-     (check-equal? (re-escape-type (parse-regex "\\S")) 'non-space))
+   ;; lookarounds and atomic groups
+   (test-case "lookarounds and atomic groups"
+     (check-equal? (parse-regex "(?=a)") (re-lookaround 'ahead #f (re-literal #\a)))
+     (check-equal? (parse-regex "(?!a)") (re-lookaround 'ahead #t (re-literal #\a)))
+     (check-equal? (parse-regex "(?<=a)") (re-lookaround 'behind #f (re-literal #\a)))
+     (check-equal? (parse-regex "(?<!a)") (re-lookaround 'behind #t (re-literal #\a)))
+     (check-equal? (parse-regex "(?>a+)") (re-atomic (re-quantifier (re-literal #\a) 1 #f #t))))
 
-   ;; 字符类
-   (test-case "解析字符类 [abc]"
-     (define ast (parse-regex "[abc]"))
-     (check-true (re-char-class? ast))
-     (check-false (re-char-class-negated? ast)))
+   ;; misc
+   (test-case "misc"
+     (check-equal? (parse-regex "{") (re-literal #\{))
+     (define empty-group (parse-regex "()"))
+     (check-true (re-group? empty-group))
+     (check-equal? (re-group-child empty-group) (re-sequence '())))
 
-   (test-case "解析范围字符类 [a-z]"
-     (define ast (parse-regex "[a-z]"))
-     (check-true (re-char-class? ast))
-     (define ranges (re-char-class-ranges ast))
-     (check-true (pair? (car ranges)))
-     (check-equal? (caar ranges) #\a)
-     (check-equal? (cdar ranges) #\z))
-
-   (test-case "解析否定字符类 [^a-z]"
-     (define ast (parse-regex "[^a-z]"))
-     (check-true (re-char-class? ast))
-     (check-true (re-char-class-negated? ast)))
-
-   ;; 锚点
-   (test-case "解析 ^"
-     (define ast (parse-regex "^"))
-     (check-true (re-anchor? ast))
-     (check-equal? (re-anchor-type ast) 'start))
-
-   (test-case "解析 $"
-     (define ast (parse-regex "$"))
-     (check-true (re-anchor? ast))
-     (check-equal? (re-anchor-type ast) 'end))
-
-   ;; 量词
-   (test-case "解析 ? 量词"
-     (define ast (parse-regex "a?"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 0)
-     (check-equal? (re-quantifier-max ast) 1)
-     (check-true (re-quantifier-greedy? ast)))
-
-   (test-case "解析 * 量词"
-     (define ast (parse-regex "a*"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 0)
-     (check-false (re-quantifier-max ast)))
-
-   (test-case "解析 + 量词"
-     (define ast (parse-regex "a+"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 1)
-     (check-false (re-quantifier-max ast)))
-
-   (test-case "解析非贪婪量词"
-     (define ast (parse-regex "a*?"))
-     (check-true (re-quantifier? ast))
-     (check-false (re-quantifier-greedy? ast)))
-
-   (test-case "解析 {n} 量词"
-     (define ast (parse-regex "a{3}"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 3)
-     (check-equal? (re-quantifier-max ast) 3))
-
-   (test-case "解析 {n,m} 量词"
-     (define ast (parse-regex "a{2,5}"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 2)
-     (check-equal? (re-quantifier-max ast) 5))
-
-   (test-case "解析 {n,} 量词"
-     (define ast (parse-regex "a{2,}"))
-     (check-true (re-quantifier? ast))
-     (check-equal? (re-quantifier-min ast) 2)
-     (check-false (re-quantifier-max ast)))
-
-   ;; 分组
-   (test-case "解析捕获组"
-     (define ast (parse-regex "(ab)"))
-     (check-true (re-group? ast))
-     (check-true (re-group-capture? ast))
-     (check-false (re-group-name ast)))
-
-   (test-case "解析非捕获组"
-     (define ast (parse-regex "(?:ab)"))
-     (check-true (re-group? ast))
-     (check-false (re-group-capture? ast)))
-
-   (test-case "解析命名组"
-     (define ast (parse-regex "(?<name>ab)"))
-     (check-true (re-group? ast))
-     (check-true (re-group-capture? ast))
-     (check-equal? (re-group-name ast) "name"))
-
-   ;; 交替
-   (test-case "解析交替 a|b"
-     (define ast (parse-regex "a|b"))
-     (check-true (re-alternation? ast))
-     (check-true (re-literal? (re-alternation-left ast)))
-     (check-true (re-literal? (re-alternation-right ast))))
-
-   (test-case "解析多路交替 a|b|c"
-     (define ast (parse-regex "a|b|c"))
-     (check-true (re-alternation? ast))
-     (check-true (re-alternation? (re-alternation-right ast))))
-
-   ;; 复杂组合
-   (test-case "解析邮箱正则"
-     (define ast (parse-regex "[a-zA-Z0-9]+@[a-zA-Z]+\\.[a-zA-Z]{2,}"))
-     (check-true (re-sequence? ast)))
-
-   (test-case "解析空字符串"
-     (define ast (parse-regex ""))
-     (check-true (re-sequence? ast))
-     (check-equal? (re-sequence-elements ast) '()))
-
-   ;; node-type 测试
-   (test-case "node-type 正确返回类型"
-     (check-equal? (node-type (parse-regex "a")) 're-literal)
-     (check-equal? (node-type (parse-regex ".")) 're-any)
-     (check-equal? (node-type (parse-regex "^")) 're-anchor)
-     (check-equal? (node-type (parse-regex "\\d")) 're-escape)
-     (check-equal? (node-type (parse-regex "[a-z]")) 're-char-class)
-     (check-equal? (node-type (parse-regex "a|b")) 're-alternation))
-   ))
+   ;; safe wrapper
+   (test-case "parse-regex-safe"
+     (check-equal? (parse-regex-safe "a") (cons (re-literal #\a) #f))
+     (check-true (re-group? (car (parse-regex-safe "(?<x>a)"))))  ; named group parses (defensive)
+     (check-false (car (parse-regex-safe "(")))       ; unbalanced paren -> error path
+     (check-true (string? (cdr (parse-regex-safe "(")))))))
 
 (provide regex-parser-tests)

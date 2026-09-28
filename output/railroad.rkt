@@ -7,18 +7,23 @@
          "../core/ast.rkt"
          "../core/regex-parser.rkt")
 
-;; 颜色主题
+;; Railroad diagram renderer: AST -> pict -> SVG bytes.
+
+;; color theme
 (define COLOR-NODE    (make-object color% 255 255 255))   ; white
 (define COLOR-SPECIAL (make-object color% 232 245 233))   ; light green
 (define COLOR-CLASS   (make-object color% 227 242 253))   ; light blue
 (define COLOR-ANCHOR  (make-object color% 255 243 224))   ; light orange
 (define COLOR-ESCAPE  (make-object color% 243 229 245))   ; light purple
-(define COLOR-GROUP   (make-object color% 250 250 250))   ; light gray
+(define COLOR-GROUP   (make-object color% 76 175 80))     ; green frame
+(define COLOR-GROUP-NC (make-object color% 158 158 158))  ; gray frame
+(define COLOR-LOOK    (make-object color% 3 155 229))     ; blue frame
+(define COLOR-ATOMIC  (make-object color% 109 76 65))     ; brown frame
 (define COLOR-BORDER  (make-object color% 51 51 51))      ; dark gray
 (define COLOR-TRACK   (make-object color% 102 102 102))   ; gray
 (define COLOR-QUANT   (make-object color% 102 102 102))   ; gray
 
-;; 节点尺寸
+;; node geometry
 (define NODE-H 26)
 (define NODE-PAD-X 8)
 (define NODE-RADIUS 4)
@@ -26,7 +31,7 @@
 (define GAP 4)
 (define ALT-GAP 12)
 
-;; 创建带文字的圆角矩形节点
+;; rounded box with centered label
 (define (node-box label [bg-color COLOR-NODE])
   (define txt (text label 'default 12))
   (define w (+ (pict-width txt) (* NODE-PAD-X 2)))
@@ -35,25 +40,33 @@
    (colorize (rectangle w NODE-H) COLOR-BORDER)
    txt))
 
-;; 创建轨道线段
+;; track line segment
 (define (track w)
   (colorize (hline w TRACK-H) COLOR-TRACK))
 
-;; AST → Pict 转换
+;; AST -> pict
 (define (ast->pict node)
   (match node
     [(re-literal c)
      (node-box (format "~a" c))]
     [(re-any)
      (node-box "." COLOR-SPECIAL)]
-    [(re-char-class ranges neg?)
-     (node-box (format-class ranges neg?) COLOR-CLASS)]
+    [(re-char-class items neg?)
+     (node-box (format-class items neg?) COLOR-CLASS)]
     [(re-anchor 'start)
      (node-box "^" COLOR-ANCHOR)]
     [(re-anchor 'end)
      (node-box "$" COLOR-ANCHOR)]
+    [(re-anchor type)
+     (node-box (format "~a" type) COLOR-ANCHOR)]
     [(re-escape type)
      (node-box (format-escape type) COLOR-ESCAPE)]
+    [(re-backref index)
+     (node-box (format "\\~a" index) COLOR-ESCAPE)]
+    [(re-unicode-class name negated?)
+     (node-box (if negated? (format "\\P{~a}" name) (format "\\p{~a}" name)) COLOR-ESCAPE)]
+    [(re-flags chars)
+     (node-box (format "(?~a)" chars) COLOR-NODE)]
     [(re-sequence elems)
      (if (null? elems)
          (blank 0 NODE-H)
@@ -63,10 +76,14 @@
      (alt-layout (ast->pict left) (ast->pict right))]
     [(re-quantifier base q-min q-max q-greedy?)
      (quant-layout (ast->pict base) q-min q-max q-greedy?)]
-    [(re-group child capture? name)
-     (group-layout (ast->pict child) capture? name)]))
+    [(re-group child capture? name flags)
+     (group-layout (ast->pict child) capture? name flags)]
+    [(re-lookaround direction negated? child)
+     (lookaround-layout (ast->pict child) direction negated?)]
+    [(re-atomic child)
+     (framed (ast->pict child) "(?>)" COLOR-ATOMIC)]))
 
-;; 交替布局
+;; alternation fork layout
 (define (alt-layout left-pict right-pict)
   (define max-w (max (pict-width left-pict) (pict-width right-pict)))
   (define left-pad (/ (- max-w (pict-width left-pict)) 2))
@@ -75,16 +92,17 @@
   (define right-centered (hc-append (blank right-pad NODE-H) right-pict (blank left-pad NODE-H)))
   (vc-append ALT-GAP left-centered right-centered))
 
-;; 量词布局（在节点上方/下方标注量词信息）
+;; quantifier badge above the node
 (define (quant-layout base-pict q-min q-max q-greedy?)
-  (define label
+  (define core
     (cond
-      [(and (= q-min 0) (eq? q-max #f)) (if q-greedy? " *" " *?")]
-      [(and (= q-min 1) (eq? q-max #f)) (if q-greedy? " +" " +?")]
-      [(and (= q-min 0) (= q-max 1)) (if q-greedy? " ?" " ??")]
-      [(and (number? q-min) (number? q-max) (= q-min q-max)) (format " {~a}" q-min)]
-      [(eq? q-max #f) (format " {~a,}" q-min)]
-      [else (format " {~a,~a}" q-min q-max)]))
+      [(and (= q-min 0) (eq? q-max #f)) "*"]
+      [(and (= q-min 1) (eq? q-max #f)) "+"]
+      [(and (= q-min 0) (= q-max 1)) "?"]
+      [(and (number? q-min) (number? q-max) (= q-min q-max)) (format "{~a}" q-min)]
+      [(eq? q-max #f) (format "{~a,}" q-min)]
+      [else (format "{~a,~a}" q-min q-max)]))
+  (define label (if q-greedy? core (format "~a?" core)))
   (define label-pict (colorize (text label 'default 10) COLOR-QUANT))
   (define base-w (pict-width base-pict))
   (define label-w (pict-width label-pict))
@@ -92,35 +110,51 @@
              (hc-append (/ (max 0 (- base-w label-w)) 2) label-pict)
              base-pict))
 
-;; 分组布局（加框）
-(define (group-layout child-pict capture? name)
-  (define frame-color
-    (if capture?
-        (make-object color% 76 175 80)   ; green
-        (make-object color% 158 158 158))) ; gray
+;; frame around a child pict
+(define (framed child-pict color)
   (define frame-pict
     (colorize
-     (rectangle (+ (pict-width child-pict) 8) (+ (pict-height child-pict) 6))
-     frame-color))
-  (define grouped (cc-superimpose frame-pict child-pict))
-  (if name
-      (lc-superimpose
-       (hc-append 2 (text "(" 'default 8) (text name 'default 8) (text ")" 'default 8))
-       grouped)
-      grouped))
+     (rectangle (+ (pict-width child-pict) 10) (+ (pict-height child-pict) 8))
+     color))
+  (cc-superimpose frame-pict child-pict))
 
-;; 格式化字符类
-(define (format-class ranges neg?)
+;; small caption above a frame
+(define (tagged child-pict tag color)
+  (define lbl (colorize (text tag 'default 8) color))
+  (vl-append -2 lbl (framed child-pict color)))
+
+(define (group-layout child-pict capture? name flags)
+  (define frame-color (if capture? COLOR-GROUP COLOR-GROUP-NC))
+  (define framed-pict (framed child-pict frame-color))
+  (cond
+    [flags
+     (tagged child-pict (format "(?~a:)" flags) frame-color)]
+    [name
+     (lc-superimpose
+      (hc-append 2 (text "(" 'default 8) (text name 'default 8) (text ")" 'default 8))
+      framed-pict)]
+    [else framed-pict]))
+
+(define (lookaround-layout child-pict direction negated?)
+  (define tag
+    (case direction
+      [(ahead) (if negated? "(?!)" "(?=)")]
+      [(behind) (if negated? "(?<!" "(?<=")]))
+  (tagged child-pict tag COLOR-LOOK))
+
+;; char class label, shared shape with the human formatter
+(define (format-class items neg?)
   (define content
-    (string-join
-     (for/list ([r ranges])
-       (match r
-         [(cons a b) (format "~a-~a" a b)]
-         [c (format "~a" c)]))
-     ""))
+     (string-join
+      (for/list ([item items])
+        (match item
+          [(list 'posix name) (format "[:~a:]" name)]
+          [(list 'class kind) (format-escape kind)]
+          [(cons a b) (format "~a-~a" a b)]
+          [c (format "~a" c)]))
+      ""))
   (format "[~a~a]" (if neg? "^" "") content))
 
-;; 格式化转义序列
 (define (format-escape type)
   (case type
     [(digit) "\\d"]
@@ -133,18 +167,28 @@
     [(non-word-boundary) "\\B"]
     [else (format "\\~a" type)]))
 
-;; 生成 railroad diagram SVG
-(define (generate-railroad-svg pattern output-path)
-  (define ast (parse-regex pattern))
+;; AST -> SVG byte string
+(define (ast->svg ast)
   (define diagram (ast->pict ast))
   (define full-diagram (hc-append (track 16) diagram (track 16)))
-  (define svg-bytes (convert full-diagram 'svg-bytes))
+  (convert full-diagram 'svg-bytes))
+
+;; pattern -> SVG bytes (raises when the parser cannot model the pattern)
+(define (railroad-svg pattern)
+  (define-values (ast err) (parse-regex-safe pattern))
+  (unless ast (error 'railroad "cannot visualize pattern: ~a" err))
+  (ast->svg ast))
+
+;; render to file or stdout; returns byte count
+(define (generate-railroad-svg pattern output-path)
+  (define svg-bytes (railroad-svg pattern))
   (if output-path
       (begin
         (call-with-output-file output-path
           (lambda (out) (write-bytes svg-bytes out))
           #:exists 'truncate)
         (displayln (format "SVG 已保存到: ~a" output-path)))
-      (write-bytes svg-bytes)))
+      (write-bytes svg-bytes))
+  (bytes-length svg-bytes))
 
-(provide generate-railroad-svg ast->pict)
+(provide generate-railroad-svg railroad-svg ast->pict ast->svg)

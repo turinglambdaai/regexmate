@@ -1,104 +1,77 @@
 #lang racket
 
-;; 导入测试框架
-(require rackunit)
+(require rackunit
+         "../core/regex-engine.rkt")
 
-;; 导入要测试的模块
-(require "../core/regex-engine.rkt")
-
-;; 测试正则表达式引擎功能
 (define regex-engine-tests
   (test-suite
-   "正则表达式引擎测试"
-   
-   ;; 测试有效正则表达式
-   (test-case "有效正则表达式验证"
+   "regex engine"
+
+   (test-case "valid-regex?"
      (check-true (valid-regex? "^\\d+$"))
-     (check-true (valid-regex? "[a-zA-Z0-9]+"))
-     (check-true (valid-regex? "^\\w+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$"))
-     (check-true (valid-regex? "^\\d{4}-\\d{2}-\\d{2}$")))
-   
-   ;; 测试无效正则表达式
-   (test-case "无效正则表达式验证"
-     (check-false (valid-regex? "[")) ; 缺少闭合括号
-     (check-false (valid-regex? "(a|b|c")) ; 缺少闭合括号
-     (check-false (valid-regex? "*abc")) ; 量词开头
-     (check-false (valid-regex? "+abc")) ; 量词开头
-     (check-false (valid-regex? "?abc")) ; 量词开头
-     (check-false (valid-regex? "[a-z")) ; 字符类未闭合
-     (check-false (valid-regex? "[\\\\")) ; 无效的转义
-     )
-   
-   ;; 测试正则匹配功能
-   (test-case "正则匹配功能测试"
-     ;; 匹配数字
-     (check-equal? (match-regex "\\d+" "abc123def456ghi") '("123" "456"))
-     ;; 匹配邮箱
-     (check-equal? (match-regex "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" 
-                    "Email: user@example.com, Support: support@test.org") 
-                   '("user@example.com" "support@test.org"))
-     ;; 匹配日期
-     (check-equal? (match-regex "\\d{4}-\\d{2}-\\d{2}" 
-                    "今天是2023-10-05，明天是2023-10-06") 
-                   '("2023-10-05" "2023-10-06"))
-     ;; 匹配空字符串 - 正则表达式匹配每两个字符之间的空字符串
-     (check-not-false (member "" (match-regex "" "test text")))
-     ;; 匹配整个字符串
-     (check-equal? (match-regex "^test text$" "test text") '("test text"))
-     ;; 不匹配
-     (check-equal? (match-regex "^\\d+$" "abc") '()))
-   
-   ;; 测试匹配位置功能
-   (test-case "匹配位置功能测试"
-     ;; 匹配数字位置
-     (check-equal? (match-regex-positions "\\d+" "abc123def456ghi") 
-                   '((3 . 6) (9 . 12)))
-     ;; 匹配邮箱位置
-     (check-equal? (length (match-regex-positions "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" 
-                    "Email: user@example.com, Support: support@test.org")) 
-                   2)
-     ;; 匹配整个字符串位置
-     (check-equal? (match-regex-positions "^test text$" "test text") 
-                   '((0 . 9)))
-     ;; 不匹配
-     (check-equal? (match-regex-positions "^\\d+$" "abc") '()))
-   
-   ;; 测试获取错误信息功能
-   (test-case "获取正则错误信息测试"
-     ;; 无效正则应返回错误信息
-     (check-not-false (get-regex-error "["))
-     (check-not-false (get-regex-error "(a|b|c"))
-     (check-not-false (get-regex-error "[a-z"))
-     ;; 有效正则应返回#f
+     (check-true (valid-regex? "(a|b)*c"))
+     (check-true (valid-regex? "(?=x)"))
+     (check-true (valid-regex? "(?<=x)y"))
+     (check-true (valid-regex? "[[:alpha:]]+"))
+     (check-true (valid-regex? "\\p{L}+"))
+     (check-true (valid-regex? "(a)\\1"))
+     (check-true (valid-regex? "(?>a+)b"))
+     (check-true (valid-regex? "(?i:abc)"))
+     (check-false (valid-regex? "("))
+     (check-false (valid-regex? "a)"))
+     (check-false (valid-regex? "[a"))
+     (check-false (valid-regex? "a{"))
+     (check-false (valid-regex? "(a)\\2"))          ; backref beyond group count
+     (check-false (valid-regex? "(?<name>x)"))      ; pregexp has no named groups
+     (check-false (valid-regex? "\\Aabc")))         ; pregexp has no \A
+
+   (test-case "get-regex-error"
      (check-false (get-regex-error "^\\d+$"))
-     (check-false (get-regex-error "[a-zA-Z]+")))
-   
-   ;; 测试大小写敏感匹配
-   (test-case "大小写敏感匹配测试"
-     (check-equal? (match-regex "[a-z]+" "abcDEF") '("abc"))
-     (check-equal? (match-regex "[A-Z]+" "abcDEF") '("DEF")))
-   
-   ;; 测试多行模式匹配
-   (test-case "多行模式匹配测试"
-     (define multi-line-text "123\n456\n789")
-     (check-equal? (match-regex "\\d+" multi-line-text) '("123" "456" "789")))
-   
-   ;; 测试量词功能
-   (test-case "量词功能测试"
-     ;; 精确匹配
-     (check-equal? (match-regex "a{3}" "aaaabbaaaa") '("aaa" "aaa"))
-     ;; 范围匹配
-     (check-equal? (match-regex "a{2,4}" "aaaabbaaaa") '("aaaa" "aaaa"))
-     ;; 至少匹配
-     (check-equal? (match-regex "a{2,}" "aaaabbaaaa") '("aaaa" "aaaa"))
-     ;; 0或1次匹配
-     (check-equal? (match-regex "a?" "aaa") '("a" "a" "a" ""))
-     ;; 0或多次匹配
-     (check-equal? (match-regex "a*" "aaabbaaa") '("aaa" "" "" "aaa" ""))
-     ;; 1或多次匹配
-     (check-equal? (match-regex "a+" "aaabbaaa") '("aaa" "aaa"))
-     )
+     (define err (get-regex-error "("))
+     (check-true (string? err))
+     ;; single line: no embedded newline (JSON contract requirement)
+     (check-false (string-contains? err "\n"))
+     (check-false (string-prefix? err "pregexp:")))
+
+   (test-case "find-all-matches spans"
+     (define ms (find-all-matches "\\d+" "abc 123 def 456"))
+     (check-equal? (length ms) 2)
+     (check-equal? (car (car ms)) (cons 4 7))
+     (check-equal? (car (cadr ms)) (cons 12 15)))
+
+   (test-case "find-all-matches capture groups"
+     (define ms (find-all-matches "(\\w+)@(\\w+)" "a@b c@d"))
+     (check-equal? (length ms) 2)
+     (match-define (cons overall groups) (car ms))
+     (check-equal? overall (cons 0 3))
+     (check-equal? (length groups) 2)
+     (check-equal? (car groups) (cons 0 1))
+     (check-equal? (cadr groups) (cons 2 3)))
+
+   (test-case "find-all-matches absent group is #f"
+     (define ms (find-all-matches "a(x)?b" "ab axb"))
+     (check-equal? (length ms) 2)
+     (check-equal? (cdr (car ms)) (list #f))          ; "ab": group absent
+     (check-equal? (cdr (cadr ms)) (list (cons 4 5)))) ; "axb": group present
+
+   (test-case "find-all-matches empty match never stalls"
+     (define ms (find-all-matches "x*" "ab"))
+     ;; empties at 0,1,2 — three positions, none repeated
+     (check-equal? (length ms) 3)
+     (for ([m ms])
+       (check-equal? (car (car m)) (cdr (car m)))))
+
+   (test-case "find-all-matches alternation and anchors"
+     (check-equal? (length (find-all-matches "^\\d+$" "123")) 1)
+     (check-equal? (length (find-all-matches "^\\d+$" "a123")) 0))
+
+   (test-case "replace-regex"
+     (define r (replace-regex "(\\w+)@(\\w+)" "mail a@b or c@d" "\\1 AT \\2"))
+     (check-equal? (car r) "mail a AT b or c AT d")
+     (check-equal? (cdr r) 2)
+     (define none (replace-regex "zzz" "abc" "x"))
+     (check-equal? (car none) "abc")
+     (check-equal? (cdr none) 0))
    ))
 
-;; 导出测试套件
 (provide regex-engine-tests)

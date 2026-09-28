@@ -1,0 +1,191 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Verify release metadata
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.2'
+
+      - name: Sanity-check scripts
+        run: |
+          bash -n scripts/smoke.sh
+          test -f CHANGELOG.md
+
+      - name: Tag must match repository version
+        run: racket scripts/check-version.rkt "$GITHUB_REF_NAME"
+
+      - name: Changelog must have a section for this version
+        run: grep -q "^## \[${GITHUB_REF_NAME#v}\]" CHANGELOG.md
+
+  build:
+    name: Build (${{ matrix.asset }})
+    needs: verify
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            asset: regexmate-linux-x86_64
+            archive: tar.gz
+            racket-arch: x64
+          - os: macos-latest
+            asset: regexmate-macos-aarch64
+            archive: tar.gz
+            racket-arch: arm64
+          - os: windows-latest
+            asset: regexmate-windows-x86_64
+            archive: zip
+            racket-arch: x64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.2'
+          architecture: ${{ matrix.racket-arch }}
+
+      - name: Compile
+        run: raco make main.rkt
+
+      - name: Build executable
+        shell: bash
+        run: |
+          case '${{ runner.os }}' in
+            Windows) raco exe -o build/regexmate.exe main.rkt ;;
+            *)       raco exe -o build/regexmate main.rkt ;;
+          esac
+
+      - name: Bundle runtime
+        shell: bash
+        run: |
+          case '${{ runner.os }}' in
+            Windows) raco distribute stage build/regexmate.exe ;;
+            *)       raco distribute stage build/regexmate ;;
+          esac
+
+      - name: Smoke the bundled binary
+        shell: bash
+        run: |
+          EXE=stage/regexmate
+          [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/regexmate.exe
+          "$EXE" --version
+          "$EXE" validate '^\d{3}-\d{4}$'
+          "$EXE" match '\d+' 'abc 123' --json
+          "$EXE" explain '(?:\d{2,4}|[a-z]+)(?=x)' --json
+          "$EXE" replace '(\w+)@(\w+)' '\1 at \2' 'a@b' --json
+          "$EXE" graph 'ab(c|d)*[0-9]+' -o smoke.svg
+          test -s smoke.svg
+          set +e
+          "$EXE" match 'nomatchpattern' 'text' >/dev/null
+          code=$?
+          set -e
+          test "$code" -eq 3
+
+      - name: Package (tar.gz)
+        if: matrix.archive == 'tar.gz'
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          tar -czf "${{ matrix.asset }}-v${VERSION}.tar.gz" -C stage .
+
+      - name: Package (zip)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          Compress-Archive -Path stage/* -DestinationPath "regexmate-windows-x86_64-v$version.zip"
+
+      - name: Checksum
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [ '${{ matrix.archive }}' = 'zip' ]; then
+            ARCHIVE="regexmate-windows-x86_64-v${VERSION}.zip"
+          else
+            ARCHIVE="${{ matrix.asset }}-v${VERSION}.tar.gz"
+          fi
+          sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+          cat "$ARCHIVE.sha256"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: |
+            regexmate-*-v*.tar.gz
+            regexmate-*-v*.zip
+            regexmate-*-v*.sha256
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        run: |
+          cd artifacts
+          for f in regexmate-*v*.tar.gz regexmate-*v*.zip; do
+            [ -f "$f" ] || continue
+            sha256sum "$f"
+          done > ../SHA256SUMS
+          cat ../SHA256SUMS
+
+      - name: Build release body (changelog section + checksums)
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          awk -v ver="$VERSION" '
+            $0 == "## [" ver "]" {found=1; next}
+            found && /^## \[/ {exit}
+            found {print}
+          ' CHANGELOG.md > release-body.md
+          if [ ! -s release-body.md ]; then
+            echo "See CHANGELOG.md for details." > release-body.md
+          fi
+          {
+            echo ""
+            echo "Standalone binaries — no Racket installation required."
+            echo ""
+            echo "### Checksums (SHA-256)"
+            echo '```'
+            cat SHA256SUMS
+            echo '```'
+          } >> release-body.md
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/regexmate-*-v*.tar.gz
+            artifacts/regexmate-*-v*.zip
+            artifacts/regexmate-*-v*.sha256
+            SHA256SUMS
+          body_path: release-body.md
+          generate_release_notes: true

@@ -3,18 +3,28 @@
 (require racket/match
          "ast.rkt")
 
-;; 正则表达式递归下降解析器
-;; 将正则字符串解析为 AST
+;; Recursive-descent regex parser: pattern string -> AST.
+;; Syntax surface is aligned with Racket's pregexp engine (verified on 9.2):
+;;   supported: . ^ $ | () (?:) (?=) (?!) (?<=) (?<!) (?>) (?i:) (?is:) (?-i:)
+;;              * + ? {n} {n,} {n,m} with lazy ?, [..] ranges/negation,
+;;              [:alpha:] POSIX classes, \d \D \w \W \s \S \b \B, \n \t \r,
+;;              \\, \1-\9 backrefs, \p{..} \P{..} unicode classes
+;;   not supported by pregexp (validator rejects before we ever parse):
+;;              (?<name>..) named groups, \A \z, \x41, (?i) without colon
+;; parse-regex-safe wraps parse failures for graceful explain/graph fallback.
 
 (define (parse-regex str)
   (define pos 0)
   (define len (string-length str))
 
-  (define (peek)
-    (and (< pos len) (string-ref str pos)))
+  (define (peek) (and (< pos len) (string-ref str pos)))
 
-  (define (advance)
-    (begin0 (peek) (set! pos (add1 pos))))
+  ;; char at offset k from current position, or #f
+  (define (peek-at k)
+    (define i (+ pos k))
+    (and (< i len) (string-ref str i)))
+
+  (define (advance) (begin0 (peek) (set! pos (add1 pos))))
 
   (define (at-end?) (>= pos len))
 
@@ -23,7 +33,7 @@
       (error 'parse-regex "expected '~a' at position ~a in ~v" c pos str))
     (advance))
 
-  ;; 顶层：解析交替
+  ;; top level: alternation
   (define (parse-alt)
     (define left (parse-seq))
     (cond
@@ -32,7 +42,7 @@
        (re-alternation left (parse-alt))]
       [else left]))
 
-  ;; 序列：量词化的原子的连接
+  ;; sequence: concatenation of quantified atoms
   (define (parse-seq)
     (define elems
       (let loop ()
@@ -49,17 +59,22 @@
       [(list single) single]
       [_ (re-sequence elems)]))
 
-  ;; 量词化的原子
+  ;; quantified atom
   (define (parse-quantified)
     (define atom (parse-atom))
     (cond
       [(not atom) #f]
       [(at-end?) atom]
-      [(memq (peek) '(#\? #\* #\+ #\{))
+      [(memq (peek) '(#\? #\* #\+))
        (parse-quantifier-spec atom)]
+      [(and (char=? (peek) #\{) (peek-digit? 1))
+       (parse-counted-quantifier atom)]
       [else atom]))
 
-  ;; 量词规格
+  (define (peek-digit? k)
+    (define c (peek-at k))
+    (and c (char-numeric? c)))
+
   (define (parse-quantifier-spec base)
     (case (peek)
       [(#\?)
@@ -77,10 +92,9 @@
        (if (and (not (at-end?)) (char=? (peek) #\?))
            (begin (advance) (re-quantifier base 1 #f #f))
            (re-quantifier base 1 #f #t))]
-      [(#\{) (parse-counted-quantifier base)]
       [else base]))
 
-  ;; {n} {n,m} {n,} 量词
+  ;; {n} {n,m} {n,}
   (define (parse-counted-quantifier base)
     (advance) ; consume {
     (define n (parse-number))
@@ -99,7 +113,6 @@
           #t))
     (re-quantifier base min-val max-val greedy?))
 
-  ;; 解析数字
   (define (parse-number)
     (define chars
       (let loop ()
@@ -110,7 +123,7 @@
         0
         (string->number (list->string chars))))
 
-  ;; 解析单个原子
+  ;; single atom
   (define (parse-atom)
     (cond
       [(at-end?) #f]
@@ -120,28 +133,71 @@
       [(char=? (peek) #\() (parse-group)]
       [(char=? (peek) #\[) (parse-char-class)]
       [(char=? (peek) #\\) (parse-escape)]
-      [(memq (peek) '(#\? #\* #\+ #\{ #\| #\))) #f]
+      [(memq (peek) '(#\? #\* #\+ #\| #\))) #f]
+      ;; '{' only reaches here when not a valid quantifier opener;
+      ;; pregexp rejects such patterns anyway, keep parsing as literal
+      [(char=? (peek) #\{) (re-literal (advance))]
       [else (re-literal (advance))]))
 
-  ;; 分组: (...) (?:...) (?<name>...)
+  ;; groups: (...) (?:...) (?=..) (?!..) (?<=..) (?<!..) (?>..)
+  ;;         (?i:...) (?is:...) (?-i:...) and (?<name>...) accepted defensively
   (define (parse-group)
     (advance) ; consume (
-    (define-values (capture? name)
+    (define-values (kind name flags)
       (cond
         [(and (peek) (char=? (peek) #\?))
          (advance)
          (cond
            [(and (peek) (char=? (peek) #\:))
+            (advance) (values 'noncapture #f #f)]
+           [(and (peek) (char=? (peek) #\=))
+            (advance) (values 'lookahead-pos #f #f)]
+           [(and (peek) (char=? (peek) #\!))
+            (advance) (values 'lookahead-neg #f #f)]
+           [(and (peek) (char=? (peek) #\<) (peek-at 1)
+                 (memq (peek-at 1) '(#\= #\!)))
+            (advance) ; <
+            (define neg? (char=? (advance) #\!))
+            (values (if neg? 'lookbehind-neg 'lookbehind-pos) #f #f)]
+           [(and (peek) (char=? (peek) #\>))
+            (advance) (values 'atomic #f #f)]
+           ;; (?i: (?is: (?-i: ...) — letters and dashes up to ':'
+           [(and (peek) (let ([c (peek)])
+                          (or (char-alphabetic? c) (char=? c #\-))))
+            (define fl (parse-flag-chars))
+            (unless (and (peek) (char=? (peek) #\:))
+              (error 'parse-regex "unsupported group flags at position ~a in ~v" pos str))
             (advance)
-            (values #f #f)]
+            (values 'flags #f fl)]
+           ;; (?<name> — pregexp rejects it, kept for graceful explanation
            [(and (peek) (char=? (peek) #\<))
             (advance)
-            (values #t (parse-group-name))]
-           [else (values #t #f)])]
-        [else (values #t #f)]))
+            (values 'named (parse-group-name) #f)]
+           [else
+            (error 'parse-regex "unsupported group syntax at position ~a in ~v" pos str)])]
+        [else (values 'capture #f #f)]))
     (define child (parse-alt))
     (expect #\))
-    (re-group child capture? name))
+    (case kind
+      [(capture) (re-group child #t #f #f)]
+      [(named) (re-group child #t name #f)]
+      [(noncapture flags) (re-group child #f #f flags)]
+      [(atomic) (re-atomic child)]
+      [(lookahead-pos) (re-lookaround 'ahead #f child)]
+      [(lookahead-neg) (re-lookaround 'ahead #t child)]
+      [(lookbehind-pos) (re-lookaround 'behind #f child)]
+      [(lookbehind-neg) (re-lookaround 'behind #t child)]
+      [else (error 'parse-regex "internal: unknown group kind ~a" kind)]))
+
+  ;; flag letters/dashes: "i", "is", "-i", "im-s" ...
+  (define (parse-flag-chars)
+    (define chars
+      (let loop ()
+        (if (and (peek)
+                 (or (char-alphabetic? (peek)) (char=? (peek) #\-)))
+            (cons (advance) (loop))
+            '())))
+    (list->string chars))
 
   (define (parse-group-name)
     (define chars
@@ -152,32 +208,58 @@
     (when (and (peek) (char=? (peek) #\>)) (advance))
     (list->string chars))
 
-  ;; 字符类: [abc] [a-z] [^a-z]
+  ;; char class: [abc] [a-z] [^a-z] [\d\s] [[:alpha:]] [a-]
   (define (parse-char-class)
     (advance) ; consume [
     (define negated?
       (if (and (peek) (char=? (peek) #\^))
           (begin (advance) #t)
           #f))
-    (define ranges (parse-class-items))
+    (define items (parse-class-items))
     (expect #\])
-    (re-char-class ranges negated?))
+    (re-char-class items negated?))
 
   (define (parse-class-items)
     (let loop ()
       (cond
-        [(and (peek) (char=? (peek) #\])) '()]
+        [(at-end?) '()]
+        [(char=? (peek) #\]) '()]
+        ;; POSIX class [:alpha:] / [:digit:] ...
+        [(and (char=? (peek) #\[) (char=? (or (peek-at 1) #\#) #\:))
+         (define name (parse-posix-class))
+         (cons (list 'posix name) (loop))]
         [else
          (define c (parse-class-atom))
          (cond
-           [(and (peek) (char=? (peek) #\-))
+           ;; range a-z (dash must be followed by a non-] char);
+           ;; symbolic items like \d can't be range endpoints, dash stays literal
+           [(and (char? c)
+                 (peek) (char=? (peek) #\-) (peek-at 1) (not (char=? (peek-at 1) #\])))
+            (advance) ; -
+            (define end-c (parse-class-atom))
+            (if (char? end-c)
+                (cons (cons c end-c) (loop))
+                (list* c #\- end-c (loop)))]
+           ;; trailing dash is literal
+           [(and (peek) (char=? (peek) #\-) (peek-at 1) (char=? (peek-at 1) #\]))
             (advance)
-            (if (and (peek) (not (char=? (peek) #\])))
-                (let ([end-c (parse-class-atom)])
-                  (cons (cons c end-c) (loop)))
-                (list* c #\- (loop)))]
+            (cons c (cons #\- (loop)))]
            [else (cons c (loop))])])))
 
+  (define (parse-posix-class)
+    (advance) ; [
+    (advance) ; :
+    (define chars
+      (let loop ()
+        (if (and (peek) (not (char=? (peek) #\:)))
+            (cons (advance) (loop))
+            '())))
+    (when (and (peek) (char=? (peek) #\:)) (advance))
+    (expect #\])
+    (string->symbol (list->string chars)))
+
+  ;; atom inside a char class: escapes collapse to plain chars here,
+  ;; except \d-family which stays symbolic so explain can name it
   (define (parse-class-atom)
     (cond
       [(char=? (peek) #\\)
@@ -186,10 +268,20 @@
          [(#\n) (advance) #\newline]
          [(#\t) (advance) #\tab]
          [(#\r) (advance) #\return]
+         [(#\\) (advance) #\\]
+         [(#\]) (advance) #\]]
+         [(#\[) (advance) #\[]
+         [(#\-) (advance) #\-]
+         [(#\d) (advance) (list 'class 'digit)]
+         [(#\D) (advance) (list 'class 'non-digit)]
+         [(#\w) (advance) (list 'class 'word)]
+         [(#\W) (advance) (list 'class 'non-word)]
+         [(#\s) (advance) (list 'class 'space)]
+         [(#\S) (advance) (list 'class 'non-space)]
          [else (advance)])]
       [else (advance)]))
 
-  ;; 转义序列: \d \D \w \W \s \S \b 等
+  ;; escape sequences outside classes
   (define (parse-escape)
     (advance) ; consume \
     (define c (advance))
@@ -205,11 +297,39 @@
       [(#\n) (re-literal #\newline)]
       [(#\t) (re-literal #\tab)]
       [(#\r) (re-literal #\return)]
+      [(#\\) (re-literal #\\)]
+      ;; backreferences \1-\9
+      [(#\1 #\2 #\3 #\4 #\5 #\6 #\7 #\8 #\9)
+       (re-backref (string->number (string c)))]
+      ;; unicode classes \p{L} \P{L} \p{Greek}
+      [(#\p #\P)
+       (if (and (peek) (char=? (peek) #\{))
+           (let ()
+             (advance)
+             (define name (parse-braced-name))
+             (re-unicode-class name (char=? c #\P)))
+           (re-literal c))]
       [else (re-literal c)]))
 
-  ;; 执行解析
+  (define (parse-braced-name)
+    (define chars
+      (let loop ()
+        (if (and (peek) (not (char=? (peek) #\})))
+            (cons (advance) (loop))
+            '())))
+    (expect #\})
+    (string->symbol (list->string chars)))
+
+  ;; run the parse
   (if (string=? str "")
       (re-sequence '())
       (parse-alt)))
 
-(provide parse-regex)
+;; Safe variant: returns (cons ast #f) on success or (cons #f message) on failure.
+;; explain/graph use this to degrade gracefully on syntax our parser
+;; does not model (pregexp still handles the matching itself).
+(define (parse-regex-safe str)
+  (with-handlers ([exn:fail? (lambda (e) (cons #f (exn-message e)))])
+    (cons (parse-regex str) #f)))
+
+(provide parse-regex parse-regex-safe)

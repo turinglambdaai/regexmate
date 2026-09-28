@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RegexMate — the regex workbench for humans and agents</title>
+    <meta name="description" content="RegexMate validates, matches, explains and draws regular expressions — with a versioned JSON contract, explicit exit codes and standalone binaries. Built for coding agents and the humans who review their work.">
+    <meta property="og:title" content="RegexMate — the regex workbench for humans and agents">
+    <meta property="og:description" content="Validate, match, explain and graph regexes. One JSON contract for agents, plain-language explanations for humans, railroad diagrams for reviews.">
+    <meta property="og:type" content="website">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <script>document.documentElement.classList.add('js-anim')</script>
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="#">
+                <svg class="brand-mark" width="26" height="26" viewBox="0 0 512 512" fill="none">
+                    <rect width="512" height="512" rx="115" fill="#059669"/>
+                    <circle cx="150" cy="200" r="42" fill="#FFFFFF"/>
+                    <path d="M 250 170 L 330 342 M 330 170 L 250 342" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                    <path d="M 366 342 L 420 170" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                </svg>
+                RegexMate
+            </a>
+            <div class="nav-links">
+                <a href="#why" data-en="Why" data-zh="为什么">Why</a>
+                <a href="#cli" data-en="CLI" data-zh="命令行">CLI</a>
+                <a href="#diagrams" data-en="Diagrams" data-zh="图解">Diagrams</a>
+                <a href="#agents" data-en="Agents" data-zh="智能体">Agents</a>
+                <a href="#install" data-en="Install" data-zh="安装">Install</a>
+                <a href="https://github.com/turinglambdaai/regexmate" class="nav-github">GitHub</a>
+                <button class="lang-btn" id="lang-btn" type="button">中文</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-badges">
+                <span class="badge badge-version">v1.0.0</span>
+                <span class="badge" data-en="Windows · Linux · macOS" data-zh="Windows · Linux · macOS">Windows · Linux · macOS</span>
+                <span class="badge">MIT</span>
+            </div>
+            <h1 class="hero-title" data-en="Regular expressions, explained." data-zh="正则表达式，一眼看懂。">Regular expressions, explained.</h1>
+            <p class="hero-sub" data-en="RegexMate validates, matches, explains and draws regexes — with a versioned JSON contract, explicit exit codes and standalone binaries. Built for coding agents, and for the humans who review their work."
+               data-zh="RegexMate 校验、匹配、解释并绘制正则表达式——带版本化 JSON 契约、明确的退出码和免安装的独立二进制。为编码智能体而生，也为审阅它们工作的人类而造。">
+                RegexMate validates, matches, explains and draws regexes — with a versioned JSON contract, explicit exit codes and standalone binaries. Built for coding agents, and for the humans who review their work.
+            </p>
+            <div class="hero-cta">
+                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download v1.0.0" data-zh="下载 v1.0.0">Download v1.0.0</a>
+                <a class="btn btn-ghost" href="#agents" data-en="Agent integration" data-zh="智能体接入">Agent integration</a>
+            </div>
+            <div class="hero-install">
+                <code>raco pkg install https://github.com/turinglambdaai/regexmate</code>
+                <button class="copy-btn" id="copy-install" type="button" aria-label="copy">⧉</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Why -->
+    <section class="section" id="why">
+        <div class="container">
+            <h2 class="section-title" data-en="Why RegexMate" data-zh="为什么是 RegexMate">Why RegexMate</h2>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    </div>
+                    <h3 data-en="Agent-native" data-zh="为智能体而生">Agent-native</h3>
+                    <p data-en="One versioned JSON contract (regexmate/v1) across every command, absolute [start, end) spans, 1-based capture groups and exit codes that never lie. Drop it into any tool loop — no screenscraping, no guessing."
+                       data-zh="所有命令共用一套版本化 JSON 契约（regexmate/v1）：绝对 [start, end) 区间、从 1 计数的捕获组、永不撒谎的退出码。直接接入任何工具循环——不用刮屏幕，不用猜格式。">
+                        One versioned JSON contract (regexmate/v1) across every command, absolute [start, end) spans, 1-based capture groups and exit codes that never lie. Drop it into any tool loop — no screenscraping, no guessing.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                    </div>
+                    <h3 data-en="Plain-language explain" data-zh="人话解释">Plain-language explain</h3>
+                    <p data-en="explain walks the parsed AST and narrates every part in English or 中文 — quantifiers, groups, lookarounds, unicode classes — so a pattern you inherited explains itself."
+                       data-zh="explain 遍历解析后的 AST，用英文或中文逐部分讲清楚每个量词、分组、断言和 Unicode 类——接手别人遗留的正则不再靠猜。">
+                        explain walks the parsed AST and narrates every part in English or 中文 — quantifiers, groups, lookarounds, unicode classes — so a pattern you inherited explains itself.
+                    </p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+                    </div>
+                    <h3 data-en="Railroad diagrams" data-zh="铁路图">Railroad diagrams</h3>
+                    <p data-en="graph renders any pattern to a clean SVG railroad diagram — for specs, pull requests and documentation. The diagrams on this page are generated by the tool itself."
+                       data-zh="graph 把任意正则渲染成干净的 SVG 铁路图——用于规格文档、代码评审和技术文档。本页展示的图就是工具自己生成的。">
+                        graph renders any pattern to a clean SVG railroad diagram — for specs, pull requests and documentation. The diagrams on this page are generated by the tool itself.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CLI -->
+    <section class="section section-alt" id="cli">
+        <div class="container">
+            <h2 class="section-title" data-en="One tool, five verbs" data-zh="一个工具，五个动词">One tool, five verbs</h2>
+            <p class="section-sub" data-en="Everything works in human mode and JSON mode, in English and 中文." data-zh="所有命令都同时支持人类可读与 JSON 输出、英文与中文。">Everything works in human mode and JSON mode, in English and 中文.</p>
+
+            <div class="terminal">
+                <div class="terminal-bar"><span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span><span class="terminal-title">regexmate</span></div>
+                <pre class="terminal-body"><code><span class="c-dim">$</span> regexmate match <span class="c-str">'\d+'</span> <span class="c-str">'abc 123 def 456'</span>
+Found 2 match(es):
+  at 4-7: "123"
+  at 12-15: "456"
+
+<span class="c-dim">$</span> regexmate explain <span class="c-str">'(?:\d{2,4}|[a-z]+)(?=x)'</span>
+Pattern: (?:\d{2,4}|[a-z]+)(?=x)
+
+Components:
+  1. [group] (?:\d{2,4}|[a-z]+)
+       ← Non-capturing group (?:...): Digit (\d) × {2,4} | Character class: [a-z] × +
+  2. [lookaround] (?=x)
+       ← Positive lookahead (?=...): Literal: x
+
+<span class="c-dim">$</span> regexmate replace <span class="c-str">'(\w+)@(\w+)'</span> <span class="c-str">'\1 AT \2'</span> <span class="c-str">'a@b'</span>
+Replaced 1 occurrence(s).
+Result: a AT b
+
+<span class="c-dim">$</span> regexmate graph <span class="c-str">'ab(c|d)*'</span> -o diagram.svg
+SVG saved to: diagram.svg</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Diagrams -->
+    <section class="section" id="diagrams">
+        <div class="container">
+            <h2 class="section-title" data-en="See the pattern" data-zh="把正则画出来">See the pattern</h2>
+            <p class="section-sub" data-en="Real output from <code>regexmate graph</code> — not a mockup." data-zh="这些图是 <code>regexmate graph</code> 的真实输出——不是设计稿。">Real output from <code>regexmate graph</code> — not a mockup.</p>
+            <div class="diagram-grid">
+                <figure class="diagram-card">
+                    <img src="assets/example-date.svg" alt="Railroad diagram of the ISO date pattern" loading="lazy">
+                    <figcaption><code>\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])</code></figcaption>
+                </figure>
+                <figure class="diagram-card">
+                    <img src="assets/example-email.svg" alt="Railroad diagram of an email-ish pattern" loading="lazy">
+                    <figcaption><code>[\w.+-]+@[\w-]+\.[\w.]{2,}</code></figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <!-- Agents -->
+    <section class="section section-alt" id="agents">
+        <div class="container">
+            <h2 class="section-title" data-en="Built for the tool loop" data-zh="为工具循环而生">Built for the tool loop</h2>
+            <div class="agent-grid">
+                <div class="agent-col">
+                    <h3 data-en="Stable JSON envelope" data-zh="稳定的 JSON 信封">Stable JSON envelope</h3>
+                    <pre class="code-block"><code>{
+  <span class="c-key">"schema"</span>:  <span class="c-str">"regexmate/v1"</span>,
+  <span class="c-key">"command"</span>: <span class="c-str">"match"</span>,
+  <span class="c-key">"ok"</span>:      <span class="c-lit">true</span>,
+  <span class="c-key">"pattern"</span>: <span class="c-str">"(\\w+)@(\\w+)"</span>,
+  <span class="c-key">"text"</span>:    <span class="c-str">"mail a@b"</span>,
+  <span class="c-key">"count"</span>:   <span class="c-num">1</span>,
+  <span class="c-key">"matches"</span>: [{
+    <span class="c-key">"value"</span>:  <span class="c-str">"a@b"</span>,
+    <span class="c-key">"start"</span>:  <span class="c-num">5</span>, <span class="c-key">"end"</span>: <span class="c-num">8</span>,
+    <span class="c-key">"groups"</span>: [
+      {<span class="c-key">"index"</span>: <span class="c-num">1</span>, <span class="c-key">"name"</span>: <span class="c-lit">null</span>,
+       <span class="c-key">"value"</span>: <span class="c-str">"a"</span>, <span class="c-key">"start"</span>: <span class="c-num">5</span>, <span class="c-key">"end"</span>: <span class="c-num">6</span>},
+      {<span class="c-key">"index"</span>: <span class="c-num">2</span>, <span class="c-key">"name"</span>: <span class="c-lit">null</span>,
+       <span class="c-key">"value"</span>: <span class="c-str">"b"</span>, <span class="c-key">"start"</span>: <span class="c-num">7</span>, <span class="c-key">"end"</span>: <span class="c-num">8</span>}
+    ]
+  }]
+}</code></pre>
+                    <p class="agent-note" data-en="Spans are absolute and [start, end). Absent groups are null — never missing keys."
+                       data-zh="区间为绝对下标、[start, end) 半开。未参与的捕获组是 null——不会缺键。">
+                        Spans are absolute and [start, end). Absent groups are null — never missing keys.
+                    </p>
+                </div>
+                <div class="agent-col">
+                    <h3 data-en="Exit codes that mean something" data-zh="有意义的退出码">Exit codes that mean something</h3>
+                    <table class="exit-table">
+                        <tr><td><code>0</code></td><td data-en="ok — match found / pattern valid / replacement done" data-zh="成功——有匹配 / 语法有效 / 完成替换">ok — match found / pattern valid / replacement done</td></tr>
+                        <tr><td><code>1</code></td><td data-en="invalid regular expression" data-zh="正则表达式无效">invalid regular expression</td></tr>
+                        <tr><td><code>2</code></td><td data-en="usage error (bad flag, unknown command)" data-zh="用法错误（错误选项、未知命令）">usage error (bad flag, unknown command)</td></tr>
+                        <tr><td><code>3</code></td><td data-en="valid pattern, zero matches / zero replacements" data-zh="语法有效但零匹配 / 零替换">valid pattern, zero matches / zero replacements</td></tr>
+                    </table>
+                    <h3 class="mt" data-en="Scriptable to the core" data-zh="脚本友好到骨子里">Scriptable to the core</h3>
+                    <pre class="code-block"><code><span class="c-dim"># stdin in, JSON out — chain it anywhere</span>
+cat access.log | regexmate match <span class="c-str">'^(\d+\.\d+\.\d+\.\d+)'</span> - --json
+
+<span class="c-dim"># exit code 3 = valid regex, no match</span>
+regexmate match <span class="c-str">'ERROR'</span> <span class="c-str">"$log"</span> --json || code=$?</code></pre>
+                    <p class="agent-note" data-en="Text comes from an argument or stdin ('-'). NO_COLOR and REGEXMATE_LANG are honored; --lang switches output language."
+                       data-zh="文本可来自参数或 stdin（'-'）。支持 NO_COLOR 与 REGEXMATE_LANG 环境变量；--lang 切换输出语言。">
+                        Text comes from an argument or stdin ('-'). NO_COLOR and REGEXMATE_LANG are honored; --lang switches output language.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Install -->
+    <section class="section" id="install">
+        <div class="container">
+            <h2 class="section-title" data-en="Install" data-zh="安装">Install</h2>
+            <div class="cards">
+                <div class="card install-card">
+                    <h3 data-en="Standalone binary" data-zh="独立二进制">Standalone binary</h3>
+                    <p data-en="Grab a release from GitHub — a single executable plus bundled runtime libraries. No Racket installation needed."
+                       data-zh="从 GitHub Releases 下载——单个可执行文件加捆绑的运行时库，无需安装 Racket。">
+                        Grab a release from GitHub — a single executable plus bundled runtime libraries. No Racket installation needed.
+                    </p>
+                    <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Releases" data-zh="下载">Releases</a>
+                </div>
+                <div class="card install-card">
+                    <h3 data-en="Racket package" data-zh="Racket 包">Racket package</h3>
+                    <p data-en="Already running Racket? Install straight from the repository:"
+                       data-zh="已经在用 Racket？直接从仓库安装：">
+                        Already running Racket? Install straight from the repository:
+                    </p>
+                    <pre class="code-block"><code>raco pkg install https://github.com/turinglambdaai/regexmate</code></pre>
+                </div>
+                <div class="card install-card">
+                    <h3 data-en="From source" data-zh="从源码构建">From source</h3>
+                    <p data-en="Clone, compile and produce your own binary in three commands (Racket 9.x):"
+                       data-zh="克隆、编译并产出自己的二进制，三条命令（需 Racket 9.x）：">
+                        Clone, compile and produce your own binary in three commands (Racket 9.x):
+                    </p>
+                    <pre class="code-block"><code>git clone https://github.com/turinglambdaai/regexmate
+cd regexmate && raco make main.rkt
+racket run-tests.rkt &amp;&amp; raco exe -o regexmate main.rkt</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmap -->
+    <section class="section section-alt" id="roadmap">
+        <div class="container">
+            <h2 class="section-title" data-en="Roadmap" data-zh="路线图">Roadmap</h2>
+            <div class="roadmap">
+                <div class="roadmap-item">
+                    <span class="roadmap-tag" data-en="next" data-zh="下一步">next</span>
+                    <span data-en="Desktop GUI on the same core (railroad diagrams, live match table, explain pane)" data-zh="同一核心之上的桌面 GUI（铁路图、实时匹配表、解释面板）">Desktop GUI on the same core (railroad diagrams, live match table, explain pane)</span>
+                </div>
+                <div class="roadmap-item">
+                    <span class="roadmap-tag" data-en="next" data-zh="下一步">next</span>
+                    <span>MCP server <span class="c-dim" data-en="— regex tools as native agent tools" data-zh="——把正则工具暴露为原生智能体工具">— regex tools as native agent tools</span></span>
+                </div>
+                <div class="roadmap-item">
+                    <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>
+                    <span data-en="regex flavor linting (catastrophic backtracking warnings, portability checks)" data-zh="正则方言 lint（灾难性回溯告警、可移植性检查）">regex flavor linting (catastrophic backtracking warnings, portability checks)</span>
+                </div>
+                <div class="roadmap-item">
+                    <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>
+                    <span data-en="Package-manager distribution (Homebrew, winget, AUR)" data-zh="包管理器分发（Homebrew、winget、AUR）">Package-manager distribution (Homebrew, winget, AUR)</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>
+                <div class="brand brand-footer">
+                    <svg width="18" height="18" viewBox="0 0 512 512" fill="none">
+                        <rect width="512" height="512" rx="115" fill="#059669"/>
+                        <circle cx="150" cy="200" r="42" fill="#FFFFFF"/>
+                        <path d="M 250 170 L 330 342 M 330 170 L 250 342" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                        <path d="M 366 342 L 420 170" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                    </svg>
+                    RegexMate
+                </div>
+                <p class="footer-note" data-en="The regex workbench for humans and agents." data-zh="面向人与智能体的正则工作台。">The regex workbench for humans and agents.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/turinglambdaai/regexmate">GitHub</a>
+                <a href="https://github.com/turinglambdaai/regexmate/releases" data-en="Releases" data-zh="发布">Releases</a>
+                <a href="https://github.com/turinglambdaai/regexmate/blob/main/README.zh-CN.md" data-en="中文文档" data-zh="中文文档">中文文档</a>
+                <a href="https://jrtx.site">TuringLambdaAI</a>
+            </div>
+            <p class="footer-copy">MIT · © 2026 TuringLambdaAI</p>
+        </div>
+    </footer>
+
+    <script>
+        // language toggle: data-en / data-zh attributes
+        (function () {
+            var btn = document.getElementById('lang-btn');
+            var saved = null;
+            try { saved = localStorage.getItem('regexmate-lang'); } catch (e) {}
+            var zh = saved === 'zh' ||
+                     (!saved && (navigator.language || '').indexOf('zh') === 0);
+
+            function apply(isZh) {
+                document.documentElement.lang = isZh ? 'zh-CN' : 'en';
+                var nodes = document.querySelectorAll('[data-en]');
+                for (var i = 0; i < nodes.length; i++) {
+                    var el = nodes[i];
+                    var v = isZh ? el.getAttribute('data-zh') : el.getAttribute('data-en');
+                    if (v !== null) el.innerHTML = v;
+                }
+                btn.textContent = isZh ? 'English' : '中文';
+                try { localStorage.setItem('regexmate-lang', isZh ? 'zh' : 'en'); } catch (e) {}
+            }
+
+            if (zh) apply(true);
+            btn.addEventListener('click', function () {
+                apply(document.documentElement.lang !== 'zh-CN');
+            });
+
+            // copy install command
+            var copy = document.getElementById('copy-install');
+            copy.addEventListener('click', function () {
+                var code = copy.parentElement.querySelector('code').textContent;
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(code.trim());
+                    copy.textContent = '✓';
+                    setTimeout(function () { copy.textContent = '⧉'; }, 1200);
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

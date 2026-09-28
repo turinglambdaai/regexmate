@@ -1,105 +1,147 @@
 # RegexMate
 
-A cross-platform GUI regular expression tool built with [Racket](https://racket-lang.org/), featuring AI assistance for more efficient regex creation. RegexMate also provides an agent-friendly CLI with structured JSON output.
+The regex workbench for humans and agents — validate, match, explain, replace and graph regular expressions from a single cross-platform CLI, with a versioned JSON contract built for coding agents.
 
 ![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **English** · [中文](README.zh-CN.md)
 
-## Features
+## Why
 
-- **validate** — check regex syntax validity
-- **match** — test regex against text, with highlighted matches
-- **explain** — break down a regex into human-readable parts
-- **graph** — generate a railroad diagram as SVG
-- **JSON mode** — structured output for agent consumption (`--json`)
+Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or silent (grep). RegexMate is a small, honest CLI that does four things well and speaks JSON natively:
 
-## Requirements
+- **validate** — check a pattern against the Racket `pregexp` flavor, single-line error messages
+- **match** — run a pattern against text or stdin; highlighted in a terminal, structured over a pipe
+- **explain** — narrate every part of a pattern in plain English or 中文
+- **replace** — substitute with backreferences, with a replacement count
+- **graph** — render a railroad diagram as SVG, for specs and pull requests
 
-| Dependency | Purpose / Version |
-|------------|-------------------|
-| [Racket](https://racket-lang.org/) | Tested with v9.0 |
+Everything ships as a standalone binary — no Racket installation required on target machines.
 
-## Quick Start
+## Install
 
-### 1. Clone
+**Standalone binary** (Windows / Linux / macOS): grab an archive from [Releases](https://github.com/turinglambdaai/regexmate/releases), unzip, run.
+
+**Racket package:**
 
 ```bash
-git clone https://github.com/turinglambdaai/regexmate.git
+raco pkg install https://github.com/turinglambdaai/regexmate
+```
+
+**From source** (Racket 9.x):
+
+```bash
+git clone https://github.com/turinglambdaai/regexmate
 cd regexmate
+raco make main.rkt
+racket run-tests.rkt          # test suite
+raco exe -o regexmate main.rkt  # produce your own binary
 ```
 
-### 2. Usage
+## Quick start
 
-```bash
-# Validate regex syntax
-racket main.rkt validate '^\d+$'
-racket main.rkt validate '^\d+$' --json
+```console
+$ regexmate validate '^\d{3}-\d{4}$'
+Pattern: ^\d{3}-\d{4}$
+✓ Valid syntax
 
-# Match regex against text
-racket main.rkt match '\d+' 'abc 123 def 456'
-racket main.rkt match '\d+' 'abc 123 def 456' --json
+$ regexmate match '\d+' 'abc 123 def 456'
+Found 2 match(es):
+  at 4-7: "123"
+  at 12-15: "456"
 
-# Explain regex parts
-racket main.rkt explain '\d{2,4}'
-racket main.rkt explain '\d{2,4}' --json
+$ regexmate explain '(?:\d{2,4}|[a-z]+)(?=x)'
+Pattern: (?:\d{2,4}|[a-z]+)(?=x)
 
-# Generate railroad diagram
-racket main.rkt graph 'a|b' -o diagram.svg
+Components:
+  1. [group] (?:\d{2,4}|[a-z]+)
+       ← Non-capturing group (?:...): Digit (\d) × {2,4} | Character class: [a-z] × +
+  2. [lookaround] (?=x)
+       ← Positive lookahead (?=...): Literal: x
+
+$ regexmate replace '(\w+)@(\w+)' '\1 AT \2' 'mail a@b'
+Replaced 1 occurrence(s).
+Result: mail a AT b
+
+$ regexmate graph 'ab(c|d)*' -o diagram.svg
+SVG saved to: diagram.svg
 ```
 
-### JSON Output Examples
+## JSON contract (`regexmate/v1`)
 
-**validate:**
+Every command accepts `--json` and emits a single-line envelope with stable keys: `schema`, `command`, `ok`.
 
-```json
-{"pattern":"^\\d+$","valid":true}
+```console
+$ regexmate match '(\w+)@(\w+)' 'mail a@b' --json
+{"command":"match","count":1,"matches":[{"end":8,"groups":[{"end":6,"index":1,"name":null,"start":5,"value":"a"},{"end":8,"index":2,"name":null,"start":7,"value":"b"}],"start":5,"value":"a@b"}],"ok":true,"pattern":"(\\w+)@(\\w+)","schema":"regexmate/v1","text":"mail a@b"}
 ```
 
-**match:**
+Contract rules:
 
-```json
-{"pattern":"\\d+","text":"abc 123 def 456","matches":[{"value":"123","start":4,"end":7},{"value":"456","start":12,"end":15}],"count":2}
-```
+- Spans are absolute indices, `[start, end)` — end exclusive.
+- Capture groups are 1-based; `name` is reserved for future named-group support; absent groups are `null`, never missing keys.
+- Errors carry a single-line `error` string (no embedded newlines).
+- `graph --json` embeds the SVG markup; `graph -o FILE --json` reports `output` and `bytes`.
 
-**explain:**
+### Exit codes
 
-```json
-{"pattern":"\\d{2,4}","parts":[{"type":"re-quantifier","description":"数字 (\\d) × {2,4}","raw":"\\d{2,4}"}]}
-```
+| Code | Meaning |
+|------|---------|
+| `0` | ok — match found / pattern valid / replacements done |
+| `1` | invalid regular expression |
+| `2` | usage error (unknown command or flag) |
+| `3` | valid pattern, zero matches / zero replacements |
 
-## Project Structure
+## Regex flavor
 
-```
-regexmate/
-├── main.rkt                 # CLI entry point
-├── run-tests.rkt            # Test runner
-├── core/
-│   ├── ast.rkt              # Regex AST data structures
-│   ├── regex-engine.rkt     # Validation and matching engine
-│   └── regex-parser.rkt     # Recursive descent parser
-├── output/
-│   ├── highlight.rkt        # ANSI terminal highlighting
-│   ├── json-format.rkt      # JSON output formatting
-│   ├── human-format.rkt     # Human-readable output
-│   └── railroad.rkt         # SVG railroad diagram generator
-└── tests/
-    ├── test-regex-engine.rkt
-    ├── test-regex-parser.rkt
-    ├── test-highlight.rkt
-    └── test-json-format.rkt
-```
+RegexMate validates and matches with Racket's `pregexp` engine. Supported: `. ^ $ * + ? {n,m}` (greedy and lazy), `( ) (?: )`, lookarounds `(?=) (?!) (?<=) (?<!)`, atomic groups `(?>)`, flag groups `(?i:…) (?is:…) (?-i:…)`, character classes with ranges / negation / POSIX names (`[:alpha:]`), escapes `\d \D \w \W \s \S \b \B`, backreferences `\1`–`\9`, and unicode classes `\p{…}` / `\P{…}`.
+
+Not supported by the engine (and therefore rejected by `validate`): named groups `(?<name>…)`, `\A`/`\z` anchors, `\x41` hex escapes. `explain` and `graph` degrade gracefully on valid-but-unmodelable syntax.
+
+## Localization
+
+Human output is English by default. `--lang zh` or the `REGEXMATE_LANG=zh` environment variable switches every message, including `explain` descriptions. `NO_COLOR` disables ANSI highlighting.
 
 ## Development
 
 ```bash
-# Run tests
-racket run-tests.rkt
-
-# Run CLI
-racket main.rkt <command> <args>
+racket run-tests.rkt      # unit tests
+bash scripts/smoke.sh     # CLI end-to-end smoke test
+racket scripts/check-version.rkt v1.0.0   # release gate
 ```
+
+CI runs the unit tests and smoke test on Ubuntu, Windows and macOS against Racket 9.2; tagged pushes build standalone binaries for all three platforms and publish a GitHub release with SHA-256 checksums.
+
+## Project structure
+
+```
+regexmate/
+├── main.rkt                 # CLI entry point
+├── version.rkt              # runtime version (must match info.rkt)
+├── info.rkt                 # Racket package metadata
+├── core/
+│   ├── ast.rkt              # regex AST data structures
+│   ├── regex-parser.rkt     # recursive-descent parser (pregexp-aligned)
+│   ├── regex-engine.rkt     # matching / replacing on pregexp
+│   └── i18n.rkt             # en/zh message tables
+├── output/
+│   ├── json-format.rkt      # regexmate/v1 envelopes
+│   ├── human-format.rkt     # bilingual human output + explainer
+│   ├── highlight.rkt        # ANSI match highlighting
+│   └── railroad.rkt         # AST → pict → SVG diagrams
+├── tests/                   # rackunit suites
+├── scripts/                 # smoke.sh, check-version.rkt
+├── docs/                    # product homepage (GitHub Pages)
+└── .github/workflows/       # ci.yml, release.yml
+```
+
+## Roadmap
+
+- Desktop GUI on the same core (diagrams, live match table, explain pane)
+- MCP server exposing the regex tools as native agent tools
+- Flavor linting (catastrophic backtracking warnings, portability checks)
+- Package-manager distribution (Homebrew, winget, AUR)
 
 ## License
 
-Licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)

@@ -1,36 +1,58 @@
 #lang racket
 
-;; 正则表达式匹配引擎
+;; Matching engine on top of Racket's pregexp. This module is the only
+;; place that touches the regexp API; spans use [start, end) with
+;; end exclusive and absolute string indices.
 
-;; 测试正则表达式是否有效
+(define (compile-regex regex) (pregexp regex))
+
+;; Test whether a pattern compiles
 (define (valid-regex? regex)
   (with-handlers ([exn:fail? (lambda (e) #f)])
-    ;; 使用 pregexp 函数编译正则表达式，支持扩展语法
-    (pregexp regex)
+    (compile-regex regex)
     #t))
 
-;; 执行正则匹配，返回匹配结果列表
-(define (match-regex regex text)
-  (cond
-    [(not (valid-regex? regex)) '()]
-    [else
-     ;; 使用 pregexp 函数编译正则表达式，然后进行匹配
-     (regexp-match* (pregexp regex) text)]))
-
-;; 执行正则匹配，返回匹配位置信息
-(define (match-regex-positions regex text)
-  (cond
-    [(not (valid-regex? regex)) '()]
-    [else
-     ;; 使用 pregexp 函数编译正则表达式，然后获取匹配位置
-     (regexp-match-positions* (pregexp regex) text)]))
-
-;; 获取正则表达式错误信息
+;; Compile error message, or #f when the pattern is valid.
+;; pregexp messages are multi-line ("pregexp: ...\n  pattern: ...");
+;; keep the first line and drop the engine prefix so the JSON contract
+;; stays single-line friendly.
 (define (get-regex-error regex)
-  (with-handlers ([exn:fail? (lambda (e) (exn-message e))])
-    ;; 使用 pregexp 函数编译正则表达式，捕获错误信息
-    (pregexp regex)
+  (with-handlers ([exn:fail? (lambda (e)
+                               (define raw (exn-message e))
+                               (define first-line (car (string-split raw "\n")))
+                               (define stripped
+                                 (if (string-prefix? first-line "pregexp: ")
+                                     (substring first-line 9)
+                                     first-line))
+                               (string-trim stripped))])
+    (compile-regex regex)
     #f))
 
-;; 导出函数
-(provide valid-regex? match-regex match-regex-positions get-regex-error)
+;; A match record: overall span (start . end) plus one entry per capture
+;; group — (start . end) or #f when that group did not participate.
+(define (find-all-matches regex text)
+  (define pat (compile-regex regex))
+  (define len (string-length text))
+  (let loop ([start 0] [acc '()])
+    (if (> start len)
+        (reverse acc)
+        (let ([m (regexp-match-positions pat text start)])
+          (if (not m)
+              (reverse acc)
+              (let* ([overall (car m)]
+                     [s (car overall)]
+                     [e (cdr overall)]
+                     ;; advance past empty matches so the scan always moves
+                     [next (if (= e s) (add1 e) e)])
+                (loop next (cons (cons overall (cdr m)) acc))))))))
+
+;; Replace all matches with an insertion template. Racket's insertion
+;; syntax applies: \\1 references group 1, \\0 the whole match.
+;; Returns (cons result-string replacement-count).
+(define (replace-regex regex text insertion)
+  (define pat (compile-regex regex))
+  (define matches (find-all-matches regex text))
+  (cons (regexp-replace* pat text insertion)
+        (length matches)))
+
+(provide valid-regex? get-regex-error find-all-matches replace-regex)
