@@ -18,11 +18,11 @@
 
 (displayln "=== RegexMate tests ===")
 
+;; run-tests returns the number of failed/errored checks (0 = all green)
 (define results (run-tests all-tests))
 
 (displayln "=== done ===")
 
-;; run-tests returns (tests passed failed errored) in rackunit/text-ui
-(if (and (list? results) (= 0 (list-ref results 2) (list-ref results 3)))
+(if (and (number? results) (zero? results))
     (exit 0)
     (exit 1))

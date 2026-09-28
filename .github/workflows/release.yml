@@ -68,6 +68,7 @@ jobs:
       - name: Build executable
         shell: bash
         run: |
+          mkdir -p build
           case '${{ runner.os }}' in
             Windows) raco exe -o build/regexmate.exe main.rkt ;;
             *)       raco exe -o build/regexmate main.rkt ;;
