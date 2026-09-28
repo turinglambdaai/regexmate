@@ -25,7 +25,7 @@
 **Racket 包：**
 
 ```bash
-raco pkg install https://github.com/turinglambdaai/regexmate
+raco pkg install https://github.com/turinglambdaai/regexmate.git
 ```
 
 **从源码构建**（Racket 9.x）：

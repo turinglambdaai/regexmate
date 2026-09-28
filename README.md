@@ -25,7 +25,7 @@ Everything ships as a standalone binary — no Racket installation required on t
 **Racket package:**
 
 ```bash
-raco pkg install https://github.com/turinglambdaai/regexmate
+raco pkg install https://github.com/turinglambdaai/regexmate.git
 ```
 
 **From source** (Racket 9.x):
