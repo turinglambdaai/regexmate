@@ -73,14 +73,17 @@ jobs:
             Windows) raco exe -o build/regexmate.exe main.rkt ;;
             *)       raco exe -o build/regexmate main.rkt ;;
           esac
+          ls -la build
 
       - name: Bundle runtime
         shell: bash
         run: |
+          set -x
           case '${{ runner.os }}' in
             Windows) raco distribute stage build/regexmate.exe ;;
             *)       raco distribute stage build/regexmate ;;
           esac
+          ls -laR stage
 
       - name: Smoke the bundled binary
         shell: bash
