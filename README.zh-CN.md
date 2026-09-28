@@ -1,6 +1,6 @@
 # RegexMate
 
-面向人与智能体的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换与绘图，并为编码智能体提供版本化的 JSON 契约。
+为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析，通过版本化 JSON 契约、MCP server 和永不撒谎的退出码服务编码智能体。
 
 ![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -15,8 +15,12 @@
 - **explain** —— 用平实的英文或中文逐部分讲解正则
 - **replace** —— 带反向引用的替换，并报告替换次数
 - **graph** —— 渲染 SVG 铁路图，用于规格文档和代码评审
+- **test** —— 对 JSON 用例批量断言并给出逐条证据：agent 迭代正则的「写→测→改」闭环
+- **lint** —— 确定性静态发现（灾难性回溯嵌套、量化断言、空/重复/被遮蔽的交替分支），`--strict` 可做 CI 门禁
+- **mcp** —— stdio MCP server，把全部七个工具原生暴露给编码智能体
+- **schema** —— 机器可读契约，由工具自我描述
 
-所有平台都提供独立二进制——目标机器无需安装 Racket。
+所有平台都提供独立二进制——目标机器无需安装 Racket。仓库自带 [`SKILL.md`](SKILL.md)，供加载技能卡的 agent 平台使用。
 
 ## 安装
 
@@ -65,6 +69,37 @@ Result: mail a AT b
 
 $ regexmate graph 'ab(c|d)*' -o diagram.svg
 SVG 已保存到: diagram.svg
+```
+
+## MCP server
+
+```json
+{
+  "mcpServers": {
+    "regexmate": {
+      "command": "regexmate",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+stdio 上的换行分隔 JSON-RPC 2.0，协议版本 `2024-11-05`。工具：`regexmate_validate`、`regexmate_match`、`regexmate_explain`、`regexmate_replace`、`regexmate_graph`、`regexmate_test`、`regexmate_lint`，均带输入 schema，可经 `tools/list` 发现。
+
+## Agent 工作流
+
+```console
+$ printf '{"cases":[{"text":"2026-09-28","expect":"match","contains":"2026"},{"text":"2026-13-01","expect":"no-match"}]}' | regexmate test '\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])'
+  ✓ "2026-09-28"
+  ✓ "2026-13-01"
+Passed 2 of 2 case(s).
+
+$ regexmate lint '(a+)+|a|'
+2 finding(s):
+  [warning] nested-quantifier at 0: nested quantifiers over a group can backtrack catastrophically on non-matching input
+  [warning] empty-branch at 8: alternative 2 is empty — it matches the empty string, usually a bug
+
+$ regexmate schema --json   # 契约由工具自我描述
 ```
 
 ## JSON 契约（`regexmate/v1`）

@@ -45,7 +45,7 @@
     <header class="hero">
         <div class="container">
             <div class="hero-badges">
-                <span class="badge badge-version">v1.0.0</span>
+                <span class="badge badge-version">v1.1.0</span>
                 <span class="badge" data-en="Windows · Linux · macOS" data-zh="Windows · Linux · macOS">Windows · Linux · macOS</span>
                 <span class="badge">MIT</span>
             </div>
@@ -55,7 +55,7 @@
                 RegexMate validates, matches, explains and draws regexes — with a versioned JSON contract, explicit exit codes and standalone binaries. Built for coding agents, and for the humans who review their work.
             </p>
             <div class="hero-cta">
-                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download v1.0.0" data-zh="下载 v1.0.0">Download v1.0.0</a>
+                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download v1.1.0" data-zh="下载 v1.1.0">Download v1.1.0</a>
                 <a class="btn btn-ghost" href="#agents" data-en="Agent integration" data-zh="智能体接入">Agent integration</a>
             </div>
             <div class="hero-install">
@@ -75,8 +75,8 @@
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
                     </div>
                     <h3 data-en="Agent-native" data-zh="为智能体而生">Agent-native</h3>
-                    <p data-en="One versioned JSON contract (regexmate/v1) across every command, absolute [start, end) spans, 1-based capture groups and exit codes that never lie. Drop it into any tool loop — no screenscraping, no guessing."
-                       data-zh="所有命令共用一套版本化 JSON 契约（regexmate/v1）：绝对 [start, end) 区间、从 1 计数的捕获组、永不撒谎的退出码。直接接入任何工具循环——不用刮屏幕，不用猜格式。">
+                    <p data-en="One versioned JSON contract (regexmate/v1) across every command, absolute [start, end) spans, 1-based capture groups and exit codes that never lie. Also speaks MCP natively — seven tools, zero glue code."
+                       data-zh="所有命令共用一套版本化 JSON 契约（regexmate/v1）：绝对 [start, end) 区间、从 1 计数的捕获组、永不撒谎的退出码。原生支持 MCP——七个工具，零胶水代码。">
                         One versioned JSON contract (regexmate/v1) across every command, absolute [start, end) spans, 1-based capture groups and exit codes that never lie. Drop it into any tool loop — no screenscraping, no guessing.
                     </p>
                 </div>
@@ -204,6 +204,39 @@ regexmate match <span class="c-str">'ERROR'</span> <span class="c-str">"$log"</s
                     </p>
                 </div>
             </div>
+
+            <div class="agent-grid" style="margin-top: 40px;">
+                <div class="agent-col">
+                    <h3>MCP server</h3>
+                    <pre class="code-block"><code>{
+  <span class="c-key">"mcpServers"</span>: {
+    <span class="c-key">"regexmate"</span>: {
+      <span class="c-key">"command"</span>: <span class="c-str">"regexmate"</span>,
+      <span class="c-key">"args"</span>: [<span class="c-str">"mcp"</span>]
+    }
+  }
+}</code></pre>
+                    <p class="agent-note" data-en="stdio JSON-RPC 2.0 (protocol 2024-11-05). Seven tools with input schemas: validate, match, explain, replace, graph, test, lint. Schemas are discoverable via tools/list."
+                       data-zh="stdio JSON-RPC 2.0（协议 2024-11-05）。七个带输入 schema 的工具：validate、match、explain、replace、graph、test、lint，均可经 tools/list 发现。">
+                        stdio JSON-RPC 2.0 (protocol 2024-11-05). Seven tools with input schemas: validate, match, explain, replace, graph, test, lint. Schemas are discoverable via tools/list.
+                    </p>
+                </div>
+                <div class="agent-col">
+                    <h3 data-en="The iteration loop" data-zh="迭代闭环">The iteration loop</h3>
+                    <pre class="code-block"><code><span class="c-dim"># assert against cases, get evidence</span>
+regexmate test <span class="c-str">'\d{4}-\d{2}-\d{2}'</span> &lt; cases.json
+
+<span class="c-dim"># static risk findings before shipping</span>
+regexmate lint <span class="c-str">'(a+)+'</span> --strict
+<span class="c-dim"># exit 3: nested-quantifier — ReDoS risk</span>
+
+regexmate schema <span class="c-dim"># contract, self-described</span></code></pre>
+                    <p class="agent-note" data-en="test asserts positives and negatives with per-case reasons; lint finds catastrophic backtracking, dead branches and shadowed alternatives — --strict turns findings into a CI gate."
+                       data-zh="test 对正反用例断言并给出逐条原因；lint 发现灾难性回溯、死分支与被遮蔽的交替——--strict 把发现变成 CI 门禁。">
+                        test asserts positives and negatives with per-case reasons; lint finds catastrophic backtracking, dead branches and shadowed alternatives — --strict turns findings into a CI gate.
+                    </p>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -252,12 +285,8 @@ racket run-tests.rkt &amp;&amp; raco exe -o regexmate main.rkt</code></pre>
                     <span data-en="Desktop GUI on the same core (railroad diagrams, live match table, explain pane)" data-zh="同一核心之上的桌面 GUI（铁路图、实时匹配表、解释面板）">Desktop GUI on the same core (railroad diagrams, live match table, explain pane)</span>
                 </div>
                 <div class="roadmap-item">
-                    <span class="roadmap-tag" data-en="next" data-zh="下一步">next</span>
-                    <span>MCP server <span class="c-dim" data-en="— regex tools as native agent tools" data-zh="——把正则工具暴露为原生智能体工具">— regex tools as native agent tools</span></span>
-                </div>
-                <div class="roadmap-item">
                     <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>
-                    <span data-en="regex flavor linting (catastrophic backtracking warnings, portability checks)" data-zh="正则方言 lint（灾难性回溯告警、可移植性检查）">regex flavor linting (catastrophic backtracking warnings, portability checks)</span>
+                    <span data-en="deeper lint rules: possessive quantifiers analysis, cross-engine portability checks" data-zh="更深的 lint 规则：占有量词分析、跨引擎可移植性检查">deeper lint rules: possessive quantifiers analysis, cross-engine portability checks</span>
                 </div>
                 <div class="roadmap-item">
                     <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>

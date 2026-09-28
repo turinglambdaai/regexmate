@@ -73,6 +73,20 @@
 (define (format-error-json command error)
   (envelope command #f 'error error))
 
+(define (format-test-json pattern results total passed failed)
+  (envelope "test" #t
+            'pattern pattern
+            'total total
+            'passed passed
+            'failed failed
+            'results results))
+
+(define (format-lint-json pattern warnings)
+  (envelope "lint" #t
+            'pattern pattern
+            'count (length warnings)
+            'warnings warnings))
+
 (define (format-version-json version)
   (hasheq 'schema SCHEMA 'command "version" 'ok #t 'version version))
 
@@ -80,5 +94,6 @@
 
 (provide format-validate-json format-match-json format-explain-json
          format-replace-json format-graph-json format-graph-file-json
+         format-test-json format-lint-json
          format-error-json format-version-json jsexpr->line
          SCHEMA)

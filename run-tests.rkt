@@ -7,6 +7,8 @@
 (require "tests/test-regex-parser.rkt")
 (require "tests/test-human-format.rkt")
 (require "tests/test-json-format.rkt")
+(require "tests/test-tester.rkt")
+(require "tests/test-linter.rkt")
 
 (define all-tests
   (test-suite
@@ -14,7 +16,9 @@
    regex-engine-tests
    regex-parser-tests
    human-format-tests
-   json-format-tests))
+   json-format-tests
+   tester-tests
+   linter-tests))
 
 (displayln "=== RegexMate tests ===")
 

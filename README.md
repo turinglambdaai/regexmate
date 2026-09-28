@@ -1,6 +1,6 @@
 # RegexMate
 
-The regex workbench for humans and agents — validate, match, explain, replace and graph regular expressions from a single cross-platform CLI, with a versioned JSON contract built for coding agents.
+The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from a single cross-platform CLI, over a versioned JSON contract, an MCP server and exit codes that never lie.
 
 ![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -15,8 +15,12 @@ Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or 
 - **explain** — narrate every part of a pattern in plain English or 中文
 - **replace** — substitute with backreferences, with a replacement count
 - **graph** — render a railroad diagram as SVG, for specs and pull requests
+- **test** — assert a pattern against JSON cases and get per-case evidence: the write → test → refine loop agents need
+- **lint** — deterministic static findings (catastrophic-backtracking nesting, quantified assertions, empty/duplicate/shadowed alternation branches), `--strict` gates CI
+- **mcp** — a stdio MCP server exposing all seven tools natively to coding agents
+- **schema** — the machine-readable contract, described by the tool itself
 
-Everything ships as a standalone binary — no Racket installation required on target machines.
+Everything ships as a standalone binary — no Racket installation required on target machines. A [`SKILL.md`](SKILL.md) ships in the repository for agent platforms that load skill cards.
 
 ## Install
 
@@ -67,6 +71,37 @@ $ regexmate graph 'ab(c|d)*' -o diagram.svg
 SVG saved to: diagram.svg
 ```
 
+## MCP server
+
+```json
+{
+  "mcpServers": {
+    "regexmate": {
+      "command": "regexmate",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+Newline-delimited JSON-RPC 2.0 over stdio, protocol `2024-11-05`. Tools: `regexmate_validate`, `regexmate_match`, `regexmate_explain`, `regexmate_replace`, `regexmate_graph`, `regexmate_test`, `regexmate_lint` — each with an input schema discoverable via `tools/list`.
+
+## Agent workflow
+
+```console
+$ printf '{"cases":[{"text":"2026-09-28","expect":"match","contains":"2026"},{"text":"2026-13-01","expect":"no-match"}]}' | regexmate test '\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])'
+  ✓ "2026-09-28"
+  ✓ "2026-13-01"
+Passed 2 of 2 case(s).
+
+$ regexmate lint '(a+)+|a|'
+2 finding(s):
+  [warning] nested-quantifier at 0: nested quantifiers over a group can backtrack catastrophically on non-matching input
+  [warning] empty-branch at 8: alternative 2 is empty — it matches the empty string, usually a bug
+
+$ regexmate schema --json   # the contract, from the tool itself
+```
+
 ## JSON contract (`regexmate/v1`)
 
 Every command accepts `--json` and emits a single-line envelope with stable keys: `schema`, `command`, `ok`.
@@ -103,6 +138,7 @@ Not supported by the engine (and therefore rejected by `validate`): named groups
 Human output is English by default. `--lang zh` or the `REGEXMATE_LANG=zh` environment variable switches every message, including `explain` descriptions. `NO_COLOR` disables ANSI highlighting.
 
 ## Development
+
 
 ```bash
 racket run-tests.rkt      # unit tests

@@ -36,6 +36,38 @@ test -s /tmp/smoke.svg; check "graph file exists" 0 $?
 $R graph 'a(b|c)*' --json >/dev/null; check "graph json" 0 $?
 $R graph 'a(b|c)*' >/dev/null; check "graph stdout" 0 $?
 
+# schema
+$R schema >/dev/null; check "schema" 0 $?
+$R schema --json >/dev/null; check "schema json" 0 $?
+
+# lint
+$R lint '(a+)+' --json >/dev/null; check "lint findings" 0 $?
+$R lint '^[a-z]+$' >/dev/null; check "lint clean" 0 $?
+$R lint '^[a-z]+$' --strict >/dev/null; check "lint strict clean" 0 $?
+$R lint '(a+)+' --strict >/dev/null; check "lint strict findings" 3 $?
+$R lint '(' >/dev/null; check "lint invalid" 1 $?
+
+# test
+printf '{"cases":[{"text":"a1","expect":"match"}]}' | $R test '\d' >/dev/null; check "test pass" 0 $?
+printf '{"cases":[{"text":"abc","expect":"match"}]}' | $R test '\d' >/dev/null; check "test fail" 3 $?
+printf '[{"text":"a1"}]' | $R test '\d' --json >/dev/null; check "test bare array json" 0 $?
+printf 'not json' | $R test '\d' >/dev/null; check "test bad input" 2 $?
+$R test '(' >/dev/null; check "test invalid pattern" 1 $?
+
+# mcp (stdio JSON-RPC)
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized"}' \
+  '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' \
+  '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"regexmate_match","arguments":{"pattern":"[0-9]+","text":"a1"}}}' \
+  > /tmp/mcp-smoke-in.jsonl
+$R mcp < /tmp/mcp-smoke-in.jsonl > /tmp/mcp-smoke.out 2>/dev/null; check "mcp server runs" 0 $?
+grep -q '"serverInfo"' /tmp/mcp-smoke.out; check "mcp initialize" 0 $?
+grep -q 'regexmate_validate' /tmp/mcp-smoke.out; check "mcp tools/list" 0 $?
+grep -q '"isError":false' /tmp/mcp-smoke.out; check "mcp tools/call" 0 $?
+# notification produced no response line
+test "$(wc -l < /tmp/mcp-smoke.out)" -eq 3; check "mcp notification silent" 0 $?
+
 # misc
 $R --version >/dev/null; check "version" 0 $?
 $R --version --json >/dev/null; check "version json" 0 $?

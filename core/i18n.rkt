@@ -32,6 +32,10 @@
      "  regexmate explain <pattern> [--json]          Explain each part in plain language\n"
      "  regexmate replace <pattern> <replacement> [text|-] [--json]\n"
      "  regexmate graph <pattern> [-o FILE] [--json]  Render a railroad diagram (SVG)\n"
+     "  regexmate test <pattern> [FILE|-] [--json]    Assert cases: {\"text\",\"expect\",\"contains\"}\n"
+     "  regexmate lint <pattern> [--strict] [--json]  Static risk findings (ReDoS etc.)\n"
+     "  regexmate schema [--json]                     Print the machine-readable contract\n"
+     "  regexmate mcp                                 Run the stdio MCP server (JSON-RPC 2.0)\n"
      "\n"
      "Options:\n"
      "  --json          Structured JSON output (schema regexmate/v1)\n"
@@ -50,6 +54,10 @@
      "  regexmate explain <正则> [--json]          逐部分解释正则\n"
      "  regexmate replace <正则> <替换文本> [文本|-] [--json]\n"
      "  regexmate graph <正则> [-o FILE] [--json]  生成铁路图（SVG）\n"
+     "  regexmate test <正则> [FILE|-] [--json]    批量断言用例：{\"text\",\"expect\",\"contains\"}\n"
+     "  regexmate lint <正则> [--strict] [--json]  静态风险分析（ReDoS 等）\n"
+     "  regexmate schema [--json]                  打印机器可读契约\n"
+     "  regexmate mcp                              启动 stdio MCP server（JSON-RPC 2.0）\n"
      "\n"
      "选项:\n"
      "  --json          结构化 JSON 输出（schema regexmate/v1）\n"
@@ -80,6 +88,14 @@
    'replace-none (cons "No occurrences replaced.\n" "没有发生替换。\n")
    'replace-text (cons "Result: ~a\n" "结果: ~a\n")
    'graph-saved (cons "SVG saved to: ~a\n" "SVG 已保存到: ~a\n")
+   'test-summary (cons "Passed ~a of ~a case(s).\n" "通过 ~a / 共 ~a 个用例。\n")
+   'test-case-pass (cons "  ✓ ~s\n" "  ✓ ~s\n")
+   'test-case-fail (cons "  ✗ ~s — ~a\n" "  ✗ ~s — ~a\n")
+   'test-input-error (cons "Error: test input must be a JSON object with a \"cases\" array or a bare array\n"
+                           "错误：test 输入必须是带 \"cases\" 数组的 JSON 对象，或裸数组\n")
+   'lint-header (cons "~a finding(s):\n" "~a 条发现:\n")
+   'lint-entry (cons "  [~a] ~a at ~a: ~a\n" "  [~a] ~a 位置 ~a: ~a\n")
+   'lint-none (cons "No findings.\n" "没有发现。\n")
    'explain-unsupported (cons "This pattern uses syntax the visualizer does not support yet; description is approximate.\n"
                               "该正则包含可视化器尚未支持的语法，描述仅供参考。\n")))
 
