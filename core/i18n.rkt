@@ -35,6 +35,7 @@
      "  regexmate test <pattern> [FILE|-] [--json]    Assert cases: {\"text\",\"expect\",\"contains\"}\n"
      "  regexmate lint <pattern> [--strict] [--json]  Static risk findings (ReDoS etc.)\n"
      "  regexmate schema [--json]                     Print the machine-readable contract\n"
+     "  regexmate update [--check] [--json]           Self-update from GitHub Releases\n"
      "  regexmate mcp                                 Run the stdio MCP server (JSON-RPC 2.0)\n"
      "\n"
      "Options:\n"
@@ -57,6 +58,7 @@
      "  regexmate test <正则> [FILE|-] [--json]    批量断言用例：{\"text\",\"expect\",\"contains\"}\n"
      "  regexmate lint <正则> [--strict] [--json]  静态风险分析（ReDoS 等）\n"
      "  regexmate schema [--json]                  打印机器可读契约\n"
+     "  regexmate update [--check] [--json]        从 GitHub Releases 自更新\n"
      "  regexmate mcp                              启动 stdio MCP server（JSON-RPC 2.0）\n"
      "\n"
      "选项:\n"
@@ -96,6 +98,16 @@
    'lint-header (cons "~a finding(s):\n" "~a 条发现:\n")
    'lint-entry (cons "  [~a] ~a at ~a: ~a\n" "  [~a] ~a 位置 ~a: ~a\n")
    'lint-none (cons "No findings.\n" "没有发现。\n")
+   'update-checking (cons "Checking for updates…\n" "正在检查更新…\n")
+   'update-check-result (cons "Latest release: ~a (installed: ~a)\n" "最新版本: ~a（当前安装: ~a）\n")
+   'update-up-to-date (cons "Already up to date (regexmate ~a).\n" "已是最新版本（regexmate ~a）。\n")
+   'update-downloading (cons "Downloading ~a …\n" "正在下载 ~a …\n")
+   'update-verifying (cons "Verifying checksum…\n" "正在校验 SHA-256…\n")
+   'update-installing (cons "Installing …\n" "正在安装…\n")
+   'update-done (cons "Updated to ~a. Run `regexmate --version` to confirm.\n" "已更新到 ~a。运行 `regexmate --version` 确认。\n")
+   'update-source (cons "regexmate is running from source; update via `git pull` or `raco pkg update`.\n"
+                        "regexmate 正以源码方式运行；请用 `git pull` 或 `raco pkg update` 更新。\n")
+   'update-failed (cons "Update failed: ~a\n" "更新失败: ~a\n")
    'explain-unsupported (cons "This pattern uses syntax the visualizer does not support yet; description is approximate.\n"
                               "该正则包含可视化器尚未支持的语法，描述仅供参考。\n")))
 

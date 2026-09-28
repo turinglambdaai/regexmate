@@ -9,6 +9,7 @@
          "core/i18n.rkt"
          "core/tester.rkt"
          "core/linter.rkt"
+         "core/updater.rkt"
          "output/json-format.rkt"
          "output/highlight.rkt"
          "output/human-format.rkt"
@@ -42,6 +43,9 @@
       [(string=? (car as) "--strict")
        ;; advisory flag for lint; travels via positionals to the command layer
        (loop (cdr as) (cons "--strict" pos) json-flag lang-flag output-file bad-flag)]
+      [(string=? (car as) "--check")
+       ;; check-only flag for update; travels via positionals
+       (loop (cdr as) (cons "--check" pos) json-flag lang-flag output-file bad-flag)]
       [(string=? (car as) "--lang")
        (if (or (null? (cdr as)) (string-prefix? (cadr as) "--"))
            (loop '() pos json-flag lang-flag output-file "--lang")
@@ -215,7 +219,105 @@
                             (hash-ref w 'message)))))))
   (exit (if (and strict? (not (null? warnings))) EXIT-NO-MATCH EXIT-OK)))
 
-;; machine-readable self-description: the contract itself, for agent discovery
+(define (update-envelope action current latest asset)
+  (hasheq 'schema SCHEMA
+          'command "update"
+          'ok #t
+          'current current
+          'latest latest
+          'updateAvailable (version<? current latest)
+          'action action
+          'asset asset))
+
+(define (cmd-update check-only? json?)
+  (unless (installed-mode?)
+    (if json?
+        (displayln (jsexpr->line (format-error-json
+                                  "update" "not a standalone install; self-update unavailable")))
+        (display (msg 'update-source)))
+    (exit EXIT-USAGE))
+  (with-handlers
+      ([exn:fail?
+        (lambda (e)
+          (define m (exn-message e))
+          (if json?
+              (displayln (jsexpr->line (format-error-json "update" m)))
+              (display (msg 'update-failed m)))
+          (exit EXIT-INVALID))])
+    (unless json? (display (msg 'update-checking)))
+    (define latest (fetch-latest-release))
+    (define tag (hash-ref latest 'tag))
+    (define current regexmate-version)
+    (cond
+      [check-only?
+       (if json?
+           (displayln (jsexpr->line (update-envelope "checked" current tag #f)))
+           (display (msg 'update-check-result tag current)))
+       (exit EXIT-OK)]
+      [(not (version<? current tag))
+       (if json?
+           (displayln (jsexpr->line (update-envelope "none" current tag #f)))
+           (display (msg 'update-up-to-date current)))
+       (exit EXIT-OK)]
+      [else
+       (define asset-name (asset-name tag))
+       (define asset-def
+         (for/first ([a (in-list (hash-ref latest 'assets))]
+                     #:when (string=? (hash-ref a 'name) asset-name))
+           a))
+       (unless asset-def
+         (error 'update (format "release asset ~a not found" asset-name)))
+       (define sha-name (string-append asset-name ".sha256"))
+       (define sha-def
+         (for/first ([a (in-list (hash-ref latest 'assets))]
+                     #:when (string=? (hash-ref a 'name) sha-name))
+           a))
+       (define stage (build-path (install-dir)
+                                 (string-append "regexmate-update-"
+                                                (number->string (current-milliseconds)))))
+       (make-directory* stage)
+       (define archive (build-path stage asset-name))
+       (unless json? (display (msg 'update-downloading asset-name)))
+       (download-to-file
+        (hash-ref asset-def 'url) archive
+        (and (not json?)
+             (lambda (done)
+               (when (number? done)
+                 (fprintf (current-error-port) "  ~a MB\r"
+                          (quotient done 1048576))))))
+       (when sha-def
+         (unless json? (display (msg 'update-verifying)))
+         (define sha-file (build-path stage sha-name))
+         (download-to-file (hash-ref sha-def 'url) sha-file #f)
+         (define want
+           (first (string-split (string-trim (port->string (open-input-file sha-file))))))
+         (define got (sha256-file archive))
+         (unless (string-ci=? want got)
+           (error 'update (format "checksum mismatch: want ~a, got ~a" want got))))
+       (unless json? (display (msg 'update-installing)))
+       (define extract-dir (build-path stage "unpacked"))
+       (extract-archive archive extract-dir)
+       ;; windows archives are flat (regexmate.exe + lib/); unix ones use
+       ;; bin/ layout (bin/regexmate + lib/)
+       (define flat-exe (build-path extract-dir (exe-name)))
+       (define bin-exe (build-path extract-dir "bin" (exe-name)))
+       (define-values (new-exe new-lib)
+         (cond
+           [(file-exists? flat-exe)
+            (values flat-exe
+                    (let ([l (build-path extract-dir "lib")])
+                      (and (directory-exists? l) l)))]
+           [(file-exists? bin-exe)
+            (values bin-exe
+                    (let ([l (build-path extract-dir "lib")])
+                      (and (directory-exists? l) l)))]
+           [else (error 'update "unexpected archive layout")]))
+       (swap-install new-exe new-lib)
+       (if json?
+           (displayln (jsexpr->line (update-envelope "updated" current tag asset-name)))
+           (display (msg 'update-done tag)))
+       (exit EXIT-OK)])))
+
 ;; machine-readable self-description: the contract itself, for agent discovery
 (define (cmd-schema)
   (displayln
@@ -242,6 +344,9 @@
                      'flags '("--strict")
                      'exit "0 clean / 3 findings with --strict")
              (hasheq 'name "schema" 'args '())
+             (hasheq 'name "update" 'args '()
+                     'flags '("--check")
+                     'exit "0 ok / 1 failed / 2 not a standalone install")
              (hasheq 'name "mcp" 'desc "stdio MCP server (JSON-RPC 2.0, newline-delimited)"))
             'flags '("--json" "--lang en|zh" "-o FILE" "--version" "--help")
             'envelope (hasheq 'fields '("schema" "command" "ok")
@@ -261,6 +366,9 @@
 ;; ---- entry ---------------------------------------------------------
 
 (define (main)
+  ;; finish a previous update's cleanup quietly (stale .old runtime files)
+  (with-handlers ([exn:fail? (lambda (e) (void))])
+    (cleanup-stale-updates))
   (define args (vector->list (current-command-line-arguments)))
   (define-values (positionals json-flag lang-flag output-file bad-flag)
     (parse-args args))
@@ -329,6 +437,12 @@
        [(list pattern) (cmd-lint pattern strict? json-flag)]
        [_ (die-usage)])]
     [("schema") (cmd-schema)]
+    [("update")
+     (define check-only? (member "--check" positionals))
+     (define rest* (remove "--check" rest))
+     (match rest*
+       [(list) (cmd-update check-only? json-flag)]
+       [_ (die-usage)])]
     [("mcp") (mcp-main) (exit EXIT-OK)]
     [("help")
      (display (msg 'usage regexmate-version))

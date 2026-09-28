@@ -71,6 +71,21 @@ $ regexmate graph 'ab(c|d)*' -o diagram.svg
 SVG saved to: diagram.svg
 ```
 
+## Self-update
+
+```console
+$ regexmate update --check
+Latest release: v1.2.0 (installed: 1.1.0)
+
+$ regexmate update
+Downloading regexmate-windows-x86_64-v1.2.0.zip …
+Verifying checksum…
+Installing …
+Updated to v1.2.0. Run `regexmate --version` to confirm.
+```
+
+Standalone installs update themselves in place from GitHub Releases: the download's SHA-256 is verified against the published checksum, and the running binary is swapped safely (renamed aside, cleaned up on next start). `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
+
 ## MCP server
 
 ```json

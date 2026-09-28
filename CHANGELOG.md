@@ -2,6 +2,22 @@
 
 All notable changes to RegexMate are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is SemVer.
 
+## [1.2.0] — 2026-09-28
+
+Self-update: `regexmate update` brings standalone installs to the latest GitHub release without any package manager.
+
+### Added
+
+- **`update` command**: checks the latest GitHub release, downloads the platform archive, verifies its SHA-256 against the published checksum, extracts and swaps the install in place. `--check` reports without installing; `--json` emits the standard envelope (`current`, `latest`, `updateAvailable`, `action`). Non-interactive by default — built for agents and scripts.
+- Swap safety on all three platforms: the running binary is renamed aside (works even on Windows while the process is live), stale `.old` runtime files are cleaned on the next startup.
+- Checksums are enforced: a mismatched download aborts the update before anything is touched.
+- Pure-Racket SHA-256 (verified against FIPS 180-4 test vectors including padding boundaries) — no new dependencies.
+
+### Notes
+
+- Update requires a standalone binary install; source/pkg installs are pointed at `git pull` / `raco pkg update`.
+- `schema` now lists the `update` command.
+
 ## [1.1.0] — 2026-09-28
 
 The agent-era release: MCP server, batch testing with evidence, static risk analysis and a self-describing contract.

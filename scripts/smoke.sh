@@ -68,6 +68,12 @@ grep -q '"isError":false' /tmp/mcp-smoke.out; check "mcp tools/call" 0 $?
 # notification produced no response line
 test "$(wc -l < /tmp/mcp-smoke.out)" -eq 3; check "mcp notification silent" 0 $?
 
+# update (source mode refuses, exit 2)
+$R update --check >/dev/null 2>&1; check "update check from source" 2 $?
+$R update --check --json >/dev/null 2>&1; check "update json from source" 2 $?
+$R update now >/dev/null 2>&1; check "update extra args" 2 $?
+$R schema >/dev/null 2>&1 && $R schema | grep -q '"update"'; check "schema lists update" 0 $?
+
 # misc
 $R --version >/dev/null; check "version" 0 $?
 $R --version --json >/dev/null; check "version json" 0 $?
