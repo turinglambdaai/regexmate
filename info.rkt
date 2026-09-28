@@ -4,7 +4,7 @@
 
 (define version "1.0.0")
 
-(define deps '("base" ["pict-lib" #:version "1.1"]))
+(define deps '("base" "pict-lib"))
 
 (define build-deps '("rackunit-lib"))
 
