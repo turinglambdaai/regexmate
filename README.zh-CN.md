@@ -30,6 +30,12 @@
 
 **独立二进制**（Windows / Linux / macOS）：从 [Releases](https://github.com/turinglambdaai/regexmate/releases) 下载压缩包，解压即用。
 
+**Homebrew**（macOS，Apple Silicon）：
+
+```bash
+brew install turinglambdaai/tap/regexmate
+```
+
 **Racket 包：**
 
 ```bash

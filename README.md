@@ -30,6 +30,12 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 **Standalone binary** (Windows / Linux / macOS): grab an archive from [Releases](https://github.com/turinglambdaai/regexmate/releases), unzip, run.
 
+**Homebrew** (macOS, Apple Silicon):
+
+```bash
+brew install turinglambdaai/tap/regexmate
+```
+
 **Racket package:**
 
 ```bash
