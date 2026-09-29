@@ -1,14 +1,18 @@
 # RegexMate
 
-The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from a single cross-platform CLI, over a versioned JSON contract, an MCP server and exit codes that never lie.
+**The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
+Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white)](https://racket-lang.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-**English** · [中文](README.zh-CN.md)
+[中文](README.zh-CN.md) · English
+
+---
 
 ## Why
 
-Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or silent (grep). RegexMate is a small, honest CLI that does four things well and speaks JSON natively:
+Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or silent (grep). RegexMate is a small, honest CLI that does seven verbs well and speaks JSON natively:
 
 - **validate** — check a pattern against the Racket `pregexp` flavor, single-line error messages
 - **match** — run a pattern against text or stdin; highlighted in a terminal, structured over a pipe

@@ -1,14 +1,18 @@
 # RegexMate
 
-为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析，通过版本化 JSON 契约、MCP server 和永不撒谎的退出码服务编码智能体。
+**为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析。**
+版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
-![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white)](https://racket-lang.org/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 [English](README.md) · **中文**
 
+---
+
 ## 为什么做这个
 
-现有正则工具要么只在网页里（regex101），要么偏检索（ripgrep），要么沉默寡言（grep）。RegexMate 是一个诚实的小 CLI，把四件事做好，并且原生说 JSON：
+现有正则工具要么只在网页里（regex101），要么偏检索（ripgrep），要么沉默寡言（grep）。RegexMate 是一个诚实的小 CLI，把七个动词做好，并且原生说 JSON：
 
 - **validate** —— 按 Racket `pregexp` 方言校验语法，报错保持单行
 - **match** —— 对文本或 stdin 执行匹配；终端里高亮，管道里结构化
