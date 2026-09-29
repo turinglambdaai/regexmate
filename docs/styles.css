@@ -240,6 +240,8 @@ code, pre { font-family: var(--mono); font-size: 0.9em; }
 .install-card { display: flex; flex-direction: column; }
 .install-card .btn { align-self: flex-start; margin-top: auto; }
 .install-card .code-block { margin-top: 12px; font-size: 0.78em; }
+/* long install commands wrap instead of clipping at the block edge */
+.install-card .code-block code { white-space: pre-wrap; word-break: break-all; }
 
 /* ---- roadmap ---- */
 .roadmap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
