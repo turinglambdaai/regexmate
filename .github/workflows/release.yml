@@ -62,8 +62,14 @@ jobs:
           version: '9.2'
           architecture: ${{ matrix.racket-arch }}
 
+      - name: Install Linux GUI runtime deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0
+
       - name: Compile
-        run: raco make main.rkt
+        run: raco make main.rkt gui.rkt
 
       - name: Build executables
         shell: bash
@@ -72,8 +78,12 @@ jobs:
           case '${{ runner.os }}' in
             Windows) raco exe -o build/regexmate.exe main.rkt
                      raco exe --gui -o build/regexmate-gui.exe gui.rkt ;;
+            # macOS: no --gui — an .app bundle would break the flat layout;
+            # a plain executable still opens the GUI window
+            macOS)   raco exe -o build/regexmate main.rkt
+                     raco exe -o build/regexmate-gui gui.rkt ;;
             *)       raco exe -o build/regexmate main.rkt
-                     raco exe --gui -o build/regexmate-gui gui.rkt ;;
+                     raco exe -o build/regexmate-gui gui.rkt ;;
           esac
           ls -la build
 
@@ -96,7 +106,12 @@ jobs:
           GUI=stage/bin/regexmate-gui
           [ '${{ runner.os }}' = 'Windows' ] && GUI=stage/regexmate-gui.exe
           "$EXE" --version
-          "$GUI" --version
+          # the gui binary initializes GTK at load time; linux needs a display
+          if [ '${{ runner.os }}' = 'Linux' ]; then
+            xvfb-run -a "$GUI" --version
+          else
+            "$GUI" --version
+          fi
           "$EXE" validate '^\d{3}-\d{4}$'
           "$EXE" match '\d+' 'abc 123' --json
           "$EXE" explain '(?:\d{2,4}|[a-z]+)(?=x)' --json
