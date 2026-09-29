@@ -32,6 +32,9 @@ jobs:
       - name: Unit tests
         run: racket run-tests.rkt
 
+      - name: GUI smoke test
+        run: racket gui.rkt --version
+
       - name: Version metadata check
         run: racket scripts/check-version.rkt
 

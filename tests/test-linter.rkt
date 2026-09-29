@@ -42,6 +42,24 @@
    (test-case "clean pattern has no findings"
      (check-equal? (lint-regex-json "^[a-z]+[0-9]{2,4}$") '()))
 
+   (test-case "portability: atomic groups and scoped flags are flagged as info"
+     (define ws (lint-regex-json "(?>a)"))
+     (check-not-false (member "portability" (map (lambda (w) (hash-ref w 'rule)) ws)))
+     (define ws2 (lint-regex-json "(?i:abc)"))
+     (check-not-false (member "portability" (map (lambda (w) (hash-ref w 'rule)) ws2))))
+
+   (test-case "portability: posix class, unicode class, backref"
+     (define rules (map (lambda (w) (hash-ref w 'rule)) (lint-regex-json "[[:alpha:]]\\p{L}(a)\\1")))
+     (check-equal? (count (lambda (r) (string=? r "portability")) rules) 3))
+
+   (test-case "redundant-atomic on single-element atomic group"
+     (define ws (lint-regex-json "(?>a)b"))
+     (check-not-false (member "redundant-atomic" (map (lambda (w) (hash-ref w 'rule)) ws)))
+     ;; atomic over a quantifier is NOT flagged as redundant
+     (check-false (member "redundant-atomic"
+                          (map (lambda (w) (hash-ref w 'rule))
+                               (lint-regex-json "(?>a+)b")))))
+
    (test-case "warnings are position-sorted jsexprs"
      (define ws (lint-regex-json "(a+)+|a|"))
      (check-true (>= (length ws) 2))

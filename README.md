@@ -75,6 +75,10 @@ $ regexmate graph 'ab(c|d)*' -o diagram.svg
 SVG saved to: diagram.svg
 ```
 
+## Desktop GUI
+
+The release archives contain `regexmate` (CLI) and `regexmate-gui` — a native desktop app on the same core: type a pattern, see matches with absolute spans, the plain-language explanation and the railroad diagram live. No server, no Electron; it is the same Racket core behind a native window. (Linux needs `libgtk-3` installed.)
+
 ## Self-update
 
 ```console

@@ -65,13 +65,15 @@ jobs:
       - name: Compile
         run: raco make main.rkt
 
-      - name: Build executable
+      - name: Build executables
         shell: bash
         run: |
           mkdir -p build
           case '${{ runner.os }}' in
-            Windows) raco exe -o build/regexmate.exe main.rkt ;;
-            *)       raco exe -o build/regexmate main.rkt ;;
+            Windows) raco exe -o build/regexmate.exe main.rkt
+                     raco exe --gui -o build/regexmate-gui.exe gui.rkt ;;
+            *)       raco exe -o build/regexmate main.rkt
+                     raco exe --gui -o build/regexmate-gui gui.rkt ;;
           esac
           ls -la build
 
@@ -80,8 +82,8 @@ jobs:
         run: |
           set -x
           case '${{ runner.os }}' in
-            Windows) raco distribute stage build/regexmate.exe ;;
-            *)       raco distribute stage build/regexmate ;;
+            Windows) raco distribute stage build/regexmate.exe build/regexmate-gui.exe ;;
+            *)       raco distribute stage build/regexmate build/regexmate-gui ;;
           esac
           ls -laR stage
 
@@ -91,7 +93,10 @@ jobs:
           # unix distribute uses bin/ layout; windows stays flat
           EXE=stage/bin/regexmate
           [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/regexmate.exe
+          GUI=stage/bin/regexmate-gui
+          [ '${{ runner.os }}' = 'Windows' ] && GUI=stage/regexmate-gui.exe
           "$EXE" --version
+          "$GUI" --version
           "$EXE" validate '^\d{3}-\d{4}$'
           "$EXE" match '\d+' 'abc 123' --json
           "$EXE" explain '(?:\d{2,4}|[a-z]+)(?=x)' --json

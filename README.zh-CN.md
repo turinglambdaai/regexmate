@@ -90,6 +90,10 @@ Updated to v1.2.0. Run `regexmate --version` to confirm.
 
 独立二进制安装可原地自更新：下载包先对照发布页校验 SHA-256，运行中的二进制安全换装（改名移开、下次启动清理残留）。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。
 
+## 桌面 GUI
+
+发布压缩包里除了 CLI 还有 `regexmate-gui`——同一核心之上的原生桌面应用：输入正则，实时看到匹配与绝对区间、人话解释和铁路图。无服务、无 Electron，就是 Racket 核心加原生窗口。（Linux 需已装 `libgtk-3`。）
+
 ## MCP server
 
 ```json

@@ -2,6 +2,21 @@
 
 All notable changes to RegexMate are documented here. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versioning is SemVer.
 
+## [1.3.0] — 2026-09-28
+
+The desktop era: a native GUI on the same core, deeper lint analysis and packaging for package managers.
+
+### Added
+
+- **Desktop GUI** (`regexmate-gui`, ships in the same release archives as the CLI): pattern field, test text, match table with absolute spans, plain-language explanation pane and a live railroad diagram — all on the shared core. `--version` works headless for CI.
+- **`lint` deepened**: new `portability` findings flag constructs that do not survive the trip to other engines (atomic groups, scoped flag groups, POSIX classes, unicode property classes, backreferences — each with the engines that lack them); new `redundant-atomic` info flags atomic groups over a single element that cannot backtrack.
+- **Packaging**: Homebrew tap (`brew install turinglambdaai/tap/regexmate`), winget manifest and AUR PKGBUILD prepared under `packaging/`.
+
+### Changed
+
+- Release archives now contain both the CLI and the GUI binary.
+- 59 unit tests, 46 smoke checks.
+
 ## [1.2.0] — 2026-09-28
 
 Self-update: `regexmate update` brings standalone installs to the latest GitHub release without any package manager.

@@ -26,6 +26,13 @@
   (for/and ([c (in-string s)])
     (not (memq c '(#\\ #\. #\[ #\] #\( #\) #\{ #\} #\| #\* #\+ #\? #\^ #\$)))))
 
+;; info-level note: this construct will not behave the same in every engine
+(define (portability-warning pattern node what note)
+  (warning 'portability
+           (pos-of pattern (ast->raw node))
+           (format "~a do not port everywhere: ~a" what note)
+           'info))
+
 ;; find approximate position of raw in the source pattern
 (define (pos-of pattern raw)
   (or (and raw (string-contains? pattern raw)
@@ -71,12 +78,29 @@
            acc)]
          [else acc]))
      (walk base pattern acc1)]
-    [(re-group child _ _ _)
-     (walk child pattern acc)]
     [(re-lookaround _ _ child)
      (walk child pattern acc)]
     [(re-atomic child)
-     (walk child pattern acc)]
+     (define acc1
+       (if (or (re-literal? child) (re-char-class? child) (re-escape? child))
+           (cons (warning 'redundant-atomic
+                          (pos-of pattern (ast->raw node))
+                          "atomic group over a single element has no effect — there is nothing inside it to backtrack"
+                          'info)
+                 acc)
+           acc))
+     (walk child pattern
+           (cons (portability-warning pattern node "atomic groups"
+                                      "PCRE and modern JavaScript only; not Python re, not RE2/Go")
+                 acc1))]
+    [(re-group child _ _ flags)
+     (define acc1
+       (if flags
+           (cons (portability-warning pattern node "scoped flag groups like (?i:...)"
+                                      "PCRE and Python 3.11+ only; not JavaScript, not Go")
+                 acc)
+           acc))
+     (walk child pattern acc1)]
     [(re-alternation left right)
      ;; flatten covers the whole right-nested chain, so check once here;
      ;; branches themselves contain no bare alternation nodes to re-walk
@@ -85,6 +109,23 @@
      (foldl (lambda (b acc2) (walk b pattern acc2)) acc1 branches)]
     [(re-sequence elems)
      (foldl (lambda (e acc2) (walk e pattern acc2)) acc elems)]
+    ;; constructs that do not survive the trip to other engines
+    [(re-unicode-class _ _)
+     (cons (portability-warning pattern node "unicode property classes"
+                                "JavaScript (with the u flag) and PCRE only; not Python re")
+           acc)]
+    [(re-backref _)
+     (cons (portability-warning pattern node "backreferences"
+                                "PCRE, Python, JavaScript only; not RE2/Go, not Rust regex")
+           acc)]
+    [(re-char-class items _)
+     (foldl (lambda (item acc2)
+              (if (and (list? item) (eq? (car item) 'posix))
+                  (cons (portability-warning pattern node "POSIX classes like [:alpha:]"
+                                            "PCRE only; not JavaScript, not Python re")
+                        acc2)
+                  acc2))
+            acc items)]
     [_ acc]))
 
 ;; duplicate, empty, and shadowing branches
