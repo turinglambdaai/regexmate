@@ -36,7 +36,16 @@
                 <a href="#agents" data-en="Agents" data-zh="智能体">Agents</a>
                 <a href="#install" data-en="Install" data-zh="安装">Install</a>
                 <a href="https://github.com/turinglambdaai/regexmate" class="nav-github">GitHub</a>
-                <button class="lang-btn" id="lang-btn" type="button">中文</button>
+                <div class="lang-dropdown-wrapper">
+                    <button class="lang-btn" type="button" onclick="void 0" aria-label="Switch language">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        <span id="current-lang-label">English</span>
+                    </button>
+                    <ul class="lang-menu">
+                        <li onclick="setLanguage('en')">English</li>
+                        <li onclick="setLanguage('zh')">简体中文</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </nav>
@@ -324,7 +333,6 @@ racket run-tests.rkt &amp;&amp; raco exe -o regexmate main.rkt</code></pre>
     <script>
         // language toggle: data-en / data-zh attributes
         (function () {
-            var btn = document.getElementById('lang-btn');
             var saved = null;
             try { saved = localStorage.getItem('regexmate-lang'); } catch (e) {}
             var zh = saved === 'zh' ||
@@ -338,14 +346,13 @@ racket run-tests.rkt &amp;&amp; raco exe -o regexmate main.rkt</code></pre>
                     var v = isZh ? el.getAttribute('data-zh') : el.getAttribute('data-en');
                     if (v !== null) el.innerHTML = v;
                 }
-                btn.textContent = isZh ? 'English' : '中文';
+                var lbl = document.getElementById('current-lang-label');
+                if (lbl) lbl.textContent = isZh ? '简体中文' : 'English';
                 try { localStorage.setItem('regexmate-lang', isZh ? 'zh' : 'en'); } catch (e) {}
             }
 
             if (zh) apply(true);
-            btn.addEventListener('click', function () {
-                apply(document.documentElement.lang !== 'zh-CN');
-            });
+            window.setLanguage = function (lang) { apply(lang === 'zh'); };
 
             // copy install command
             var copy = document.getElementById('copy-install');
