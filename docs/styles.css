@@ -150,6 +150,7 @@ code, pre { font-family: var(--mono); font-size: 0.9em; }
 
 /* ---- cards ---- */
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.cards--two { grid-template-columns: repeat(2, 1fr); }
 .card {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
     padding: 26px 26px 24px;
@@ -162,7 +163,19 @@ code, pre { font-family: var(--mono); font-size: 0.9em; }
     background: var(--accent-soft); color: var(--accent);
     display: flex; align-items: center; justify-content: center;
 }
-@media (max-width: 860px) { .cards { grid-template-columns: 1fr; } }
+@media (max-width: 860px) { .cards, .cards--two { grid-template-columns: 1fr; } }
+
+/* ---- gui screenshot ---- */
+.gui-shot {
+    max-width: 880px; margin: 0 auto;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px;
+    box-shadow: 0 14px 40px -18px rgba(0, 0, 0, 0.3);
+}
+.gui-shot img { width: 100%; height: auto; border-radius: 8px; display: block; }
+.gui-shot figcaption {
+    margin-top: 12px; text-align: center; font-size: 0.82em; color: var(--text-3);
+}
 
 /* ---- terminal ---- */
 .terminal {

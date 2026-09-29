@@ -54,7 +54,7 @@
     <header class="hero">
         <div class="container">
             <div class="hero-badges">
-                <span class="badge badge-version">v1.2.0</span>
+                <span class="badge badge-version">v1.3.0</span>
                 <span class="badge" data-en="Windows · Linux · macOS" data-zh="Windows · Linux · macOS">Windows · Linux · macOS</span>
                 <span class="badge">MIT</span>
             </div>
@@ -64,7 +64,7 @@
                 RegexMate validates, matches, explains and draws regexes — with a versioned JSON contract, explicit exit codes and standalone binaries. Built for coding agents, and for the humans who review their work.
             </p>
             <div class="hero-cta">
-                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download v1.2.0" data-zh="下载 v1.2.0">Download v1.2.0</a>
+                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download v1.3.0" data-zh="下载 v1.3.0">Download v1.3.0</a>
                 <a class="btn btn-ghost" href="#agents" data-en="Agent integration" data-zh="智能体接入">Agent integration</a>
             </div>
             <div class="hero-install">
@@ -142,6 +142,21 @@ Result: a AT b
 <span class="c-dim">$</span> regexmate graph <span class="c-str">'ab(c|d)*'</span> -o diagram.svg
 SVG saved to: diagram.svg</code></pre>
             </div>
+        </div>
+    </section>
+
+    <!-- GUI -->
+    <section class="section" id="gui">
+        <div class="container">
+            <h2 class="section-title" data-en="Prefer a window?" data-zh="喜欢图形界面？">Prefer a window?</h2>
+            <p class="section-sub" data-en="Every release archive ships <code>regexmate-gui</code> — a native desktop app on the same core. Pattern on top, test text and matches on the left, explanation and the live railroad diagram on the right. No server, no Electron."
+               data-zh="每个发布包都带 <code>regexmate-gui</code>——同一核心之上的原生桌面应用：上方输入正则，左侧测试文本与匹配列表，右侧解释与实时铁路图。无服务、无 Electron。">
+                Every release archive ships <code>regexmate-gui</code> — a native desktop app on the same core. Pattern on top, test text and matches on the left, explanation and the live railroad diagram on the right. No server, no Electron.
+            </p>
+            <figure class="gui-shot">
+                <img src="assets/gui-window.png" alt="RegexMate desktop GUI on Windows: pattern field, matches table, explanation and railroad diagram" loading="lazy">
+                <figcaption data-en="RegexMate GUI 1.3.0 on Windows — same core as the CLI" data-zh="RegexMate GUI 1.3.0 on Windows——与 CLI 同一核心">RegexMate GUI 1.3.0 on Windows — same core as the CLI</figcaption>
+            </figure>
         </div>
     </section>
 
@@ -253,7 +268,7 @@ regexmate schema <span class="c-dim"># contract, self-described</span></code></p
     <section class="section" id="install">
         <div class="container">
             <h2 class="section-title" data-en="Install" data-zh="安装">Install</h2>
-            <div class="cards">
+            <div class="cards cards--two">
                 <div class="card install-card">
                     <h3 data-en="Standalone binary" data-zh="独立二进制">Standalone binary</h3>
                     <p data-en="Grab a release from GitHub — a single executable plus bundled runtime libraries. No Racket installation needed, and <code>regexmate update</code> keeps it current."
@@ -269,6 +284,14 @@ regexmate schema <span class="c-dim"># contract, self-described</span></code></p
                         Already running Racket? Install straight from the repository:
                     </p>
                     <pre class="code-block"><code>raco pkg install https://github.com/turinglambdaai/regexmate.git</code></pre>
+                </div>
+                <div class="card install-card">
+                    <h3>Homebrew</h3>
+                    <p data-en="macOS (Apple Silicon): install from the TuringLambdaAI tap:"
+                       data-zh="macOS（Apple Silicon）：从 TuringLambdaAI tap 安装：">
+                        macOS (Apple Silicon): install from the TuringLambdaAI tap:
+                    </p>
+                    <pre class="code-block"><code>brew install turinglambdaai/tap/regexmate</code></pre>
                 </div>
                 <div class="card install-card">
                     <h3 data-en="From source" data-zh="从源码构建">From source</h3>
@@ -291,15 +314,15 @@ racket run-tests.rkt &amp;&amp; raco exe -o regexmate main.rkt</code></pre>
             <div class="roadmap">
                 <div class="roadmap-item">
                     <span class="roadmap-tag" data-en="next" data-zh="下一步">next</span>
-                    <span data-en="Desktop GUI on the same core (railroad diagrams, live match table, explain pane)" data-zh="同一核心之上的桌面 GUI（铁路图、实时匹配表、解释面板）">Desktop GUI on the same core (railroad diagrams, live match table, explain pane)</span>
+                    <span data-en="winget and AUR publication — manifests and PKGBUILD are ready in packaging/, awaiting public review" data-zh="winget 与 AUR 发布——manifest 和 PKGBUILD 已备好在 packaging/，待公开评审">winget and AUR publication — manifests and PKGBUILD are ready in packaging/, awaiting public review</span>
                 </div>
                 <div class="roadmap-item">
                     <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>
-                    <span data-en="deeper lint rules: possessive quantifiers analysis, cross-engine portability checks" data-zh="更深的 lint 规则：占有量词分析、跨引擎可移植性检查">deeper lint rules: possessive quantifiers analysis, cross-engine portability checks</span>
+                    <span data-en="GUI polish: live refresh as you type, match highlighting inside the test text" data-zh="GUI 打磨：输入即刷新、测试文本内的匹配高亮">GUI polish: live refresh as you type, match highlighting inside the test text</span>
                 </div>
                 <div class="roadmap-item">
                     <span class="roadmap-tag roadmap-tag-later" data-en="later" data-zh="以后">later</span>
-                    <span data-en="Package-manager distribution (Homebrew, winget, AUR)" data-zh="包管理器分发（Homebrew、winget、AUR）">Package-manager distribution (Homebrew, winget, AUR)</span>
+                    <span data-en="signed installers and notarization" data-zh="签名安装包与公证">signed installers and notarization</span>
                 </div>
             </div>
         </div>
