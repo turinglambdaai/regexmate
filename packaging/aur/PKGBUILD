@@ -1,0 +1,25 @@
+# AUR package for RegexMate — ready to publish to the AUR once the
+# repo owner has an AUR account (sshgitre@aur.archlinux.org push).
+# The launcher resolves its bundled runtime relative to the real
+# binary path, so /usr/bin gets symlinks into /usr/lib/regexmate.
+pkgname=regexmate
+pkgver=1.3.0
+pkgrel=1
+pkgdesc="The regex workbench for humans and agents"
+arch=('x86_64')
+url="https://regexmate.jrtx.site"
+license=('MIT')
+depends=('glibc' 'gtk3')
+provides=('regexmate')
+conflicts=('regexmate')
+source_x86_64=("https://github.com/turinglambdaai/regexmate/releases/download/v${pkgver}/regexmate-linux-x86_64-v${pkgver}.tar.gz")
+sha256sums_x86_64=('efa61e63b25d7d499cd96496ff8a7f173e3c8109ffb5d6301793fd03dd3d5ae3')
+
+package() {
+  install -d "${pkgdir}/usr/lib/regexmate" "${pkgdir}/usr/bin"
+  cp -r "${srcdir}/bin" "${srcdir}/lib" "${pkgdir}/usr/lib/regexmate/"
+  ln -s /usr/lib/regexmate/bin/regexmate "${pkgdir}/usr/bin/regexmate"
+  ln -s /usr/lib/regexmate/bin/regexmate-gui "${pkgdir}/usr/bin/regexmate-gui"
+  install -Dm644 "${srcdir}/lib/plt/regexmate/NOTICE" \
+    "${pkgdir}/usr/share/licenses/regexmate/NOTICE" 2>/dev/null || true
+}
