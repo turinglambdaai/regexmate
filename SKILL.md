@@ -5,7 +5,7 @@ description: Validate, test, lint, explain, replace and graph regular expression
 
 # RegexMate
 
-Agent-first regex workbench. Install as a standalone binary (see https://jrtx.site/regexmate/), via `raco pkg install https://github.com/turinglambdaai/regexmate.git`, or connect the MCP server (`regexmate mcp`, stdio transport).
+Agent-first regex workbench. Install as a standalone binary (see https://regexmate.jrtx.site/), via `raco pkg install https://github.com/turinglambdaai/regexmate.git`, or connect the MCP server (`regexmate mcp`, stdio transport).
 
 ## When to use
 
