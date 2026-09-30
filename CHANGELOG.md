@@ -3,6 +3,19 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] — 2026-09-30
+
+The workbench tightens: live feedback inside the desktop app.
+
+### Added
+
+- **Live refresh** — pattern and test text re-evaluate as you type (300 ms debounce); the Refresh button and Enter remain for explicit runs.
+- **Match highlighting** — matches are bolded and tinted inside the test text itself, so the sample reads like a test report.
+
+### Fixed
+
+- Diagram decoding no longer deadlocks the UI thread (the async completion was blocked by its own `.get()`), and the image stream is rewound before decoding — the railroad diagram now displays reliably.
+
 ## [0.1.0] — 2026-09-30
 
 Initial release of the rebuilt RegexMate: an agent-era regex workbench with a

@@ -68,7 +68,41 @@ rivet::windows::RacketRuntimeConfig runtime_config() {
 MainWindow::MainWindow() {
   InitializeComponent();
   Title(L"RegexMate");
+
+  // seed the sample text and remember it, so refresh only re-applies match
+  // formatting and never clobbers what the user typed
+  auto doc = TextBox().Document();
+  seeded_text_ = L"Order 12345 shipped on 2026-09-28 to zip 10115.";
+  doc.SetText(winrt::Microsoft::UI::Text::TextSetOptions::None, seeded_text_);
+
+  refresh_timer_ = DispatcherQueue().CreateTimer();
+  refresh_timer_.Interval(std::chrono::milliseconds(300));
+  refresh_timer_.IsRepeating(false);
+  refresh_timer_.Tick([weak = get_weak()](auto&, auto&) {
+    if (auto window = weak.get()) {
+      window->RefreshAsync();
+    }
+  });
+
+  PatternBox().TextChanged([weak = get_weak()](auto const&, auto const&) {
+    if (auto window = weak.get()) {
+      window->QueueRefresh();
+    }
+  });
+  TextBox().TextChanged([weak = get_weak()](auto const&, auto const&) {
+    if (auto window = weak.get()) {
+      window->QueueRefresh();
+    }
+  });
+
   InitializeBackendAsync();
+}
+
+void MainWindow::QueueRefresh() {
+  if (!refresh_timer_) {
+    return;
+  }
+  refresh_timer_.Start();
 }
 
 winrt::fire_and_forget MainWindow::InitializeBackendAsync() {
@@ -136,14 +170,6 @@ void MainWindow::Refresh_Click(
   RefreshAsync();
 }
 
-void MainWindow::Pattern_KeyDown(
-    winrt::Windows::Foundation::IInspectable const&,
-    winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& args) {
-  if (args.Key() == winrt::Windows::System::VirtualKey::Enter) {
-    RefreshAsync();
-  }
-}
-
 winrt::fire_and_forget MainWindow::RefreshAsync() {
   if (busy_) {
     co_return;
@@ -159,7 +185,10 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
   busy_ = true;
   RefreshButton().IsEnabled(false);
   auto const pattern = winrt::to_string(PatternBox().Text());
-  auto const text = winrt::to_string(TextBox().Text());
+  winrt::hstring text_h;
+  TextBox().Document().GetText(winrt::Microsoft::UI::Text::TextGetOptions::None, text_h);
+  std::wstring text_w{text_h};
+  auto const text = winrt::to_string(text_w);
 
   co_await winrt::resume_background();
   std::string error;
@@ -186,11 +215,12 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
   }
 
   dispatcher.TryEnqueue([weak, error, rows = std::move(rows),
-                         explain = std::move(explain), png = std::move(png)]() mutable {
+                         explain = std::move(explain), png = std::move(png),
+                         text_w = std::move(text_w)]() mutable {
     if (auto window = weak.get()) {
       window->busy_ = false;
       window->RefreshButton().IsEnabled(true);
-      window->ApplyResults(error, std::move(rows), std::move(explain), std::move(png));
+      window->ApplyResults(error, std::move(rows), std::move(explain), std::move(png), text_w);
     }
   });
 }
@@ -198,7 +228,8 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
 void MainWindow::ApplyResults(std::string const& error,
                               std::vector<std::vector<std::string>> rows,
                               std::string const& explain,
-                              rivet::Bytes const& png) {
+                              rivet::Bytes const& png,
+                              std::wstring const& text) {
   if (!error.empty()) {
     SetStatus(false, winrt::to_hstring(error));
     MatchList().Text(L"(invalid pattern)");
@@ -206,6 +237,35 @@ void MainWindow::ApplyResults(std::string const& error,
   }
 
   SetStatus(true, winrt::hstring(L"Found " + std::to_wstring(rows.size()) + L" match(es)"));
+
+  // highlight matches inside the test text: reset all formatting first,
+  // then tint each [start, end) span
+  {
+    auto doc = TextBox().Document();
+    auto const length = static_cast<int32_t>(text.size());
+    if (length > 0) {
+      auto all = doc.GetRange(0, length);
+      auto format = all.CharacterFormat();
+      format.Bold(winrt::Microsoft::UI::Text::FormatEffect::Off);
+      format.BackgroundColor(winrt::Windows::UI::Colors::Transparent());
+      all.CharacterFormat(format);
+      for (auto const& row : rows) {
+        if (row.size() < 3) {
+          continue;
+        }
+        auto const start = std::stoi(row[1]);
+        auto const end = std::stoi(row[2]);
+        if (start < 0 || end <= start || end > length) {
+          continue;
+        }
+        auto range = doc.GetRange(start, end);
+        auto matchFormat = range.CharacterFormat();
+        matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
+        matchFormat.BackgroundColor(winrt::Windows::UI::Color{144, 238, 174});
+        range.CharacterFormat(matchFormat);
+      }
+    }
+  }
 
   std::wstring table;
   if (rows.empty()) {

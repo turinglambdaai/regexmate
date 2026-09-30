@@ -17,10 +17,9 @@
             </Grid.ColumnDefinitions>
             <TextBox
                 x:Name="PatternBox"
-                Header="Pattern"
+                Header="Pattern (live)"
                 PlaceholderText="\d+"
-                Text="\d+"
-                KeyDown="Pattern_KeyDown" />
+                Text="\d+" />
             <Button
                 x:Name="RefreshButton"
                 Grid.Column="1"
@@ -52,14 +51,14 @@
                     <RowDefinition Height="1.2*"/>
                 </Grid.RowDefinitions>
                 <TextBlock Text="Test text" FontWeight="SemiBold" />
-                <TextBox
+                <RichEditBox
                     x:Name="TextBox"
                     Grid.Row="1"
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
                     ScrollViewer.VerticalScrollMode="Auto"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
-                    Text="Order 12345 shipped on 2026-09-28 to zip 10115." />
+                    PlaceholderText="paste sample text…" />
                 <TextBlock Text="Matches" Grid.Row="2" FontWeight="SemiBold" />
                 <ScrollViewer Grid.Row="3" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
                     <TextBlock
