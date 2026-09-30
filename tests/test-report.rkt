@@ -60,6 +60,6 @@
      (display (report-html "a" "a" '() "" '() #f #f "0.2.1") out)
      (define html (bytes->string/utf-8 (get-output-bytes out)))
      (check-true (string-prefix? html "<!DOCTYPE html>"))
-     (check-true (string-contains? html "</body></html>"))))
+     (check-true (string-contains? html "</body></html>")))))
 
 (provide report-tests)
