@@ -132,6 +132,20 @@ jobs:
           set -e
           test "$code" -eq 3
 
+      - name: Build standalone single-file CLI (Windows only)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          raco exe --embed-dlls -o "dist/regexmate-standalone-windows-x86_64-v${VERSION}.exe" main.rkt
+          # verify it truly runs standalone: no sibling runtime, empty dir
+          mkdir -p standalone-check
+          cp "dist/regexmate-standalone-windows-x86_64-v${VERSION}.exe" standalone-check/regexmate.exe
+          ./standalone-check/regexmate.exe --version
+          ./standalone-check/regexmate.exe match '\d+' 'abc 123' --json
+          ./standalone-check/regexmate.exe graph 'ab(c|d)*[0-9]+' -o standalone-check/s.svg
+          test -s standalone-check/s.svg
+
       - name: Package (tar.gz)
         if: matrix.archive == 'tar.gz'
         shell: bash
@@ -166,6 +180,7 @@ jobs:
             regexmate-*-v*.tar.gz
             regexmate-*-v*.zip
             regexmate-*-v*.sha256
+            dist/regexmate-standalone-*.exe
           if-no-files-found: error
 
   publish:
@@ -185,7 +200,7 @@ jobs:
       - name: Generate SHA-256 checksums
         run: |
           cd artifacts
-          for f in regexmate-*v*.tar.gz regexmate-*v*.zip; do
+          for f in regexmate-*v*.tar.gz regexmate-*v*.zip regexmate-standalone-*.exe; do
             [ -f "$f" ] || continue
             sha256sum "$f"
           done > ../SHA256SUMS
@@ -220,6 +235,7 @@ jobs:
             artifacts/regexmate-*-v*.tar.gz
             artifacts/regexmate-*-v*.zip
             artifacts/regexmate-*-v*.sha256
+            artifacts/regexmate-standalone-*.exe
             SHA256SUMS
           body_path: release-body.md
           generate_release_notes: true

@@ -3,6 +3,12 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.1] — 2026-09-30
+
+### Added
+
+- **Single-file Windows CLI** (`regexmate-standalone-windows-x86_64-*.exe`): the whole CLI — including railroad-diagram rendering — embedded in one executable. This is also the winget/scoop-friendly artifact.
+
 ## [0.2.0] — 2026-09-30
 
 The workbench tightens: live feedback inside the desktop app.
