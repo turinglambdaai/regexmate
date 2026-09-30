@@ -271,7 +271,33 @@ int on_backend_finished(gpointer) {
 
   g_state.set_status("Embedded Racket CS is ready");
   gtk_widget_set_sensitive(GTK_WIDGET(g_state.refresh), TRUE);
-  (void)g_state.api->status("\\d+", deliver_status);
+  std::thread([]() mutable {
+    try {
+      rivet_app::API api(*g_state.backend);
+      auto ok = api.status("\\d+").get() == "ok";
+      g_idle_add(
+          [](gpointer user_data) -> int {
+            std::unique_ptr<StatusOutcome> result(
+                static_cast<StatusOutcome*>(user_data));
+            if (result->ok) {
+              g_state.set_status("Embedded Racket CS is ready");
+            } else {
+              g_state.set_status("Backend error: " + result->error);
+            }
+            return G_SOURCE_REMOVE;
+          },
+          new StatusOutcome{ok, ok ? std::string() : std::string("sample pattern rejected")});
+    } catch (std::exception const& error) {
+      g_idle_add(
+          [](gpointer user_data) -> int {
+            std::unique_ptr<StatusOutcome> result(
+                static_cast<StatusOutcome*>(user_data));
+            g_state.set_status("Backend error: " + result->error);
+            return G_SOURCE_REMOVE;
+          },
+          new StatusOutcome{false, error.what()});
+    }
+  }).detach();
   return G_SOURCE_REMOVE;
 }
 
