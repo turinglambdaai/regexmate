@@ -3,6 +3,18 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] — 2026-09-30
+
+The report era: HTML evidence reports, shell completions and the lint panel in the desktop app.
+
+### Added
+
+- **`report` command**: one HTML file with everything — pattern, matches, highlighted sample, plain-language explanation, lint findings, test results and the railroad diagram. Feed it stdin, a text file and an optional `--cases` JSON; write with `-o`. Zero network, evidence for PRs and CI.
+- **`completions` command**: shell completion scripts for bash, zsh and PowerShell.
+- **Desktop lint panel** (Windows GUI): findings render with severity, rule, position and message alongside matches and explanation.
+- **Linux desktop GUI**: the same four-pane app on GTK4, distributed in the Linux archive.
+- Report and lint RPCs are also available over the MCP bridge.
+
 ## [0.2.1] — 2026-09-30
 
 ### Added
