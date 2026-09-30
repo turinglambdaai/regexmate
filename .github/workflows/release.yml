@@ -102,7 +102,10 @@ jobs:
           mkdir -p stage/gui
           cp -r dist/regexmate-gui-windows-x64/* stage/gui/
           rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
+          # the WinUI runtime resolves <exe-name>.pri/.winmd next to the exe
           mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
+          mv stage/gui/RivetHost.pri stage/gui/regexmate-gui.pri
+          mv stage/gui/RivetHost.winmd stage/gui/regexmate-gui.winmd
           ls -la stage/gui
 
       - name: Smoke the bundled binary
