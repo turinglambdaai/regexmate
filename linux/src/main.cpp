@@ -155,14 +155,7 @@ struct StatusOutcome {
   std::string error;
 };
 
-int on_refresh_delivered_worker(gpointer user_data) {
-  std::unique_ptr<RefreshResult> result(static_cast<RefreshResult*>(user_data));
-  gtk_widget_set_sensitive(GTK_WIDGET(g_state.refresh), TRUE);
-  if (!result->ok) {
-    g_state.set_status("Error: " + result->error);
-  }
-  return G_SOURCE_REMOVE;
-}
+
 
 void deliver_status(rivet_app::Result<std::string> result) {
   auto* delivered = new StatusOutcome;
@@ -227,15 +220,6 @@ int on_start_refresh(gpointer user_data) {
   return G_SOURCE_REMOVE;
 }
 
-void start_refresh() {
-  if (g_state.api == nullptr) {
-    return;
-  }
-  auto pack = std::make_shared<StartPack>();
-  pack->pattern = gtk_entry_buffer_get_text(gtk_entry_get_buffer(g_state.pattern));
-  pack->text = sample_text();
-  g_idle_add(on_start_refresh, new std::shared_ptr<StartPack>(pack));
-}
 
 int on_backend_finished(gpointer) {
   if (g_state.startup_thread.joinable()) {
@@ -506,7 +490,7 @@ void on_shutdown(GApplication*, gpointer) {
 
 int main(int argc, char** argv) {
   auto* app = gtk_application_new("site.jrtx.regexmate",
-                                  G_APPLICATION_DEFAULT_FLAGS);
+                                  G_APPLICATION_FLAGS_NONE);
   g_signal_connect(app, "activate", G_CALLBACK(on_activate), nullptr);
   g_signal_connect(app, "shutdown", G_CALLBACK(on_shutdown), nullptr);
   int const status = g_application_run(G_APPLICATION(app), argc, argv);
