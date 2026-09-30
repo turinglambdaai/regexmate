@@ -94,7 +94,7 @@ The Windows release archive contains `regexmate-gui` — a **native WinUI 3 appl
 
 ![RegexMate desktop GUI](docs/assets/gui-window.png)
 
-macOS (SwiftUI) and Linux (GTK4) GUI hosts are planned; the CLI covers those platforms today.
+The Linux archive ships the same app on GTK4. A macOS (SwiftUI) host is planned.
 
 ## Self-update
 

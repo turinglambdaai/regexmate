@@ -109,7 +109,7 @@ Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑�
 
 ![RegexMate 桌面 GUI](docs/assets/gui-window.png)
 
-macOS（SwiftUI）与 Linux（GTK4）原生宿主在计划中，当前这两个平台由 CLI 覆盖。
+Linux 发布包带同一应用（GTK4）。macOS（SwiftUI）宿主在计划中。
 
 ## Agent 工作流
 
