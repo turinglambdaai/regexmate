@@ -59,11 +59,8 @@
      (define out (open-output-bytes))
      (display (report-html "a" "a" '() "" '() #f #f "0.2.1") out)
      (define html (bytes->string/utf-8 (get-output-bytes out)))
-     (define normalized (string-replace html "
-" "
-"))
+     (define normalized (string-replace html "\r\n" "\n"))
      (check-true (string-prefix? normalized "<!DOCTYPE html>"))
-     (check-true (string-suffix? normalized "</html>
-")))))
+     (check-true (string-suffix? normalized "</html>\n")))))
 
 (provide report-tests)
