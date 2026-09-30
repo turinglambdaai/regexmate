@@ -137,10 +137,10 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          raco exe --embed-dlls -o "dist/regexmate-standalone-windows-x86_64-v${VERSION}.exe" main.rkt
+          raco exe --embed-dlls -o "regexmate-standalone-windows-x86_64-v${VERSION}.exe" main.rkt
           # verify it truly runs standalone: no sibling runtime, empty dir
           mkdir -p standalone-check
-          cp "dist/regexmate-standalone-windows-x86_64-v${VERSION}.exe" standalone-check/regexmate.exe
+          cp "regexmate-standalone-windows-x86_64-v${VERSION}.exe" standalone-check/regexmate.exe
           ./standalone-check/regexmate.exe --version
           ./standalone-check/regexmate.exe match '\d+' 'abc 123' --json
           ./standalone-check/regexmate.exe graph 'ab(c|d)*[0-9]+' -o standalone-check/s.svg
