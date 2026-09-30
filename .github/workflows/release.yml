@@ -62,40 +62,48 @@ jobs:
           version: '9.2'
           architecture: ${{ matrix.racket-arch }}
 
-      - name: Install Linux GUI runtime deps
+      - name: Install Linux deps
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y xvfb libgtk-3-0
 
-      - name: Compile
-        run: raco make main.rkt gui.rkt
+      - name: Install Rivet (Windows GUI host toolchain)
+        if: runner.os == 'Windows'
+        run: raco pkg install --auto https://github.com/turinglambdaai/rivet.git
 
-      - name: Build executables
+      - name: Compile
+        run: raco make main.rkt
+
+      - name: Build CLI executable
         shell: bash
         run: |
           mkdir -p build
           case '${{ runner.os }}' in
-            Windows) raco exe -o build/regexmate.exe main.rkt
-                     raco exe --gui -o build/regexmate-gui.exe gui.rkt ;;
-            # macOS: no --gui — an .app bundle would break the flat layout;
-            # a plain executable still opens the GUI window
-            macOS)   raco exe -o build/regexmate main.rkt
-                     raco exe -o build/regexmate-gui gui.rkt ;;
-            *)       raco exe -o build/regexmate main.rkt
-                     raco exe -o build/regexmate-gui gui.rkt ;;
+            Windows) raco exe -o build/regexmate.exe main.rkt ;;
+            *)       raco exe -o build/regexmate main.rkt ;;
           esac
           ls -la build
 
-      - name: Bundle runtime
+      - name: Bundle CLI runtime
         shell: bash
         run: |
           set -x
           case '${{ runner.os }}' in
-            Windows) raco distribute stage build/regexmate.exe build/regexmate-gui.exe ;;
-            *)       raco distribute stage build/regexmate build/regexmate-gui ;;
+            Windows) raco distribute stage build/regexmate.exe ;;
+            *)       raco distribute stage build/regexmate ;;
           esac
-          ls -laR stage
+
+      - name: Build native GUI and bundle into the archive (Windows only)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          raco rivet package
+          mkdir -p stage/gui
+          cp -r dist/regexmate-gui-windows-x64/* stage/gui/
+          rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
+          mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
+          ls -la stage/gui
 
       - name: Smoke the bundled binary
         shell: bash
@@ -103,21 +111,18 @@ jobs:
           # unix distribute uses bin/ layout; windows stays flat
           EXE=stage/bin/regexmate
           [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/regexmate.exe
-          GUI=stage/bin/regexmate-gui
-          [ '${{ runner.os }}' = 'Windows' ] && GUI=stage/regexmate-gui.exe
           "$EXE" --version
-          # the gui binary initializes GTK at load time; linux needs a display
-          if [ '${{ runner.os }}' = 'Linux' ]; then
-            xvfb-run -a "$GUI" --version
-          else
-            "$GUI" --version
-          fi
           "$EXE" validate '^\d{3}-\d{4}$'
           "$EXE" match '\d+' 'abc 123' --json
           "$EXE" explain '(?:\d{2,4}|[a-z]+)(?=x)' --json
           "$EXE" replace '(\w+)@(\w+)' '\1 at \2' 'a@b' --json
           "$EXE" graph 'ab(c|d)*[0-9]+' -o smoke.svg
           test -s smoke.svg
+          # the rivet-built native GUI ships in the windows archive
+          if [ '${{ runner.os }}' = 'Windows' ]; then
+            test -f stage/gui/regexmate-gui.exe
+            test -f stage/gui/runtime/racket.boot
+          fi
           set +e
           "$EXE" match 'nomatchpattern' 'text' >/dev/null
           code=$?

@@ -98,7 +98,7 @@ Updated to v1.2.0. Run `regexmate --version` to confirm.
 
 ## 桌面 GUI
 
-发布压缩包里除了 CLI 还有 `regexmate-gui`——同一核心之上的原生桌面应用：输入正则，实时看到匹配与绝对区间、人话解释和铁路图。无服务、无 Electron，就是 Racket 核心加原生窗口。（Linux 需已装 `libgtk-3`。）
+Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）：输入正则，实时看到匹配与绝对区间、人话解释和铁路图。macOS（SwiftUI）与 Linux（GTK4）原生宿主在计划中，当前这两个平台由 CLI 覆盖。
 
 ## MCP server
 

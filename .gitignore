@@ -3,3 +3,10 @@ compiled/
 /build/
 /dist/
 .trae/
+.rivet/
+windows/Generated Files/
+windows/obj/
+windows/x64/
+windows/RivetHost/
+macos-host/
+linux/

@@ -1,0 +1,105 @@
+<Window
+    x:Class="RivetHost.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Grid Padding="20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox
+                x:Name="PatternBox"
+                Header="Pattern"
+                PlaceholderText="\d+"
+                Text="\d+"
+                KeyDown="Pattern_KeyDown" />
+            <Button
+                x:Name="RefreshButton"
+                Grid.Column="1"
+                Content="Refresh"
+                VerticalAlignment="Bottom"
+                MinWidth="110"
+                Click="Refresh_Click" />
+        </Grid>
+
+        <InfoBar
+            x:Name="Status"
+            Grid.Row="1"
+            IsOpen="True"
+            IsClosable="False"
+            Severity="Informational"
+            Message="Starting embedded Racket CS…" />
+
+        <Grid Grid.Row="2" ColumnSpacing="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Grid Grid.Column="0" RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1.2*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Test text" FontWeight="SemiBold" />
+                <TextBox
+                    x:Name="TextBox"
+                    Grid.Row="1"
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap"
+                    ScrollViewer.VerticalScrollMode="Auto"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    Text="Order 12345 shipped on 2026-09-28 to zip 10115." />
+                <TextBlock Text="Matches" Grid.Row="2" FontWeight="SemiBold" />
+                <ScrollViewer Grid.Row="3" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                    <TextBlock
+                        x:Name="MatchList"
+                        FontFamily="Consolas"
+                        FontSize="13"
+                        IsTextSelectionEnabled="True"
+                        Text="(no matches)" />
+                </ScrollViewer>
+            </Grid>
+
+            <Grid Grid.Column="1" RowSpacing="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="1.6*"/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Explanation" FontWeight="SemiBold" />
+                <ScrollViewer Grid.Row="1" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+                    <TextBlock
+                        x:Name="ExplainText"
+                        FontFamily="Consolas"
+                        FontSize="13"
+                        IsTextSelectionEnabled="True"
+                        TextWrapping="Wrap" />
+                </ScrollViewer>
+                <TextBlock Text="Railroad diagram" Grid.Row="2" FontWeight="SemiBold" />
+                <ScrollViewer
+                    Grid.Row="3"
+                    HorizontalScrollMode="Enabled"
+                    HorizontalScrollBarVisibility="Auto"
+                    VerticalScrollMode="Auto"
+                    VerticalScrollBarVisibility="Auto"
+                    Background="{ThemeResource LayerFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="8">
+                    <Image x:Name="Diagram" />
+                </ScrollViewer>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>
