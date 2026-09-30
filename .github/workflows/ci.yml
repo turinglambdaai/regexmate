@@ -25,6 +25,8 @@ jobs:
         with:
           version: ${{ matrix.racket }}
           architecture: x64
+          distribution: full
+          variant: CS
 
       - name: Compile
         run: raco make main.rkt run-tests.rkt
