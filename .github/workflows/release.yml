@@ -180,7 +180,7 @@ jobs:
             regexmate-*-v*.tar.gz
             regexmate-*-v*.zip
             regexmate-*-v*.sha256
-            dist/regexmate-standalone-*.exe
+            regexmate-standalone-*.exe
           if-no-files-found: error
 
   publish:
