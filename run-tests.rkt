@@ -10,6 +10,7 @@
 (require "tests/test-tester.rkt")
 (require "tests/test-linter.rkt")
 (require "tests/test-updater.rkt")
+(require "tests/test-report.rkt")
 
 (define all-tests
   (test-suite
@@ -20,7 +21,8 @@
    json-format-tests
    tester-tests
    linter-tests
-   updater-tests))
+   updater-tests
+   report-tests))
 
 (displayln "=== RegexMate tests ===")
 

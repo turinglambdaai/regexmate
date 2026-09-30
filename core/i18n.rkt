@@ -98,6 +98,9 @@
    'lint-header (cons "~a finding(s):\n" "~a 条发现:\n")
    'lint-entry (cons "  [~a] ~a at ~a: ~a\n" "  [~a] ~a 位置 ~a: ~a\n")
    'lint-none (cons "No findings.\n" "没有发现。\n")
+   'report-saved (cons "Report saved to: ~a
+" "报告已保存到: ~a
+")
    'update-checking (cons "Checking for updates…\n" "正在检查更新…\n")
    'update-check-result (cons "Latest release: ~a (installed: ~a)\n" "最新版本: ~a（当前安装: ~a）\n")
    'update-up-to-date (cons "Already up to date (regexmate ~a).\n" "已是最新版本（regexmate ~a）。\n")

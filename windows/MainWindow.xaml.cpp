@@ -194,6 +194,7 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
   std::string error;
   std::vector<std::vector<std::string>> rows;
   std::string explain;
+  std::vector<std::vector<std::string>> lint;
   rivet::Bytes png;
   try {
     rivet_app::API api(*backend);
@@ -203,6 +204,7 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
     } else {
       rows = api.match_rows(pattern, text).get();
       explain = api.explain_text(pattern).get();
+      lint = api.lint_rows(pattern).get();
       png = api.diagram_png(pattern).get();
       if (png.empty()) {
         // diagram failed: surface the backend's staged diagnostic
@@ -216,11 +218,11 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
 
   dispatcher.TryEnqueue([weak, error, rows = std::move(rows),
                          explain = std::move(explain), png = std::move(png),
-                         text_w = std::move(text_w)]() mutable {
+                         lint = std::move(lint), text_w = std::move(text_w)]() mutable {
     if (auto window = weak.get()) {
       window->busy_ = false;
       window->RefreshButton().IsEnabled(true);
-      window->ApplyResults(error, std::move(rows), std::move(explain), std::move(png), text_w);
+      window->ApplyResults(error, std::move(rows), std::move(explain), std::move(png), std::move(lint), text_w);
     }
   });
 }
@@ -229,6 +231,7 @@ void MainWindow::ApplyResults(std::string const& error,
                               std::vector<std::vector<std::string>> rows,
                               std::string const& explain,
                               rivet::Bytes const& png,
+                              std::vector<std::vector<std::string>> lint,
                               std::wstring const& text) {
   if (!error.empty()) {
     SetStatus(false, winrt::to_hstring(error));
@@ -237,6 +240,21 @@ void MainWindow::ApplyResults(std::string const& error,
   }
 
   SetStatus(true, winrt::hstring(L"Found " + std::to_wstring(rows.size()) + L" match(es)"));
+
+  if (lint.empty()) {
+    LintList().Text(L"(no findings)");
+  } else {
+    std::wstring lintText;
+    for (auto const& row : lint) {
+      if (row.size() < 4) continue;
+      std::wstring severity = std::wstring(winrt::to_hstring(row[0]));
+      lintText += (severity == L"warning" ? L"[!] " : L"- ") +
+                  std::wstring(winrt::to_hstring(row[1])) + L" @" +
+                  std::wstring(winrt::to_hstring(row[2])) + L": " +
+                  std::wstring(winrt::to_hstring(row[3])) + L"\n";
+    }
+    LintList().Text(lintText);
+  }
 
   // highlight matches inside the test text: reset all formatting first,
   // then tint each [start, end) span

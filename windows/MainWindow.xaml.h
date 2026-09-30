@@ -24,6 +24,7 @@ struct MainWindow : MainWindowT<MainWindow> {
                     std::vector<std::vector<std::string>> rows,
                     std::string const& explain,
                     rivet::Bytes const& png,
+                    std::vector<std::vector<std::string>> lint,
                     std::wstring const& text);
 
   std::shared_ptr<rivet::windows::Backend> backend_;

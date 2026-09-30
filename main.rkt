@@ -9,6 +9,7 @@
          "core/i18n.rkt"
          "core/tester.rkt"
          "core/linter.rkt"
+         "output/report.rkt"
          "core/updater.rkt"
          "output/json-format.rkt"
          "output/highlight.rkt"
@@ -30,36 +31,41 @@
 ;; flags may appear anywhere; positional args are returned in order.
 ;; --help / --version are surfaced as pseudo-positionals for the main loop.
 (define (parse-args args)
-  (let loop ([as args] [pos '()] [json-flag #f] [lang-flag #f] [output-file #f] [bad-flag #f])
+  (let loop ([as args] [pos '()] [json-flag #f] [lang-flag #f] [output-file #f] [cases-file #f] [bad-flag #f])
     (cond
       [(null? as)
-       (values (reverse pos) json-flag lang-flag output-file bad-flag)]
+       (values (reverse pos) json-flag lang-flag output-file cases-file bad-flag)]
       [(string=? (car as) "--json")
-       (loop (cdr as) pos #t lang-flag output-file bad-flag)]
+       (loop (cdr as) pos #t lang-flag output-file cases-file bad-flag)]
       [(or (string=? (car as) "--help") (string=? (car as) "-h"))
-       (loop (cdr as) (cons "--help" pos) json-flag lang-flag output-file bad-flag)]
+       (loop (cdr as) (cons "--help" pos) json-flag lang-flag output-file cases-file bad-flag)]
       [(string=? (car as) "--version")
-       (loop (cdr as) (cons "--version" pos) json-flag lang-flag output-file bad-flag)]
+       (loop (cdr as) (cons "--version" pos) json-flag lang-flag output-file cases-file bad-flag)]
       [(string=? (car as) "--strict")
        ;; advisory flag for lint; travels via positionals to the command layer
-       (loop (cdr as) (cons "--strict" pos) json-flag lang-flag output-file bad-flag)]
+       (loop (cdr as) (cons "--strict" pos) json-flag lang-flag output-file cases-file bad-flag)]
       [(string=? (car as) "--check")
        ;; check-only flag for update; travels via positionals
-       (loop (cdr as) (cons "--check" pos) json-flag lang-flag output-file bad-flag)]
+       (loop (cdr as) (cons "--check" pos) json-flag lang-flag output-file cases-file bad-flag)]
       [(string=? (car as) "--lang")
        (if (or (null? (cdr as)) (string-prefix? (cadr as) "--"))
-           (loop '() pos json-flag lang-flag output-file "--lang")
-           (loop (cddr as) pos json-flag (cadr as) output-file bad-flag))]
+           (loop '() pos json-flag lang-flag output-file cases-file "--lang")
+           (loop (cddr as) pos json-flag (cadr as) output-file cases-file bad-flag))]
       [(string=? (car as) "-o")
        (if (or (null? (cdr as)) (string-prefix? (cadr as) "--"))
-           (loop '() pos json-flag lang-flag output-file "-o")
-           (loop (cddr as) pos json-flag lang-flag (cadr as) bad-flag))]
+           (loop '() pos json-flag lang-flag output-file cases-file "-o")
+           (loop (cddr as) pos json-flag lang-flag (cadr as) cases-file bad-flag))]
+      [(string=? (car as) "--cases")
+       (if (or (null? (cdr as)) (string-prefix? (cadr as) "--"))
+           (loop '() pos json-flag lang-flag output-file "--cases")
+           (loop (cddr as) pos json-flag lang-flag (cadr as) output-file bad-flag))]
+
       ;; unknown dash-flag ("-" itself is a positional: stdin marker)
       [(and (> (string-length (car as)) 1)
             (string-prefix? (car as) "-"))
-       (loop '() pos json-flag lang-flag output-file (car as))]
+       (loop '() pos json-flag lang-flag output-file cases-file (car as))]
       [else
-       (loop (cdr as) (cons (car as) pos) json-flag lang-flag output-file bad-flag)])))
+       (loop (cdr as) (cons (car as) pos) json-flag lang-flag output-file cases-file bad-flag)])))
 
 (define (die-usage)
   (display (msg 'usage regexmate-version))
@@ -318,6 +324,58 @@
            (display (msg 'update-done tag)))
        (exit EXIT-OK)])))
 
+(define (cmd-report pattern text-file cases-file out-file json?)
+  (unless (valid-regex? pattern)
+    (invalid-pattern-quit pattern "report" json?))
+  (define text
+    (cond
+      [(or (not text-file) (string=? text-file "-")) (read-stdin-text)]
+      [(string=? text-file "@") ""]
+      [else (port->string (open-input-file text-file))]))
+  (define test-results
+    (and cases-file
+         (let ()
+           (define input-text
+             (if (string=? cases-file "-")
+                 (read-stdin-text)
+                 (port->string (open-input-file cases-file))))
+           (define-values (results passed failed)
+             (run-cases pattern (string->jsexpr input-text)))
+           results)))
+  (define rows
+    (for/list ([m (in-list (find-all-matches pattern text))])
+      (match-define (cons span groups) m)
+      (list (substring text (car span) (cdr span))
+            (number->string (car span))
+            (number->string (cdr span))
+            (number->string (length groups)))))
+  (define explain
+    (format-explain-human pattern (explain-regex pattern)))
+  (define lint-rows (lint-regex-json pattern))
+  (define parsed (parse-regex-safe pattern))
+  (define diagram-svg
+    (and (car parsed) (bytes->string/utf-8 (ast->svg (car parsed)))))
+  (define html (report-html pattern text rows explain lint-rows
+                            test-results diagram-svg regexmate-version))
+  (if out-file
+      (begin
+        (call-with-output-file out-file
+          (lambda (out) (display html out))
+          #:exists 'truncate)
+        (if json?
+            (displayln (jsexpr->line
+                        (hasheq 'schema SCHEMA 'command "report" 'ok #t
+                                'pattern pattern 'output out-file
+                                'bytes (string-length html))))
+            (displayln (msg 'report-saved out-file))))
+      (begin
+        (display html)
+        (when json?
+          (displayln (jsexpr->line
+                      (hasheq 'schema SCHEMA 'command "report" 'ok #t
+                              'pattern pattern 'bytes (string-length html)))))))
+  (exit EXIT-OK))
+
 ;; machine-readable self-description: the contract itself, for agent discovery
 (define (cmd-schema)
   (displayln
@@ -343,6 +401,7 @@
              (hasheq 'name "lint" 'args '("pattern")
                      'flags '("--strict")
                      'exit "0 clean / 3 findings with --strict")
+             (hasheq 'name "completions" 'args '("bash|zsh|pwsh"))
              (hasheq 'name "schema" 'args '())
              (hasheq 'name "update" 'args '()
                      'flags '("--check")
@@ -363,6 +422,75 @@
                                   "regexmate_lint")))))
   (exit EXIT-OK))
 
+;; ---- shell completions ----------------------------------------------
+
+(define (completions-script shell)
+  (cond
+    [(string=? shell "bash")
+     #<<EOF
+# bash completion for regexmate
+_regexmate() {
+  local cur prev commands flags
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+  commands="match validate explain replace graph test lint report schema update mcp help"
+  flags="--json --lang --strict --check --cases -o --version --help"
+  if [[ "$prev" == "--lang" ]]; then
+    COMPREPLY=( $(compgen -W "en zh" -- "$cur") )
+  elif [[ "$prev" == "--generate-completions" ]]; then
+    COMPREPLY=( $(compgen -W "bash zsh pwsh" -- "$cur") )
+  elif [[ "$cur" == --* ]]; then
+    COMPREPLY=( $(compgen -W "$flags" -- "$cur") )
+  else
+    COMPREPLY=( $(compgen -W "$commands" -- "$cur") )
+  fi
+  return 0
+}
+complete -F _regexmate regexmate
+EOF
+    ]
+    [(string=? shell "zsh")
+     #<<EOF
+#compdef regexmate
+_regexmate() {
+  local -a commands flags
+  commands=(match validate explain replace graph test lint report schema update mcp help)
+  flags=(--json --lang --strict --check --cases -o --version --help)
+  if (( CURRENT == 2 )); then
+    _describe 'command' commands
+  else
+    _describe 'option' flags
+  fi
+}
+_regexmate "$@"
+EOF
+    ]
+    [(string=? shell "pwsh")
+     #<<EOF
+# PowerShell completion for regexmate
+Register-ArgumentCompleter -Native -CommandName regexmate -ScriptBlock {
+  param($wordToComplete, $commandAst, $cursorPosition)
+  $commands = 'match','validate','explain','replace','graph','test','lint','report','schema','update','mcp','help'
+  $flags = '--json','--lang','--strict','--check','--cases','-o','--version','--help'
+  if ($wordToComplete -like '--*') {
+    $flags | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }
+  } else {
+    $commands | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }
+  }
+}
+EOF
+    ]
+    [else
+     (error 'completions "unsupported shell: ~a (use bash, zsh or pwsh)" shell)]))
+
+(define (cmd-completions shell)
+  (unless (member shell '("bash" "zsh" "pwsh"))
+    (displayln (format "unsupported shell: ~a (use bash, zsh or pwsh)" shell))
+    (exit EXIT-USAGE))
+  (display (completions-script shell))
+  (exit EXIT-OK))
+
 ;; ---- entry ---------------------------------------------------------
 
 (define (main)
@@ -370,7 +498,7 @@
   (with-handlers ([exn:fail? (lambda (e) (void))])
     (cleanup-stale-updates))
   (define args (vector->list (current-command-line-arguments)))
-  (define-values (positionals json-flag lang-flag output-file bad-flag)
+  (define-values (positionals json-flag lang-flag output-file cases-file bad-flag)
     (parse-args args))
 
   (when bad-flag
@@ -435,6 +563,16 @@
      (define rest* (remove "--strict" rest))
      (match rest*
        [(list pattern) (cmd-lint pattern strict? json-flag)]
+       [_ (die-usage)])]
+    [("report")
+     (match rest
+       [(list pattern) (cmd-report pattern "-" cases-file output-file json-flag)]
+       [(list pattern text-file) (cmd-report pattern text-file cases-file output-file json-flag)]
+       [(list pattern text-file out-file) (cmd-report pattern text-file cases-file out-file json-flag)]
+       [_ (die-usage)])]
+    [("completions")
+     (match rest
+       [(list shell) (cmd-completions shell)]
        [_ (die-usage)])]
     [("schema") (cmd-schema)]
     [("update")

@@ -16,8 +16,11 @@
          "../core/ast.rkt"
          "../core/regex-engine.rkt"
          "../core/regex-parser.rkt"
+         "../core/linter.rkt"
          "../output/human-format.rkt"
-         "../output/railroad.rkt")
+         "../output/report.rkt"
+         "../output/railroad.rkt"
+         "../version.rkt")
 
 (provide start)
 
@@ -48,6 +51,31 @@
 (define-rpc (diagram-png [pattern String] : Bytes)
   (call-with-diagram pattern
                      (lambda (png diag) png)))
+
+(define-rpc (lint-rows [pattern String] : (List (List String)))
+  (for/list ([w (in-list (lint-regex-json pattern))])
+    (list (hash-ref w 'severity)
+          (hash-ref w 'rule)
+          (number->string (hash-ref w 'position))
+          (hash-ref w 'message))))
+
+(define-rpc (report-html [pattern String] [text String] : String)
+  (define rows
+    (if (first-error pattern)
+        '()
+        (for/list ([m (in-list (find-all-matches pattern text))])
+          (match-define (cons span groups) m)
+          (list (substring text (car span) (cdr span))
+                (number->string (car span))
+                (number->string (cdr span))
+                (number->string (length groups))))))
+  (define explain
+    (if (first-error pattern) "" (format-explain-human pattern (explain-regex pattern))))
+  (define lint (lint-regex-json pattern))
+  (report-html pattern text rows explain lint #f
+               (and (car (parse-regex-safe pattern))
+                    (bytes->string/utf-8 (ast->svg (car (parse-regex-safe pattern))))))
+  regexmate-version)
 
 (define-rpc (diagram-diag [pattern String] : String)
   (call-with-diagram pattern
