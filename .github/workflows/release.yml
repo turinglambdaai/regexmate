@@ -95,6 +95,8 @@ jobs:
           make -j"$(nproc)"
           make install
 
+          boot_dir="$(find "$embed_prefix" -name petite.boot -print -quit | xargs dirname)"
+          echo "RIVET_RACKET_BOOT_DIR=$boot_dir" >> "$GITHUB_ENV"
           echo "RIVET_RACKET_LIBRARY=$embed_prefix/lib/libracketcs.a" >> "$GITHUB_ENV"
           echo "RIVET_RACKET_INCLUDE=$embed_prefix/include" >> "$GITHUB_ENV"
           echo "RIVET_RACKET_LIB_DIR=$embed_prefix/lib" >> "$GITHUB_ENV"
