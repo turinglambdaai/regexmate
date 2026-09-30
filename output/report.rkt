@@ -122,7 +122,8 @@ mark{background:#ffe9a8;color:inherit;font-weight:600;padding:0 1px}
                       "<span class=\"ok\">PASS</span>"
                       (format "<span class=\"bad\">FAIL</span> — ~a" reason))
                   reason)))))
-  (format #<<EOF
+  (define html
+    (format #<<EOF
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <title>RegexMate report — ~a</title>
@@ -184,5 +185,7 @@ EOF
               "")
           (or diagram-svg "<em>diagram unavailable for this pattern</em>")
           (esc version)))
+  ;; CI checkouts may hold this file with CRLF endings; normalize the output
+  (string-replace html "\r\n" "\n"))
 
 (provide report-html html-escape)
