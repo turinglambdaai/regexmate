@@ -105,7 +105,11 @@ Updated to v1.2.0. Run `regexmate --version` to confirm.
 
 ## 桌面 GUI
 
-Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）：输入正则，实时看到匹配与绝对区间、人话解释和铁路图。macOS（SwiftUI）与 Linux（GTK4）原生宿主在计划中，当前这两个平台由 CLI 覆盖。
+Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。输入正则边打边算，匹配直接高亮在样本文字里，人话解释与铁路图实时呈现：
+
+![RegexMate 桌面 GUI](docs/assets/gui-window.png)
+
+macOS（SwiftUI）与 Linux（GTK4）原生宿主在计划中，当前这两个平台由 CLI 覆盖。
 
 ## Agent 工作流
 

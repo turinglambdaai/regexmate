@@ -90,7 +90,11 @@ SVG saved to: diagram.svg
 
 ## Desktop GUI
 
-The Windows release archive contains `regexmate-gui` — a **native WinUI 3 application** on the same Racket core (embedded via [Rivet](https://github.com/turinglambdaai/rivet), no WebView, no Electron): type a pattern, see matches with absolute spans, the plain-language explanation and the railroad diagram live. macOS (SwiftUI) and Linux (GTK4) GUI hosts are planned; the CLI covers those platforms today.
+The Windows release archive contains `regexmate-gui` — a **native WinUI 3 application** on the same Racket core (embedded via [Rivet](https://github.com/turinglambdaai/rivet), no WebView, no Electron). Type a pattern, re-evaluate as you type, see matches highlighted inside your sample text, with the plain-language explanation and the railroad diagram live:
+
+![RegexMate desktop GUI](docs/assets/gui-window.png)
+
+macOS (SwiftUI) and Linux (GTK4) GUI hosts are planned; the CLI covers those platforms today.
 
 ## Self-update
 
