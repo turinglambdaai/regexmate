@@ -69,7 +69,6 @@ jobs:
           sudo apt-get install -y cmake libgtk-4-dev
 
       - name: Install Rivet (native GUI host toolchain)
-        if: runner.os != 'macOS'
         run: raco pkg install --auto https://github.com/turinglambdaai/rivet.git
 
       - name: Compile
