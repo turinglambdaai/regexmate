@@ -30,6 +30,13 @@
 
 **独立二进制**（Windows / Linux / macOS）：从 [Releases](https://github.com/turinglambdaai/regexmate/releases) 下载压缩包，解压即用。
 
+**Windows 单文件 exe**（仅 CLI，适合 winget）：
+
+```powershell
+# 从 GitHub Releases 下载：regexmate-standalone-windows-x86_64-*.exe
+winget install TuringLambdaAI.RegexMate
+```
+
 **Homebrew**（macOS，Apple Silicon）：
 
 ```bash
@@ -99,6 +106,10 @@ Updated to v1.2.0. Run `regexmate --version` to confirm.
 ## 桌面 GUI
 
 Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）：输入正则，实时看到匹配与绝对区间、人话解释和铁路图。macOS（SwiftUI）与 Linux（GTK4）原生宿主在计划中，当前这两个平台由 CLI 覆盖。
+
+## Agent 工作流
+
+完整实战教程见 [docs/agents-guide.md](docs/agents-guide.md)：write → validate → test → lint → ship 循环、MCP 工具参考、lint 规则含义与完整示例。
 
 ## MCP server
 

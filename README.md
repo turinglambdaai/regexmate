@@ -30,6 +30,13 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 **Standalone binary** (Windows / Linux / macOS): grab an archive from [Releases](https://github.com/turinglambdaai/regexmate/releases), unzip, run.
 
+**Windows single-file exe** (CLI only, winget-friendly):
+
+```powershell
+# from GitHub Releases: regexmate-standalone-windows-x86_64-*.exe
+winget install TuringLambdaAI.RegexMate
+```
+
 **Homebrew** (macOS, Apple Silicon):
 
 ```bash
@@ -114,6 +121,10 @@ Standalone installs update themselves in place from GitHub Releases: the downloa
 ```
 
 Newline-delimited JSON-RPC 2.0 over stdio, protocol `2024-11-05`. Tools: `regexmate_validate`, `regexmate_match`, `regexmate_explain`, `regexmate_replace`, `regexmate_graph`, `regexmate_test`, `regexmate_lint` — each with an input schema discoverable via `tools/list`.
+
+## Agent workflow
+
+See [docs/agents-guide.md](docs/agents-guide.md) for the full walkthrough: the write → validate → test → lint → ship loop, the MCP tool reference, lint rule meanings and a worked example.
 
 ## Agent workflow
 
