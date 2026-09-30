@@ -68,10 +68,36 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libgtk-4-dev
+          sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev
 
       - name: Install Rivet (native GUI host toolchain)
         run: raco pkg install --auto https://github.com/turinglambdaai/rivet.git
+
+      - name: Build embeddable Racket CS (Linux GUI needs the static runtime)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive="$RUNNER_TEMP/racket-minimal-9.3-src-builtpkgs.tgz"
+          source_root="$RUNNER_TEMP/racket-9.3"
+          build_root="$RUNNER_TEMP/racket-embed-build"
+          embed_prefix="$RUNNER_TEMP/racket-embed"
+
+          curl --fail --location --retry 3 \
+            --output "$archive" \
+            https://download.racket-lang.org/releases/9.3/installers/racket-minimal-9.3-src-builtpkgs.tgz
+          echo "3a01324d559a15e3f1f58b0c57a92bb344dce534e72e564e0d8b75e3b9c65295  $archive" |
+            sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP"
+          mkdir -p "$build_root"
+          cd "$build_root"
+          "$source_root/src/configure" --prefix="$embed_prefix"
+          make -j"$(nproc)"
+          make install
+
+          echo "RIVET_RACKET_LIBRARY=$embed_prefix/lib/libracketcs.a" >> "$GITHUB_ENV"
+          echo "RIVET_RACKET_INCLUDE=$embed_prefix/include" >> "$GITHUB_ENV"
+          echo "RIVET_RACKET_LIB_DIR=$embed_prefix/lib" >> "$GITHUB_ENV"
 
       - name: Compile
         run: raco make main.rkt
