@@ -232,7 +232,7 @@ void start_refresh() {
     return;
   }
   auto pack = std::make_shared<StartPack>();
-  pack->pattern = gtk_entry_get_text(g_state.pattern);
+  pack->pattern = gtk_entry_buffer_get_text(gtk_entry_get_buffer(g_state.pattern));
   pack->text = sample_text();
   g_idle_add(on_start_refresh, new std::shared_ptr<StartPack>(pack));
 }
@@ -338,14 +338,14 @@ void start_backend() {
 
 void on_refresh_clicked(GtkButton*, gpointer) {
   auto pack = std::make_shared<StartPack>();
-  pack->pattern = gtk_entry_get_text(g_state.pattern);
+  pack->pattern = gtk_entry_buffer_get_text(gtk_entry_get_buffer(g_state.pattern));
   pack->text = sample_text();
   g_idle_add(on_start_refresh, new std::shared_ptr<StartPack>(pack));
 }
 
 void on_pattern_activate(GtkEntry*, gpointer) {
   auto pack = std::make_shared<StartPack>();
-  pack->pattern = gtk_entry_get_text(g_state.pattern);
+  pack->pattern = gtk_entry_buffer_get_text(gtk_entry_get_buffer(g_state.pattern));
   pack->text = sample_text();
   g_idle_add(on_start_refresh, new std::shared_ptr<StartPack>(pack));
 }
@@ -414,7 +414,7 @@ void on_activate(GtkApplication* app, gpointer) {
   gtk_widget_set_valign(matches, GTK_ALIGN_START);
   gtk_label_set_xalign(GTK_LABEL(matches), 0.0);
   gtk_label_set_yalign(GTK_LABEL(matches), 0.0);
-  gtk_label_set_selectable(matches, TRUE);
+  gtk_label_set_selectable(GTK_LABEL(matches), TRUE);
   gtk_widget_set_vexpand(matches, TRUE);
   gtk_box_append(GTK_BOX(left), matches);
 
@@ -424,7 +424,7 @@ void on_activate(GtkApplication* app, gpointer) {
   gtk_box_append(GTK_BOX(right), explain_title);
   auto* explanation = gtk_label_new(nullptr);
   gtk_widget_add_css_class(explanation, "monospace");
-  gtk_label_set_selectable(explanation, TRUE);
+  gtk_label_set_selectable(GTK_LABEL(explanation), TRUE);
   gtk_label_set_xalign(GTK_LABEL(explanation), 0.0);
   gtk_label_set_yalign(GTK_LABEL(explanation), 0.0);
   gtk_widget_set_hexpand(explanation, TRUE);
@@ -441,7 +441,7 @@ void on_activate(GtkApplication* app, gpointer) {
   gtk_widget_set_valign(lint, GTK_ALIGN_START);
   gtk_label_set_xalign(GTK_LABEL(lint), 0.0);
   gtk_label_set_yalign(GTK_LABEL(lint), 0.0);
-  gtk_label_set_selectable(lint, TRUE);
+  gtk_label_set_selectable(GTK_LABEL(lint), TRUE);
   gtk_box_append(GTK_BOX(right), lint);
 
   auto* diagram_title = gtk_label_new(nullptr);
