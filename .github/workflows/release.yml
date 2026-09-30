@@ -66,10 +66,10 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0
+          sudo apt-get install -y cmake libgtk-4-dev
 
-      - name: Install Rivet (Windows GUI host toolchain)
-        if: runner.os == 'Windows'
+      - name: Install Rivet (native GUI host toolchain)
+        if: runner.os != 'macOS'
         run: raco pkg install --auto https://github.com/turinglambdaai/rivet.git
 
       - name: Compile
@@ -94,18 +94,21 @@ jobs:
             *)       raco distribute stage build/regexmate ;;
           esac
 
-      - name: Build native GUI and bundle into the archive (Windows only)
-        if: runner.os == 'Windows'
+      - name: Build native GUI and bundle into the archive (Windows + Linux)
+        if: runner.os != 'macOS'
         shell: bash
         run: |
           raco rivet package
           mkdir -p stage/gui
-          cp -r dist/regexmate-gui-windows-x64/* stage/gui/
+          GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui-*' | head -1)
+          cp -r "$GUI_DIR"/* stage/gui/
           rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
           # the WinUI runtime resolves <exe-name>.pri/.winmd next to the exe
-          mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
-          mv stage/gui/RivetHost.pri stage/gui/regexmate-gui.pri
-          mv stage/gui/RivetHost.winmd stage/gui/regexmate-gui.winmd
+          if [ '${{ runner.os }}' = 'Windows' ]; then
+            mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
+            mv stage/gui/RivetHost.pri stage/gui/regexmate-gui.pri
+            mv stage/gui/RivetHost.winmd stage/gui/regexmate-gui.winmd
+          fi
           ls -la stage/gui
 
       - name: Smoke the bundled binary
@@ -121,9 +124,12 @@ jobs:
           "$EXE" replace '(\w+)@(\w+)' '\1 at \2' 'a@b' --json
           "$EXE" graph 'ab(c|d)*[0-9]+' -o smoke.svg
           test -s smoke.svg
-          # the rivet-built native GUI ships in the windows archive
+          # the rivet-built native GUI ships in the windows/linux archives
           if [ '${{ runner.os }}' = 'Windows' ]; then
             test -f stage/gui/regexmate-gui.exe
+            test -f stage/gui/runtime/racket.boot
+          elif [ '${{ runner.os }}' = 'Linux' ]; then
+            test -f stage/gui/RivetHost
             test -f stage/gui/runtime/racket.boot
           fi
           set +e
