@@ -90,7 +90,11 @@
     (define stages (open-output-string))
     (define (note s) (fprintf stages "[~a]" s))
     (note "pict")
-    (define p (scale (ast->pict ast) 2))
+    ;; Dense render with entry/exit tracks; cap the long side so pathological
+    ;; patterns stay within bitmap memory limits.
+    (define base (railroad-pict ast))
+    (define fit-scale (/ 4200.0 (max 1.0 (pict-width base))))
+    (define p (scale base (min 8.0 (max 2.0 fit-scale))))
     (define w (max 1 (inexact->exact (ceiling (pict-width p)))))
     (define h (max 1 (inexact->exact (ceiling (pict-height p)))))
     (note (format "size:~ax~a" w h))

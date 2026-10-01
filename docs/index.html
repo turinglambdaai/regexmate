@@ -42,7 +42,7 @@
     <header class="hero">
         <div class="container">
             <div class="hero-eyebrow reveal">
-                <span class="pill pill-accent">v0.3.0</span>
+                <span class="pill pill-accent">v0.4.0</span>
                 <span class="pill" data-en="Windows · Linux · macOS" data-zh="Windows · Linux · macOS">Windows · Linux · macOS</span>
                 <span class="pill">MIT</span>
             </div>
@@ -140,13 +140,13 @@
                 <div class="cell cell--wide reveal">
                     <p class="cell-tag" data-en="Native" data-zh="原生">Native</p>
                     <h3 data-en="A desktop app, not a wrapper" data-zh="桌面应用，不是套壳">A desktop app, not a wrapper</h3>
-                    <p data-en="Windows and Linux releases ship <code>regexmate-gui</code> — a native desktop app (WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation and live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron."
-                       data-zh="Windows 与 Linux 发布包带 <code>regexmate-gui</code>——原生桌面应用（WinUI 3 / GTK4），边输入边求值：匹配直接高亮在样本文字里，旁有解释与实时铁路图。与 CLI 同一核心、进程内嵌——无服务、无 Electron。">
-                        Windows releases ship <code>regexmate-gui</code> — a native WinUI 3 app that re-evaluates as you type: matches highlighted inside your sample text, explanation and live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron.
+                    <p data-en="Every release ships <code>regexmate-gui</code> — a native desktop app (SwiftUI / WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation, lint findings and a live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron."
+                       data-zh="每个平台的发布包都带 <code>regexmate-gui</code>——原生桌面应用（SwiftUI / WinUI 3 / GTK4），边输入边求值：匹配直接高亮在样本文字里，旁有解释、lint 与实时铁路图。与 CLI 同一核心、进程内嵌——无服务、无 Electron。">
+                        Every release ships <code>regexmate-gui</code> — a native desktop app (SwiftUI / WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation, lint findings and a live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron.
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="dim">$</span> tar -tf regexmate-macos.tar.gz
-regexmate-gui
+regexmate-gui.app
 regexmate
 lib/</div>
                     </div>
@@ -300,12 +300,8 @@ raco exe -o regexmate main.rkt</code>
                     <span data-en="winget submission under review (microsoft/winget-pkgs#444020) · AUR PKGBUILD ready, awaiting an AUR account" data-zh="winget 提交审核中（microsoft/winget-pkgs#444020）· AUR PKGBUILD 已备好，待注册账号">winget submission under review (microsoft/winget-pkgs#444020) · AUR PKGBUILD ready, awaiting an AUR account</span>
                 </div>
                 <div class="next-row reveal">
-                    <span class="tag later" data-en="later" data-zh="以后">later</span>
-                    <span data-en="GUI polish: live refresh as you type, match highlighting inside the test text" data-zh="GUI 打磨：输入即刷新、测试文本内的匹配高亮">GUI polish: live refresh as you type, match highlighting inside the test text</span>
-                </div>
-                <div class="next-row reveal">
-                    <span class="tag later" data-en="later" data-zh="以后">later</span>
-                    <span data-en="signed installers and notarization" data-zh="签名安装包与公证">signed installers and notarization</span>
+                    <span class="tag" data-en="next" data-zh="下一步">next</span>
+                    <span data-en="macOS GUI screenshot for this page · signed installers and notarization" data-zh="本页换上 macOS GUI 截图 · 签名安装包与公证">macOS GUI screenshot for this page · signed installers and notarization</span>
                 </div>
             </div>
         </div>

@@ -9,15 +9,15 @@
 
 ;; Railroad diagram renderer: AST -> pict -> SVG bytes.
 
-;; color theme
+;; color theme — tuned to the RegexMate brand (green accent, quiet neutrals)
 (define COLOR-NODE    (make-object color% 255 255 255))   ; white
-(define COLOR-SPECIAL (make-object color% 232 245 233))   ; light green
-(define COLOR-CLASS   (make-object color% 227 242 253))   ; light blue
-(define COLOR-ANCHOR  (make-object color% 255 243 224))   ; light orange
-(define COLOR-ESCAPE  (make-object color% 243 229 245))   ; light purple
-(define COLOR-GROUP   (make-object color% 76 175 80))     ; green frame
+(define COLOR-SPECIAL (make-object color% 224 243 234))   ; accent green tint
+(define COLOR-CLASS   (make-object color% 224 240 247))   ; soft blue tint
+(define COLOR-ANCHOR  (make-object color% 252 240 220))   ; soft amber tint
+(define COLOR-ESCAPE  (make-object color% 224 243 234))   ; accent green tint
+(define COLOR-GROUP   (make-object color% 3 122 85))      ; accent frame
 (define COLOR-GROUP-NC (make-object color% 158 158 158))  ; gray frame
-(define COLOR-LOOK    (make-object color% 3 155 229))     ; blue frame
+(define COLOR-LOOK    (make-object color% 2 132 199))     ; blue frame
 (define COLOR-ATOMIC  (make-object color% 109 76 65))     ; brown frame
 (define COLOR-BORDER  (make-object color% 51 51 51))      ; dark gray
 (define COLOR-TRACK   (make-object color% 102 102 102))   ; gray
@@ -83,16 +83,48 @@
     [(re-atomic child)
      (framed (ast->pict child) "(?>)" COLOR-ATOMIC)]))
 
-;; alternation fork layout
+;; alternation fork: branches stacked between two rails, each branch row
+;; carrying a vertically-centered flow line so taps and content connect
 (define (alt-layout left-pict right-pict)
   (define max-w (max (pict-width left-pict) (pict-width right-pict)))
   (define left-pad (/ (- max-w (pict-width left-pict)) 2))
   (define right-pad (/ (- max-w (pict-width right-pict)) 2))
-  (define left-centered (hc-append (blank left-pad NODE-H) left-pict (blank right-pad NODE-H)))
-  (define right-centered (hc-append (blank right-pad NODE-H) right-pict (blank left-pad NODE-H)))
-  (vc-append ALT-GAP left-centered right-centered))
+  (define (flow-row pict h lp rp)
+    (hc-append (cc-superimpose (blank 10 h) (colorize (hline 10 TRACK-H) COLOR-TRACK))
+               (blank lp h) pict (blank rp h)
+               (cc-superimpose (blank 10 h) (colorize (hline 10 TRACK-H) COLOR-TRACK))))
+  (define h1 (max NODE-H (pict-height left-pict)))
+  (define h2 (max NODE-H (pict-height right-pict)))
+  (define left-centered (flow-row left-pict h1 left-pad right-pad))
+  (define right-centered (flow-row right-pict h2 right-pad left-pad))
+  (define branches (vc-append ALT-GAP left-centered right-centered))
+  (define H (pict-height branches))
+  (define y1 (/ h1 2))
+  (define y2 (+ h1 ALT-GAP (/ h2 2)))
+  (define rail-w 12)
+  (hc-append (rail rail-w H (list y1 y2) 'left)
+             branches
+             (rail rail-w H (list y1 y2) 'right)))
 
-;; quantifier badge above the node
+;; vertical rail with horizontal taps at each y — the fork connectors
+(define (rail w h ys side)
+  (define canvas (blank w h))
+  (define v (colorize (vline 2 h) COLOR-TRACK))
+  (define base (if (eq? side 'left) (lt-superimpose canvas v) (rt-superimpose canvas v)))
+  (for/fold ([acc base])
+            ([y (in-list ys)])
+    (define tap
+      (vc-append 0
+                 (blank w (max 0 (- y 1)))
+                 (colorize (hline w 2) COLOR-TRACK)
+                 (blank w (max 0 (- h y 1)))))
+    (lt-superimpose acc tap)))
+
+;; quantifier: the flow line runs straight through the node's vertical
+;; center (correct for every quantifier); a loop branches up from the entry,
+;; carries the label in a gap in the line, and rejoins at the exit.
+;; Pieces are placed absolutely so alignment never depends on pict's
+;; box-alignment rules.
 (define (quant-layout base-pict q-min q-max q-greedy?)
   (define core
     (cond
@@ -104,19 +136,49 @@
       [else (format "{~a,~a}" q-min q-max)]))
   (define label (if q-greedy? core (format "~a?" core)))
   (define label-pict (colorize (text label 'default 10) COLOR-QUANT))
-  (define base-w (pict-width base-pict))
-  (define label-w (pict-width label-pict))
-  (vc-append -4
-             (hc-append (/ (max 0 (- base-w label-w)) 2) label-pict)
-             base-pict))
+  (define lw (pict-width label-pict))
+  (define lh (pict-height label-pict))
+  (define node-w (pict-width base-pict))
+  (define node-h (pict-height base-pict))
+  (define loop-w (max (+ node-w 24) (+ lw 26)))
+  (define gap (+ lw 12))
+  (define side (/ (- loop-w gap) 2))
+  (define row-h (max lh 12))
+  (define stub-h 6)
+  (define total-h (+ row-h stub-h node-h))
+  (define center-y (+ row-h stub-h (/ node-h 2)))
+  ;; element with its top-left corner at (x, y) on a full-size canvas
+  (define (put elt x y)
+    (hc-append (blank x 0) (vc-append 0 (blank 0 y) elt)))
+  (define (seg w) (cc-superimpose (blank w row-h) (colorize (hline w TRACK-H) COLOR-TRACK)))
+  ;; the glyph's font box centers it a touch low; bias the label up ~1.6pt
+  ;; so its strokes read centered on the loop line
+  (define label-cell
+    (cc-superimpose (blank gap lh) (vc-append 0 label-pict (blank 0 3))))
+  (define topline (hc-append (seg side) label-cell (seg side)))
+  (define drop-h (- center-y (+ (/ row-h 2) 1)))
+  (define drop (colorize (vline 2 drop-h) COLOR-TRACK))
+  (define p (blank loop-w total-h))
+  (set! p (lt-superimpose p (put (colorize (hline loop-w TRACK-H) COLOR-TRACK) 0 (- center-y 1))))
+  (set! p (lt-superimpose p (put topline 0 0)))
+  (set! p (lt-superimpose p (put drop 0 (+ (/ row-h 2) 1))))
+  (set! p (lt-superimpose p (put drop (- loop-w 2) (+ (/ row-h 2) 1))))
+  ;; node last so its fill covers the flow line passing behind it
+  (set! p (lt-superimpose p (put base-pict (/ (- loop-w node-w) 2) (+ row-h stub-h))))
+  ;; balance the space below the node so the flow line sits at the pict's
+  ;; vertical center — entry/exit tracks (center-aligned by hc-append) then
+  ;; land exactly on it
+  (vc-append 0 p (blank loop-w (+ row-h stub-h))))
 
-;; frame around a child pict
+;; frame around a child pict; opaque white fill masks the parent's flow
+;; line so it only shows entering and leaving the frame
 (define (framed child-pict color)
-  (define frame-pict
-    (colorize
-     (rectangle (+ (pict-width child-pict) 10) (+ (pict-height child-pict) 8))
-     color))
-  (cc-superimpose frame-pict child-pict))
+  (define w (+ (pict-width child-pict) 10))
+  (define h (+ (pict-height child-pict) 8))
+  (cc-superimpose
+   (colorize (filled-rectangle w h) COLOR-NODE)
+   (colorize (rectangle w h) color)
+   child-pict))
 
 ;; small caption above a frame
 (define (tagged child-pict tag color)
@@ -167,16 +229,20 @@
     [(non-word-boundary) "\\B"]
     [else (format "\\~a" type)]))
 
+;; full diagram with entry/exit tracks — the shared shape used by the SVG
+;; and the PNG renderers
+(define (railroad-pict ast)
+  (hc-append (track 16) (ast->pict ast) (track 16)))
+
 ;; AST -> SVG byte string
 (define (ast->svg ast)
-  (define diagram (ast->pict ast))
-  (define full-diagram (hc-append (track 16) diagram (track 16)))
-  (convert full-diagram 'svg-bytes))
+  (convert (railroad-pict ast) 'svg-bytes))
 
 ;; pattern -> SVG bytes (raises when the parser cannot model the pattern)
 (define (railroad-svg pattern)
-  (define-values (ast err) (parse-regex-safe pattern))
-  (unless ast (error 'railroad "cannot visualize pattern: ~a" err))
+  (define parsed (parse-regex-safe pattern))
+  (define ast (car parsed))
+  (unless ast (error 'railroad "cannot visualize pattern: ~a" (cdr parsed)))
   (ast->svg ast))
 
 ;; render to file or stdout; returns byte count
@@ -191,4 +257,4 @@
       (write-bytes svg-bytes))
   (bytes-length svg-bytes))
 
-(provide generate-railroad-svg railroad-svg ast->pict ast->svg)
+(provide generate-railroad-svg railroad-svg ast->pict railroad-pict ast->svg)

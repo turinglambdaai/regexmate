@@ -3,6 +3,39 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-10-02
+
+The desktop app ships on every platform, and the railroad diagram grows real
+geometry.
+
+### Added
+
+- **macOS desktop GUI** (SwiftUI host, same embedded Racket core): toolbar
+  pattern bar with live refresh as you type, match pills highlighted inside
+  the sample text, a match list with spans and group counts (click a row to
+  select the range in the sample), plain-language explanation, lint findings
+  with severity chips, and the railroad diagram. ⌘R re-runs; the toolbar
+  share button exports the self-contained HTML report. Ships in the macOS
+  archive as `regexmate-gui.app`.
+- **Railroad diagram geometry**: quantifiers render as a proper loop over the
+  element — the flow line runs straight through the node's center and the
+  quantifier label sits in the loop line; alternations get fork rails with
+  connector stubs; every diagram carries entry/exit tracks. Node palette
+  follows the RegexMate brand (green escapes, blue classes, amber anchors,
+  accent group frames) instead of ad-hoc pastels. Applies to the GUI PNG, the
+  HTML report and the CLI `graph` SVG on all platforms.
+- Adaptive diagram resolution: the PNG render density scales with the
+  pattern's size (capped), so the in-app diagram stays sharp.
+
+### Fixed
+
+- The macOS GUI host compiles and launches again: it now calls the generated
+  snake_case RPC surface (`match_rows`, `lint_rows`, …) and pins the Rivet
+  runtime working directory so the packaged app resolves its staged foreign
+  libraries (libpng et al).
+- `railroad-svg` (library API) destructured `parse-regex-safe`'s result
+  incorrectly and always errored; the CLI `graph` path was unaffected.
+
 ## [0.3.0] — 2026-09-30
 
 The report era: HTML evidence reports, shell completions and the lint panel in the desktop app.

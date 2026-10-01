@@ -125,13 +125,12 @@ jobs:
             *)       raco distribute stage build/regexmate ;;
           esac
 
-      - name: Build native GUI and bundle into the archive (Windows + Linux)
-        if: runner.os != 'macOS'
+      - name: Build native GUI and bundle into the archive (all platforms)
         shell: bash
         run: |
           raco rivet package
           mkdir -p stage/gui
-          GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui-*' | head -1)
+          GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui*' | head -1)
           cp -r "$GUI_DIR"/* stage/gui/
           rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
           # the WinUI runtime resolves <exe-name>.pri/.winmd next to the exe
@@ -155,13 +154,17 @@ jobs:
           "$EXE" replace '(\w+)@(\w+)' '\1 at \2' 'a@b' --json
           "$EXE" graph 'ab(c|d)*[0-9]+' -o smoke.svg
           test -s smoke.svg
-          # the rivet-built native GUI ships in the windows/linux archives
+          # the rivet-built native GUI ships in every platform archive
           if [ '${{ runner.os }}' = 'Windows' ]; then
             test -f stage/gui/regexmate-gui.exe
             test -f stage/gui/runtime/racket.boot
           elif [ '${{ runner.os }}' = 'Linux' ]; then
             test -f stage/gui/RivetHost
             test -f stage/gui/runtime/racket.boot
+          else
+            test -d stage/gui/regexmate-gui.app
+            test -f stage/gui/regexmate-gui.app/Contents/MacOS/regexmate-gui
+            test -f stage/gui/regexmate-gui.app/Contents/Resources/runtime/racket.boot
           fi
           set +e
           "$EXE" match 'nomatchpattern' 'text' >/dev/null
