@@ -9,10 +9,7 @@ How a coding agent (Claude Code, Codex, Cursor, …
 Either install the binary once:
 
 ```bash
-# Windows: single-file exe from GitHub Releases, or
-winget install TuringLambdaAI.RegexMate
-# macOS (Apple Silicon):
-brew install turinglambdaai/tap/regexmate
+# grab the single-file exe (Windows) or the tarball (macOS) from GitHub Releases
 ```
 
 …or connect the MCP server so the tools appear natively:
