@@ -515,8 +515,13 @@ void on_activate(GtkApplication* app, gpointer) {
                            -1);
   gtk_widget_add_css_class(sample, "card");
   gtk_widget_add_css_class(sample, "pad");
-  gtk_widget_set_size_request(sample, -1, 170);
-  gtk_box_append(GTK_BOX(left), sample);
+  // Fixed-height card with internal scrolling for long samples.
+  auto* sample_scroll = gtk_scrolled_window_new();
+  gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(sample_scroll), sample);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(sample_scroll),
+                                 GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+  gtk_widget_set_size_request(sample_scroll, -1, 170);
+  gtk_box_append(GTK_BOX(left), sample_scroll);
 
   auto* matches_caption = make_caption("MATCHES");
   gtk_box_append(GTK_BOX(left), matches_caption);

@@ -81,7 +81,9 @@ struct SampleTextView: NSViewRepresentable {
     var selection: NSRange?
     var onEdit: () -> Void
 
-    func makeNSView(context: Context) -> RegexSampleTextView {
+    typealias NSViewType = NSScrollView
+
+    func makeNSView(context: Context) -> NSScrollView {
         let view = RegexSampleTextView()
         view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
         view.drawsBackground = false
@@ -106,10 +108,18 @@ struct SampleTextView: NSViewRepresentable {
             onEdit()
         }
         context.coordinator.applied = nil
-        return view
+
+        let scroll = NSScrollView()
+        scroll.documentView = view
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
+        scroll.drawsBackground = false
+        scroll.borderType = .noBorder
+        return scroll
     }
 
-    func updateNSView(_ view: RegexSampleTextView, context: Context) {
+    func updateNSView(_ scroll: NSScrollView, context: Context) {
+        guard let view = scroll.documentView as? RegexSampleTextView else { return }
         if let layoutManager = view.layoutManager as? MatchHighlightLayoutManager {
             layoutManager.highlightColor = highlightColor
         }
