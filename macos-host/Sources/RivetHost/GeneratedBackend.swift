@@ -8,7 +8,7 @@ public enum RivetGeneratedConfig {
     public static let entryName = "start"
     public static let displayName = "RegexMate"
     public static let version = "0.4.0"
-    public static let build: Int64 = 1
+    public static let build: Int64 = 2
     public static let identifier = "site.jrtx.regexmate"
     public static let releaseChannel = "stable"
 }

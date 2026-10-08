@@ -41,3 +41,39 @@ jobs:
       - name: CLI smoke test
         shell: bash
         run: bash scripts/smoke.sh
+
+  linux-host:
+    name: linux host (GTK4 compile)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Racket (headers for the embedding includes)
+        uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.3'
+          architecture: x64
+          distribution: full
+          variant: CS
+
+      - name: Install GTK4
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev
+
+      - name: Clone rivet (host platform headers)
+        run: git clone --depth 1 https://github.com/turinglambdaai/rivet.git "$RUNNER_TEMP/rivet"
+
+      # Compile gate only: the release workflow does the full embedded-CS
+      # build. This catches GTK 4.6 API and C++ mistakes on every push.
+      - name: Compile-check the GTK4 host
+        run: |
+          racket_include="$(racket -e '(require setup/dirs) (display (path->string (find-include-dir)))')"
+          g++ -std=c++20 -fsyntax-only -Wall -Wextra -Wpedantic \
+            -I linux \
+            -I "$RUNNER_TEMP/rivet/platform/linux/runtime" \
+            -I "$RUNNER_TEMP/rivet/runtime/include" \
+            -I "$racket_include" \
+            $(pkg-config --cflags gtk4) \
+            linux/src/main.cpp

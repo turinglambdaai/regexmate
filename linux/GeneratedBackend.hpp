@@ -19,7 +19,7 @@ inline constexpr char kModuleName[] = "backend";
 inline constexpr char kEntryName[] = "start";
 inline constexpr char kDisplayName[] = "RegexMate";
 inline constexpr char kVersion[] = "0.4.0";
-inline constexpr std::int64_t kBuild = 1;
+inline constexpr std::int64_t kBuild = 2;
 inline constexpr char kIdentifier[] = "site.jrtx.regexmate";
 inline constexpr char kReleaseChannel[] = "stable";
 

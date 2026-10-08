@@ -17,6 +17,15 @@ geometry.
   with severity chips, and the railroad diagram. ⌘R re-runs; the toolbar
   share button exports the self-contained HTML report. Ships in the macOS
   archive as `regexmate-gui.app`.
+- **Linux desktop GUI redesigned** (GTK4): the pattern field moves into the
+  headerbar with the same 300 ms live refresh, matches are highlighted inside
+  the sample text (alpha-tinted so both Adwaita themes read right), matches
+  render as a real list with spans and group counts, severity-colored lint
+  findings, and a bottom status bar with dot and counts — styled with theme
+  symbolic colors, no hard-coded neutrals.
+- **App icon** on macOS and Windows: a mono `/…/` literal on an accent pill
+  in the RegexMate palette (Big Sur squircle, Windows .ico from one source
+  SVG in `branding/`).
 - **Railroad diagram geometry**: quantifiers render as a proper loop over the
   element — the flow line runs straight through the node's center and the
   quantifier label sits in the loop line; alternations get fork rails with
