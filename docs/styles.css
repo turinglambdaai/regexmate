@@ -99,13 +99,14 @@ code, pre { font-family: var(--mono); font-size: 0.88em; }
     transition: color .15s;
 }
 .nav-links a:hover { color: var(--ink); }
-.lang-btn {
-    border: 1px solid var(--hairline); background: transparent; color: var(--ink-2);
-    font-size: 0.8em; padding: 6px 14px; border-radius: 999px; cursor: pointer;
-    font-family: var(--font); min-height: 32px;
-    transition: color .15s, border-color .15s;
-}
-.lang-btn:hover { color: var(--ink); border-color: var(--ink-3); }
+/* ---- language dropdown (family standard) ---- */
+.lang-dropdown-wrapper { position: relative; }
+.lang-btn { display: flex; align-items: center; gap: 6px; background: none; border: none; cursor: pointer; font-family: var(--font); font-size: 14px; color: var(--ink-2); padding: 6px 10px; border-radius: 8px; transition: color .15s, background .15s; }
+.lang-btn:hover { color: var(--accent); background: var(--accent-tint); }
+.lang-menu { position: absolute; top: calc(100% + 6px); right: 0; background: var(--surface); border: 1px solid var(--hairline); border-radius: var(--radius-s); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12); padding: 6px; min-width: 132px; margin: 0; list-style: none; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .18s, visibility .18s, transform .18s; z-index: 10000; }
+.lang-dropdown-wrapper:hover .lang-menu, .lang-dropdown-wrapper:focus-within .lang-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.lang-menu li { padding: 7px 12px; font-size: 14px; color: var(--ink); border-radius: 6px; cursor: pointer; transition: background .15s, color .15s; }
+.lang-menu li:hover { background: var(--accent-tint); color: var(--accent); }
 @media (max-width: 760px) { .nav-links a:not(.nav-github) { display: none; } }
 
 /* ---------- hero ---------- */
