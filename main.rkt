@@ -9,6 +9,7 @@
          "core/i18n.rkt"
          "core/tester.rkt"
          "core/linter.rkt"
+         "core/cookbook.rkt"
          "output/report.rkt"
          "core/updater.rkt"
          "output/json-format.rkt"
@@ -80,9 +81,12 @@
 
 (define (invalid-pattern-quit pattern command json?)
   (define err (get-regex-error pattern))
+  (define hint (hint-for-error err))
   (if json?
-      (displayln (jsexpr->line (format-error-json command err)))
-      (display (msg 'err-invalid-regex err)))
+      (displayln (jsexpr->line (format-error-json command err hint)))
+      (begin
+        (display (msg 'err-invalid-regex err))
+        (when hint (display (msg 'validate-hint hint)))))
   (exit EXIT-INVALID))
 
 (define (group-names-for pattern)
@@ -95,12 +99,61 @@
 (define (cmd-validate pattern json?)
   (define valid (valid-regex? pattern))
   (define err (and (not valid) (get-regex-error pattern)))
+  (define hint (hint-for-error err))
   (if json?
-      (displayln (jsexpr->line (format-validate-json pattern valid err)))
+      (displayln (jsexpr->line (format-validate-json pattern valid err hint)))
       (begin
         (display (msg 'validate-pattern pattern))
-        (display (if valid (msg 'validate-ok) (msg 'validate-bad err)))))
+        (if valid
+            (display (msg 'validate-ok))
+            (begin
+              (display (msg 'validate-bad err))
+              (when hint (display (msg 'validate-hint hint)))))))
   (exit (if valid EXIT-OK EXIT-INVALID)))
+
+;; cookbook: no argument lists everything; otherwise the argument is a
+;; recipe id or a topic, and matching recipes print in full detail
+(define (cmd-cookbook arg json?)
+  (define lang-zh? (eq? (current-language) 'zh))
+  (define (title r)
+    (if lang-zh? (recipe-title-zh r) (recipe-title-en r)))
+  (cond
+    [(not arg)
+     (if json?
+         (displayln (jsexpr->line
+                     (format-cookbook-list-json recipes (map title recipes))))
+         (display (format-cookbook-list recipes)))
+     (exit EXIT-OK)]
+    [else
+     (define sym (with-handlers ([exn:fail? (lambda (_) #f)])
+                   (and arg (string->symbol arg))))
+     (define matches
+       (cond
+         [(not sym) '()]
+         [(recipe-by-id sym) => list]
+         [(member sym (recipe-topics)) => (lambda (_) (recipes-in-topic sym))]
+         [else '()]))
+     (cond
+       [(null? matches)
+        (if json?
+            (displayln (jsexpr->line (format-error-json "cookbook" (format "no recipe or topic '~a'" arg))))
+            (displayln (msg 'cookbook-unknown arg)))
+        (exit EXIT-USAGE)]
+       [else
+        (if json?
+            (displayln
+             (jsexpr->line
+              (if (null? (cdr matches))
+                  (format-cookbook-json
+                   (car matches) (title (car matches))
+                   (if lang-zh? (recipe-notes-zh (car matches)) (recipe-notes-en (car matches)))
+                   (if lang-zh? (recipe-variants-zh (car matches)) (recipe-variants-en (car matches)))
+                   (if lang-zh? (recipe-sample-zh (car matches)) (recipe-sample-en (car matches))))
+                  (format-cookbook-list-json matches (map title matches)))))
+            (for ([r matches])
+              (display (format-cookbook-recipe r))
+              (newline)))
+        (exit EXIT-OK)])]))
 
 (define (spans-of match-records)
   (for/list ([m match-records]) (car m)))
@@ -401,6 +454,8 @@
              (hasheq 'name "lint" 'args '("pattern")
                      'flags '("--strict")
                      'exit "0 clean / 3 findings with --strict")
+             (hasheq 'name "cookbook" 'args '("[id-or-topic]")
+                     'exit "0 ok / 2 unknown id")
              (hasheq 'name "completions" 'args '("bash|zsh|pwsh"))
              (hasheq 'name "schema" 'args '())
              (hasheq 'name "update" 'args '()
@@ -419,7 +474,7 @@
             'mcp (hasheq 'transport "stdio (newline-delimited JSON-RPC 2.0)"
                          'tools '("regexmate_validate" "regexmate_match" "regexmate_explain"
                                   "regexmate_replace" "regexmate_graph" "regexmate_test"
-                                  "regexmate_lint")))))
+                                  "regexmate_lint" "regexmate_cookbook")))))
   (exit EXIT-OK))
 
 ;; ---- shell completions ----------------------------------------------
@@ -434,7 +489,7 @@ _regexmate() {
   COMPREPLY=()
   cur="${COMP_WORDS[COMP_CWORD]}"
   prev="${COMP_WORDS[COMP_CWORD-1]}"
-  commands="match validate explain replace graph test lint report schema update mcp help"
+  commands="match validate explain replace graph test lint cookbook report schema update mcp help"
   flags="--json --lang --strict --check --cases -o --version --help"
   if [[ "$prev" == "--lang" ]]; then
     COMPREPLY=( $(compgen -W "en zh" -- "$cur") )
@@ -455,7 +510,7 @@ EOF
 #compdef regexmate
 _regexmate() {
   local -a commands flags
-  commands=(match validate explain replace graph test lint report schema update mcp help)
+  commands=(match validate explain replace graph test lint cookbook report schema update mcp help)
   flags=(--json --lang --strict --check --cases -o --version --help)
   if (( CURRENT == 2 )); then
     _describe 'command' commands
@@ -471,7 +526,7 @@ EOF
 # PowerShell completion for regexmate
 Register-ArgumentCompleter -Native -CommandName regexmate -ScriptBlock {
   param($wordToComplete, $commandAst, $cursorPosition)
-  $commands = 'match','validate','explain','replace','graph','test','lint','report','schema','update','mcp','help'
+  $commands = 'match','validate','explain','replace','graph','test','lint','cookbook','report','schema','update','mcp','help'
   $flags = '--json','--lang','--strict','--check','--cases','-o','--version','--help'
   if ($wordToComplete -like '--*') {
     $flags | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object { [System.Management.Automation.CompletionResult]::new($_) }
@@ -573,6 +628,11 @@ EOF
     [("completions")
      (match rest
        [(list shell) (cmd-completions shell)]
+       [_ (die-usage)])]
+    [("cookbook")
+     (match rest
+       [(list) (cmd-cookbook #f json-flag)]
+       [(list arg) (cmd-cookbook arg json-flag)]
        [_ (die-usage)])]
     [("schema") (cmd-schema)]
     [("update")

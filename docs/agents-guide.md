@@ -22,11 +22,11 @@ Either install the binary once:
 }
 ```
 
-MCP tools: `regexmate_validate`, `regexmate_match`, `regexmate_explain`, `regexmate_replace`, `regexmate_graph`, `regexmate_test`, `regexmate_lint`.
+MCP tools: `regexmate_validate`, `regexmate_match`, `regexmate_explain`, `regexmate_replace`, `regexmate_graph`, `regexmate_test`, `regexmate_lint`, `regexmate_cookbook`.
 
 ## The loop
 
-### 1. Write, then validate
+### 1. Write, then validate — invalid patterns return a repair `hint` in the JSON; read it before retrying
 
 ```bash
 regexmate validate '^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$'

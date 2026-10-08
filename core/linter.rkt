@@ -3,10 +3,15 @@
 ;; Static risk analysis on the pattern AST. Deterministic rules only —
 ;; no execution, no heuristics that pretend to be sure. Findings are
 ;; advisory: agents and CI decide what to do with them.
+;;
+;; Findings carry (rule position severity args); the human sentence is
+;; rendered per rule from the bilingual templates in i18n.rkt, so the
+;; teaching content reads natively in en and zh.
 
 (require racket/match
          "ast.rkt"
-         "regex-parser.rkt")
+         "regex-parser.rkt"
+         "i18n.rkt")
 
 ;; first index of needle in haystack, or #f
 (define (substring-index needle haystack)
@@ -20,18 +25,33 @@
 ;; raw text of a node, for approximate source positions
 (require "../output/human-format.rkt") ; ast->raw lives with the explainers
 
-(struct warning (rule position message severity) #:transparent)
+(struct warning (rule position severity args) #:transparent)
 
 (define (lit-raw? s)
   (for/and ([c (in-string s)])
     (not (memq c '(#\\ #\. #\[ #\] #\( #\) #\{ #\} #\| #\* #\+ #\? #\^ #\$)))))
 
-;; info-level note: this construct will not behave the same in every engine
-(define (portability-warning pattern node what note)
-  (warning 'portability
-           (pos-of pattern (ast->raw node))
-           (format "~a do not port everywhere: ~a" what note)
-           'info))
+(define lint-port-keys
+  (hasheq 'port-atomic 'lint-rule-port-atomic
+          'port-flags 'lint-rule-port-flags
+          'port-unicode 'lint-rule-port-unicode
+          'port-backref 'lint-rule-port-backref
+          'port-posix 'lint-rule-port-posix))
+
+(define (translate-lint-arg a)
+  (if (symbol? a)
+      (or (lint-arg-text (string->symbol (format "lint-arg-~a" a)))
+          (symbol->string a))
+      a))
+
+;; the finding's sentence in the current language
+(define (warning-message w)
+  (define args (warning-args w))
+  (define port-key (and (pair? args) (hash-ref lint-port-keys (car args) #f)))
+  (if port-key
+      (lint-msg port-key)
+      (apply lint-msg (lint-rule-key (warning-rule w))
+             (map translate-lint-arg args))))
 
 ;; find approximate position of raw in the source pattern
 (define (pos-of pattern raw)
@@ -61,9 +81,8 @@
           (cons
            (warning 'quantified-assertion
                     (pos-of pattern (ast->raw node))
-                    (format "quantifier applied to ~a — it matches no text, so the quantifier has no effect or hides a bug"
-                            (if (re-lookaround? base) "an assertion" "an anchor"))
-                    'warning)
+                    'warning
+                    (list (if (re-lookaround? base) 'assertion 'anchor)))
            acc)]
          ;; ((a+)*) style nesting — catastrophic backtracking risk
          [(and (re-group? base)
@@ -73,8 +92,8 @@
           (cons
            (warning 'nested-quantifier
                     (pos-of pattern (ast->raw node))
-                    "nested quantifiers over a group can backtrack catastrophically on non-matching input"
-                    'warning)
+                    'warning
+                    '())
            acc)]
          [else acc]))
      (walk base pattern acc1)]
@@ -85,19 +104,17 @@
        (if (or (re-literal? child) (re-char-class? child) (re-escape? child))
            (cons (warning 'redundant-atomic
                           (pos-of pattern (ast->raw node))
-                          "atomic group over a single element has no effect — there is nothing inside it to backtrack"
-                          'info)
+                          'info
+                          '())
                  acc)
            acc))
      (walk child pattern
-           (cons (portability-warning pattern node "atomic groups"
-                                      "PCRE and modern JavaScript only; not Python re, not RE2/Go")
+           (cons (portability-warning pattern node 'port-atomic)
                  acc1))]
     [(re-group child _ _ flags)
      (define acc1
        (if flags
-           (cons (portability-warning pattern node "scoped flag groups like (?i:...)"
-                                      "PCRE and Python 3.11+ only; not JavaScript, not Go")
+           (cons (portability-warning pattern node 'port-flags)
                  acc)
            acc))
      (walk child pattern acc1)]
@@ -111,22 +128,26 @@
      (foldl (lambda (e acc2) (walk e pattern acc2)) acc elems)]
     ;; constructs that do not survive the trip to other engines
     [(re-unicode-class _ _)
-     (cons (portability-warning pattern node "unicode property classes"
-                                "JavaScript (with the u flag) and PCRE only; not Python re")
+     (cons (portability-warning pattern node 'port-unicode)
            acc)]
     [(re-backref _)
-     (cons (portability-warning pattern node "backreferences"
-                                "PCRE, Python, JavaScript only; not RE2/Go, not Rust regex")
+     (cons (portability-warning pattern node 'port-backref)
            acc)]
     [(re-char-class items _)
      (foldl (lambda (item acc2)
               (if (and (list? item) (eq? (car item) 'posix))
-                  (cons (portability-warning pattern node "POSIX classes like [:alpha:]"
-                                            "PCRE only; not JavaScript, not Python re")
+                  (cons (portability-warning pattern node 'port-posix)
                         acc2)
                   acc2))
             acc items)]
     [_ acc]))
+
+;; info-level note: this construct will not behave the same in every engine
+(define (portability-warning pattern node note-id)
+  (warning 'portability
+           (pos-of pattern (ast->raw node))
+           'info
+           (list note-id)))
 
 ;; duplicate, empty, and shadowing branches
 (define (check-branches branches pattern acc)
@@ -139,8 +160,8 @@
                 (if (string=? ri "")
                     (cons (warning 'empty-branch
                                    (pos-of pattern ri)
-                                   (format "alternative ~a is empty — it matches the empty string, usually a bug" (add1 i))
-                                   'warning)
+                                   'warning
+                                   (list (add1 i)))
                           acc)
                     acc)]
                [acc-dup
@@ -151,8 +172,8 @@
                                 (if (string=? ri (list-ref raws j))
                                     (cons (warning 'duplicate-branch
                                                    (pos-of pattern ri)
-                                                   (format "alternative ~a duplicates alternative ~a" (add1 i) (add1 j))
-                                                   'info)
+                                                   'info
+                                                   (list (add1 i) (add1 j)))
                                           a)
                                     a))))]
                ;; later literal branch starts with an earlier literal branch:
@@ -168,9 +189,8 @@
                                               (string-prefix? ri rj))
                                          (cons (warning 'shadowed-branch
                                                         (pos-of pattern ri)
-                                                        (format "alternative ~a (~s) can never match: earlier alternative ~a (~s) always matches its prefix first"
-                                                                (add1 i) ri (add1 j) rj)
-                                                        'warning)
+                                                        'warning
+                                                        (list (add1 i) ri (add1 j) rj))
                                                a)
                                          a)))))])
           (loop (add1 i) acc-shadow)))))
@@ -184,7 +204,7 @@
             <
             #:key (lambda (w) (warning-position w)))))
 
-;; JSON-ready form
+;; JSON-ready form; the message sentence follows the current language
 (define (warning->jsexpr pattern w)
   (hasheq 'rule (symbol->string (warning-rule w))
           'position (warning-position w)

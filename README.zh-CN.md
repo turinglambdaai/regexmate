@@ -7,6 +7,7 @@
 
 [English](README.md) · **中文**
 
+
 ## 安装
 
 从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个压缩包都带 CLI 和原生桌面应用：
@@ -86,6 +87,15 @@ Updated to v0.4.0. Run `regexmate --version` to confirm.
 每个平台的发布包都带 `regexmate-gui`——原生应用（SwiftUI / WinUI 3 / GTK4），跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。pattern 常驻工具栏，边打边算：匹配直接高亮在样本文字里，匹配列表、人话解释、lint 发现与铁路图实时更新：
 
 ![RegexMate 桌面 GUI（macOS）](docs/assets/gui-macos.png)
+
+## 边用边学
+
+正则是一门手艺，RegexMate 让你在使用中学会它：
+
+- **从配方库起步**——`regexmate cookbook` 列出 23 条带讲解的入门配方；`regexmate cookbook email` 打印正则、可匹配的样本、每一段的讲解和常见变体。复制、微调、理解。
+- **读修复提示**——非法正则自带改法建议（`validate '[unclosed'` → 「字符类以 [ 开头、以 ] 收尾——例如 [a-z0-9]」）。
+- **让 lint 讲风险**——「组内嵌套量词可能引发灾难性回溯」这类发现，英文与中文都是完整句子。
+- **看铁路图**——`graph` 把正则画成铁路图，复杂嵌套一眼看清。
 
 ## Agent 工作流
 

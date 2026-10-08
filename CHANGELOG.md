@@ -3,6 +3,36 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] — 2026-10-08
+
+The learning release: regex is a skill, and the workbench now teaches it.
+
+### Added
+
+- **`cookbook` command**: a built-in library of 23 commented starter
+  patterns across 7 topics (contact, date-time, web, numbers, text, code,
+  log) — every recipe carries the pattern, a sample it demonstrably
+  matches, per-segment teaching notes and variants. `regexmate cookbook`
+  lists; `regexmate cookbook email` (or a topic like `web`) prints full
+  detail in English or 中文; `--json` emits the structured envelope.
+- **Repair hints on invalid patterns**: `validate '[unclosed'` now says how
+  to fix it ("a character class opens with [ and must close with ] — e.g.
+  [a-z0-9]"), in human output and as an optional `hint` field on the JSON
+  error envelope (additive, contract stays v1). Agents self-correct instead
+  of trial-and-error.
+- **MCP tool `regexmate_cookbook`**: agents can pull verified, annotated
+  patterns and pass the teaching along — listing, ids and topics all work
+  over tools/call. `regexmate_validate` responses now include the repair
+  hint.
+- **Shell completions and `schema` list the new command.**
+
+### Fixed
+
+- **Lint findings are fully localized**: under `--lang zh` the finding
+  sentences themselves were still English; every rule now renders from
+  bilingual templates (nested quantifiers, empty/shadowed branches,
+  portability notes and friends).
+
 ## [0.4.0] — 2026-10-02
 
 The desktop app ships on every platform, and the railroad diagram grows real

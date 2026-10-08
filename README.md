@@ -7,6 +7,7 @@ Versioned JSON contract, a native MCP server, exit codes that never lie, and onl
 
 **English** · [中文](README.zh-CN.md)
 
+
 ## Install
 
 Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — every archive carries the CLI and the native desktop app:
@@ -71,6 +72,15 @@ SVG saved to: diagram.svg
 Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 / GTK4) on the same Racket core, embedded via [Rivet](https://github.com/turinglambdaai/rivet). No WebView, no Electron. The pattern lives in the toolbar and re-evaluates as you type: matches are highlighted inside your sample text, and the match list, explanation, lint findings and the railroad diagram update live:
 
 ![RegexMate desktop GUI on macOS](docs/assets/gui-macos.png)
+
+## Learn as you go
+
+Regex is a skill, and RegexMate teaches it while you work:
+
+- **Start from the cookbook** — `regexmate cookbook` lists 23 commented starter patterns; `regexmate cookbook email` prints the pattern, a sample it matches, a note on every segment and the common variants. Copy, tweak, understand.
+- **Read the hints** — invalid patterns come with a repair suggestion (`validate '[unclosed'` → "a character class opens with [ and must close with ] — e.g. [a-z0-9]").
+- **Let lint explain the risks** — findings like *nested quantifiers can backtrack catastrophically* arrive fully translated in English and 中文.
+- **Watch the diagram** — `graph` renders the pattern as a railroad diagram, so complex nesting becomes geometry.
 
 ## Self-update
 

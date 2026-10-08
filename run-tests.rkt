@@ -9,6 +9,7 @@
 (require "tests/test-json-format.rkt")
 (require "tests/test-tester.rkt")
 (require "tests/test-linter.rkt")
+(require "tests/test-cookbook.rkt")
 (require "tests/test-updater.rkt")
 (require "tests/test-report.rkt")
 
@@ -21,6 +22,7 @@
    json-format-tests
    tester-tests
    linter-tests
+   cookbook-tests
    updater-tests
    report-tests))
 

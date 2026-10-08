@@ -3,6 +3,7 @@
 (require racket/match
          "../core/ast.rkt"
          "../core/regex-parser.rkt"
+         "../core/cookbook.rkt"
          "../core/i18n.rkt")
 
 ;; Human-readable output: validate/match/replace formatting and the
@@ -235,5 +236,50 @@
       (msg 'explain-entry i (hash-ref p 'type) (hash-ref p 'raw) (hash-ref p 'description)))
     "")))
 
+;; ---- cookbook rendering ------------------------------------------------
+;; titles/notes/variants come from the recipe in the caller's language; the
+;; labels here are the only i18n concern. A note segment of "*" marks a
+;; general note: rendered as a bullet instead of a pattern chip.
+
+(define (recipe-title r)
+  ((if (eq? (current-language) 'zh) recipe-title-zh recipe-title-en) r))
+
+(define (format-cookbook-list recipes)
+  (string-append
+   (msg 'cookbook-list-header (length recipes))
+   (string-join
+    (for/list ([r recipes])
+      (msg 'cookbook-list-entry
+           (symbol->string (recipe-id r))
+           (symbol->string (recipe-topic r))
+           (recipe-title r)))
+    "")))
+
+(define (format-cookbook-recipe r)
+  (define zh? (eq? (current-language) 'zh))
+  (define sample (if zh? (recipe-sample-zh r) (recipe-sample-en r)))
+  (define notes (if zh? (recipe-notes-zh r) (recipe-notes-en r)))
+  (define variants (if zh? (recipe-variants-zh r) (recipe-variants-en r)))
+  (string-append
+   (string-append (recipe-title r) "\n")
+   (msg 'cookbook-recipe-pattern (recipe-pattern r))
+   (msg 'cookbook-recipe-sample sample)
+   (msg 'cookbook-recipe-notes)
+   (string-join
+    (for/list ([pair (in-list notes)])
+      (if (string=? (car pair) "*")
+          (msg 'cookbook-note-general (cdr pair))
+          (msg 'cookbook-note-entry (car pair) (cdr pair))))
+    "")
+   (if (null? variants)
+       ""
+       (string-append
+        (msg 'cookbook-recipe-variants)
+        (string-join
+         (for/list ([pair (in-list variants)])
+           (msg 'cookbook-note-entry (car pair) (cdr pair)))
+         "")))))
+
 (provide explain-regex format-explain-human ast->description ast->raw
-         escape-char char-class-label quantifier-label format-escape)
+         escape-char char-class-label quantifier-label format-escape
+         format-cookbook-list format-cookbook-recipe recipe-title)

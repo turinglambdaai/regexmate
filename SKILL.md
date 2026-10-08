@@ -13,10 +13,11 @@ Agent-first regex workbench. Install as a standalone binary (see https://regexma
 - You inherited a regex you don't understand → **explain** it.
 - You need matches with positions/groups from a shell script or tool call → **match** (`--json`).
 - You need to document a pattern → **graph** it as SVG.
+- You need a starting point for a common need (email, date, URL, password…) → **cookbook**: `regexmate cookbook` lists commented, test-verified starter patterns; `regexmate cookbook <id>` prints per-segment teaching notes — pass them to the user.
 
 ## Core workflow (always do this for non-trivial patterns)
 
-1. `regexmate validate '<pattern>'` — syntax check first.
+1. `regexmate validate '<pattern>'` — syntax check first. Invalid patterns return a `hint` field in JSON with the fix — read it before retrying.
 2. `regexmate test '<pattern>'` with JSON cases on stdin — assert both positives and negatives:
    ```json
    {"cases":[

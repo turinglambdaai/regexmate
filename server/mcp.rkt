@@ -13,6 +13,8 @@
          "../core/ast.rkt"
          "../core/tester.rkt"
          "../core/linter.rkt"
+         "../core/cookbook.rkt"
+         "../core/i18n.rkt"
          "../output/json-format.rkt"
          "../output/human-format.rkt"
          "../output/railroad.rkt")
@@ -82,7 +84,13 @@
     "regexmate_lint"
     "Static risk findings for a regex: nested quantifiers (catastrophic backtracking), quantified assertions, empty or duplicate alternation branches, shadowed branches. Advisory, not errors."
     (schema-of (hasheq 'pattern (str-schema "The regular expression to analyze"))
-               '("pattern")))))
+               '("pattern")))
+   (tool-def
+    "regexmate_cookbook"
+    "Browse the built-in cookbook of commented, test-verified starter patterns (email, dates, URLs, IPv4, passwords, log lines, ...). Without an argument, lists every recipe; pass a recipe id (e.g. \"email\") or a topic (e.g. \"web\") for full detail: pattern, sample text, per-segment teaching notes and variants."
+    (schema-of (hasheq 'id_or_topic
+                       (str-schema "Recipe id or topic; omit to list all recipes"))
+               '()))))
 
 ;; ---- tool implementations ------------------------------------------
 
@@ -93,7 +101,8 @@
     ["regexmate_validate"
      (define pattern (arg 'pattern))
      (define valid (valid-regex? pattern))
-     (format-validate-json pattern valid (and (not valid) (get-regex-error pattern)))]
+     (define err (and (not valid) (get-regex-error pattern)))
+     (format-validate-json pattern valid err (hint-for-error err))]
     ["regexmate_match"
      (define pattern (arg 'pattern))
      (define text (arg 'text))
@@ -139,6 +148,29 @@
      (if (not (valid-regex? pattern))
          (format-error-json "lint" (get-regex-error pattern))
          (format-lint-json pattern (lint-regex-json pattern)))]
+    ["regexmate_cookbook"
+     (define id-or-topic (arg 'id_or_topic))
+     (define sym (and id-or-topic
+                      (with-handlers ([exn:fail? (lambda (_) #f)])
+                        (string->symbol id-or-topic))))
+     (define matches
+       (cond
+         [(not sym) 'all]
+         [(recipe-by-id sym) => list]
+         [(member sym (recipe-topics)) => (lambda (_) (recipes-in-topic sym))]
+         [else '()]))
+     (cond
+       [(eq? matches 'all)
+        (format-cookbook-list-json recipes (map recipe-title-en recipes))]
+       [(null? matches)
+        (format-error-json "cookbook" (format "no recipe or topic '~a'" id-or-topic))]
+       [else
+        (if (null? (cdr matches))
+            (let ([r (car matches)])
+              (format-cookbook-json r (recipe-title-en r)
+                                    (recipe-notes-en r) (recipe-variants-en r)
+                                    (recipe-sample-en r)))
+            (format-cookbook-list-json matches (map recipe-title-en matches)))])]
     [else #f]))
 
 ;; ---- JSON-RPC plumbing ---------------------------------------------

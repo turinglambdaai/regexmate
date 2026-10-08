@@ -36,6 +36,21 @@ test -s /tmp/smoke.svg; check "graph file exists" 0 $?
 $R graph 'a(b|c)*' --json >/dev/null; check "graph json" 0 $?
 $R graph 'a(b|c)*' >/dev/null; check "graph stdout" 0 $?
 
+# cookbook
+$R cookbook >/dev/null; check "cookbook list" 0 $?
+$R cookbook email >/dev/null; check "cookbook recipe" 0 $?
+$R cookbook web >/dev/null; check "cookbook topic" 0 $?
+$R cookbook email --json >/dev/null; check "cookbook json" 0 $?
+$R cookbook email --lang zh >/dev/null; check "cookbook zh" 0 $?
+$R cookbook nope-xyz >/dev/null 2>&1; check "cookbook unknown id" 2 $?
+
+# validate hints ride on invalid-pattern errors
+$R validate '[unclosed' --json | grep -q '"hint"'; check "validate hint in json" 0 $?
+$R validate '[unclosed' --lang zh --json | grep -q '字符类'; check "validate hint zh" 0 $?
+
+# lint localization: the finding sentence itself is zh under --lang zh
+$R lint '(a+)+' --lang zh | grep -q '灾难性回溯'; check "lint zh message" 0 $?
+
 # schema
 $R schema >/dev/null; check "schema" 0 $?
 $R schema --json >/dev/null; check "schema json" 0 $?
