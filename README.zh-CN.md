@@ -35,15 +35,6 @@
 
 每个发布都带逐文件 `.sha256` 校验和与 `SHA256SUMS` 清单。CLI 可原地自更新——见[自更新](#自更新)。
 
-**包管理器：**
-
-```bash
-brew install turinglambdaai/tap/regexmate   # macOS，Apple Silicon
-```
-
-```powershell
-```
-
 **Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-standalone-windows-x86_64-*.exe`，下载即用。
 
 **Racket 包：**
