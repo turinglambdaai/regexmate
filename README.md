@@ -35,16 +35,7 @@ Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/la
 
 Every release carries per-file `.sha256` checksums and a `SHA256SUMS` manifest. The CLI updates itself in place — see [Self-update](#self-update).
 
-**Package managers:**
-
-```bash
-brew install turinglambdaai/tap/regexmate   # macOS, Apple Silicon
-```
-
-```powershell
-```
-
-**Windows single-file exe** (CLI only, no GUI): grab `regexmate-standalone-windows-x86_64-*.exe` from the release - install and run directly..
+**Windows single-file exe** (CLI only, no GUI): grab `regexmate-standalone-windows-x86_64-*.exe` from the release and run it directly.
 
 **Racket package:**
 
