@@ -3,9 +3,9 @@
 **为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析。**
 版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
-[English](README.md) · **中文**
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.4.0-037A55)
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.5.0-037A55)
+[English](README.md) · **中文**
 
 ## 为什么做这个
 
@@ -18,8 +18,7 @@
 - **graph** —— 渲染 SVG 铁路图，用于规格文档和代码评审
 - **test** —— 对 JSON 用例批量断言并给出逐条证据：agent 迭代正则的「写→测→改」闭环
 - **lint** —— 确定性静态发现（灾难性回溯嵌套、量化断言、空/重复/被遮蔽的交替分支），`--strict` 可做 CI 门禁
-- **cookbook** —— 23 条带讲解的入门配方（邮箱、日期、网址、IPv4、密码、日志行……），逐段教学：边用边学
-- **mcp** —— stdio MCP server，把全部八个工具原生暴露给编码智能体
+- **mcp** —— stdio MCP server，把全部七个工具原生暴露给编码智能体
 - **schema** —— 机器可读契约，由工具自我描述
 
 所有平台都提供独立二进制——目标机器无需安装 Racket。仓库自带 [`SKILL.md`](SKILL.md)，供加载技能卡的 agent 平台使用。
@@ -103,15 +102,6 @@ Updated to v0.4.0. Run `regexmate --version` to confirm.
 每个平台的发布包都带 `regexmate-gui`——原生应用（SwiftUI / WinUI 3 / GTK4），跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。pattern 常驻工具栏，边打边算：匹配直接高亮在样本文字里，匹配列表、人话解释、lint 发现与铁路图实时更新：
 
 ![RegexMate 桌面 GUI（macOS）](docs/assets/gui-macos.png)
-
-## 边用边学
-
-正则是一门手艺，RegexMate 让你在使用中学会它：
-
-- **从配方库起步**——`regexmate cookbook` 列出 23 条带讲解的入门配方；`regexmate cookbook email` 打印正则、可匹配的样本、每一段的讲解和常见变体。复制、微调、理解。
-- **读修复提示**——非法正则自带改法建议（`validate '[unclosed'` → 「字符类以 [ 开头、以 ] 收尾——例如 [a-z0-9]」）。
-- **让 lint 讲风险**——「组内嵌套量词可能引发灾难性回溯」这类发现，英文与中文都是完整句子。
-- **看铁路图**——`graph` 把正则画成铁路图，复杂嵌套一眼看清。
 
 ## Agent 工作流
 
