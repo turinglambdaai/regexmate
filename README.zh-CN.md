@@ -42,10 +42,9 @@ brew install turinglambdaai/tap/regexmate   # macOS，Apple Silicon
 ```
 
 ```powershell
-winget install TuringLambdaAI.RegexMate     # Windows
 ```
 
-**Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-standalone-windows-x86_64-*.exe`，即 winget 友好产物。
+**Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-standalone-windows-x86_64-*.exe`，下载即用。
 
 **Racket 包：**
 
