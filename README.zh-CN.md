@@ -3,12 +3,9 @@
 **为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析。**
 版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
-[![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white)](https://racket-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
-
 [English](README.md) · **中文**
 
----
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.4.0-037A55)
 
 ## 为什么做这个
 
@@ -28,20 +25,27 @@
 
 ## 安装
 
-**独立二进制**（Windows / Linux / macOS）：从 [Releases](https://github.com/turinglambdaai/regexmate/releases) 下载压缩包，解压即用。
+从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个压缩包都带 CLI 和原生桌面应用：
 
-**Windows 单文件 exe**（仅 CLI，适合 winget）：
+| 平台 | 下载 | 内容 |
+|---|---|---|
+| macOS 14+（Apple Silicon） | `regexmate-macos-aarch64-v<version>.tar.gz` | CLI + `gui/regexmate-gui.app`（ad-hoc 签名——首次启动右键 → 打开） |
+| Windows 10+ x64 | `regexmate-windows-x86_64-v<version>.zip` | CLI + `gui\regexmate-gui.exe` |
+| Linux x64 | `regexmate-linux-x86_64-v<version>.tar.gz` | CLI + `gui/RivetHost`（GTK4） |
 
-```powershell
-# 从 GitHub Releases 下载：regexmate-standalone-windows-x86_64-*.exe
-winget install TuringLambdaAI.RegexMate
-```
+每个发布都带逐文件 `.sha256` 校验和与 `SHA256SUMS` 清单。CLI 可原地自更新——见[自更新](#自更新)。
 
-**Homebrew**（macOS，Apple Silicon）：
+**包管理器：**
 
 ```bash
-brew install turinglambdaai/tap/regexmate
+brew install turinglambdaai/tap/regexmate   # macOS，Apple Silicon
 ```
+
+```powershell
+winget install TuringLambdaAI.RegexMate     # Windows
+```
+
+**Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-standalone-windows-x86_64-*.exe`，即 winget 友好产物。
 
 **Racket 包：**
 
@@ -92,24 +96,22 @@ SVG 已保存到: diagram.svg
 
 ```console
 $ regexmate update --check
-Latest release: v1.2.0 (installed: 1.1.0)
+Latest release: v0.4.0 (installed: 0.3.0)
 
 $ regexmate update
-Downloading regexmate-windows-x86_64-v1.2.0.zip …
+Downloading regexmate-macos-aarch64-v0.4.0.tar.gz …
 Verifying checksum…
 Installing …
-Updated to v1.2.0. Run `regexmate --version` to confirm.
+Updated to v0.4.0. Run `regexmate --version` to confirm.
 ```
 
 独立二进制安装可原地自更新：下载包先对照发布页校验 SHA-256，运行中的二进制安全换装（改名移开、下次启动清理残留）。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。
 
 ## 桌面 GUI
 
-Windows 发布包里带有 `regexmate-gui`——**原生 WinUI 3 应用**，跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。输入正则边打边算，匹配直接高亮在样本文字里，人话解释与铁路图实时呈现：
+每个平台的发布包都带 `regexmate-gui`——原生应用（SwiftUI / WinUI 3 / GTK4），跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。pattern 常驻工具栏，边打边算：匹配直接高亮在样本文字里，匹配列表、人话解释、lint 发现与铁路图实时更新：
 
-![RegexMate 桌面 GUI](docs/assets/gui-window.png)
-
-Linux 发布包带同一应用（GTK4）。macOS（SwiftUI）宿主在计划中。
+![RegexMate 桌面 GUI（macOS）](docs/assets/gui-macos.png)
 
 ## Agent 工作流
 
@@ -130,7 +132,7 @@ Linux 发布包带同一应用（GTK4）。macOS（SwiftUI）宿主在计划中�
 
 stdio 上的换行分隔 JSON-RPC 2.0，协议版本 `2024-11-05`。工具：`regexmate_validate`、`regexmate_match`、`regexmate_explain`、`regexmate_replace`、`regexmate_graph`、`regexmate_test`、`regexmate_lint`，均带输入 schema，可经 `tools/list` 发现。
 
-## Agent 工作流
+## 测试与 lint
 
 ```console
 $ printf '{"cases":[{"text":"2026-09-28","expect":"match","contains":"2026"},{"text":"2026-13-01","expect":"no-match"}]}' | regexmate test '\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])'
@@ -189,7 +191,7 @@ bash scripts/smoke.sh     # CLI 端到端冒烟
 racket scripts/check-version.rkt v1.0.0   # 发布门禁
 ```
 
-CI 在 Ubuntu、Windows、macOS 三平台 × Racket 9.2 上运行单元测试与冒烟测试；推送 `v*` 标签会构建三平台独立二进制并发布带 SHA-256 校验和的 GitHub Release。
+CI 在 Ubuntu、Windows、macOS 三平台 × Racket 9.2 上运行单元测试与冒烟测试，并对 GTK4 宿主做编译检查；推送 `v*` 标签会构建三平台的 CLI 与原生 GUI，发布带 SHA-256 校验和的 GitHub Release。
 
 ## 项目结构
 
@@ -198,16 +200,16 @@ regexmate/
 ├── main.rkt                 # CLI 入口
 ├── version.rkt              # 运行时版本（须与 info.rkt 一致）
 ├── info.rkt                 # Racket 包元数据
-├── core/
-│   ├── ast.rkt              # 正则 AST 数据结构
-│   ├── regex-parser.rkt     # 递归下降解析器（与 pregexp 对齐）
-│   ├── regex-engine.rkt     # 基于 pregexp 的匹配 / 替换
-│   └── i18n.rkt             # 英/中消息表
-├── output/
-│   ├── json-format.rkt      # regexmate/v1 信封
-│   ├── human-format.rkt     # 双语人类输出 + 解释器
-│   ├── highlight.rkt        # ANSI 匹配高亮
-│   └── railroad.rkt         # AST → pict → SVG 铁路图
+├── core/                    # 正则 AST、解析器、引擎、i18n
+├── output/                  # JSON 信封、人类输出、ANSI、铁路图
+├── server/
+│   └── mcp.rkt              # stdio MCP server
+├── app/
+│   └── backend.rkt          # Rivet 后端（GUI 的类型化 RPC 面）
+├── macos-host/              # SwiftUI 宿主（SwiftPM）
+├── windows/                 # WinUI 3 宿主（C++/WinRT）
+├── linux/                   # GTK4 宿主（CMake）
+├── branding/                # 应用图标（SVG 源、.icns、.ico）
 ├── tests/                   # rackunit 测试套件
 ├── scripts/                 # smoke.sh、check-version.rkt
 ├── docs/                    # 产品主页（GitHub Pages）
@@ -216,10 +218,9 @@ regexmate/
 
 ## 路线图
 
-- 同一核心之上的桌面 GUI（铁路图、实时匹配表、解释面板）
-- MCP server，把正则工具暴露为原生智能体工具
-- 方言 lint（灾难性回溯告警、可移植性检查）
-- 包管理器分发（Homebrew、winget、AUR）
+- 签名安装包与公证（macOS GUI 目前为 ad-hoc 签名）
+- 更多包管理器（AUR PKGBUILD 已备好，待注册账号）
+- 命名捕获组 `(?<name>…)`（等引擎支持后跟进）
 
 ## 许可证
 

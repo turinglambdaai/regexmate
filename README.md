@@ -3,12 +3,9 @@
 **The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
 Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-[![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white)](https://racket-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+**English** · [中文](README.zh-CN.md)
 
-[中文](README.zh-CN.md) · English
-
----
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.4.0-037A55)
 
 ## Why
 
@@ -28,20 +25,27 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 ## Install
 
-**Standalone binary** (Windows / Linux / macOS): grab an archive from [Releases](https://github.com/turinglambdaai/regexmate/releases), unzip, run.
+Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — every archive carries the CLI and the native desktop app:
 
-**Windows single-file exe** (CLI only, winget-friendly):
+| Platform | Download | Includes |
+|---|---|---|
+| macOS 14+ (Apple Silicon) | `regexmate-macos-aarch64-v<version>.tar.gz` | CLI + `gui/regexmate-gui.app` (ad-hoc signed — first launch: right-click → Open) |
+| Windows 10+ x64 | `regexmate-windows-x86_64-v<version>.zip` | CLI + `gui\regexmate-gui.exe` |
+| Linux x64 | `regexmate-linux-x86_64-v<version>.tar.gz` | CLI + `gui/RivetHost` (GTK4) |
 
-```powershell
-# from GitHub Releases: regexmate-standalone-windows-x86_64-*.exe
-winget install TuringLambdaAI.RegexMate
-```
+Every release carries per-file `.sha256` checksums and a `SHA256SUMS` manifest. The CLI updates itself in place — see [Self-update](#self-update).
 
-**Homebrew** (macOS, Apple Silicon):
+**Package managers:**
 
 ```bash
-brew install turinglambdaai/tap/regexmate
+brew install turinglambdaai/tap/regexmate   # macOS, Apple Silicon
 ```
+
+```powershell
+winget install TuringLambdaAI.RegexMate     # Windows
+```
+
+**Windows single-file exe** (CLI only, no GUI): grab `regexmate-standalone-windows-x86_64-*.exe` from the release — it is the winget-friendly artifact.
 
 **Racket package:**
 
@@ -90,23 +94,21 @@ SVG saved to: diagram.svg
 
 ## Desktop GUI
 
-The Windows release archive contains `regexmate-gui` — a **native WinUI 3 application** on the same Racket core (embedded via [Rivet](https://github.com/turinglambdaai/rivet), no WebView, no Electron). Type a pattern, re-evaluate as you type, see matches highlighted inside your sample text, with the plain-language explanation and the railroad diagram live:
+Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 / GTK4) on the same Racket core, embedded via [Rivet](https://github.com/turinglambdaai/rivet). No WebView, no Electron. The pattern lives in the toolbar and re-evaluates as you type: matches are highlighted inside your sample text, and the match list, explanation, lint findings and the railroad diagram update live:
 
-![RegexMate desktop GUI](docs/assets/gui-window.png)
-
-The Linux archive ships the same app on GTK4. A macOS (SwiftUI) host is planned.
+![RegexMate desktop GUI on macOS](docs/assets/gui-macos.png)
 
 ## Self-update
 
 ```console
 $ regexmate update --check
-Latest release: v1.2.0 (installed: 1.1.0)
+Latest release: v0.4.0 (installed: 0.3.0)
 
 $ regexmate update
-Downloading regexmate-windows-x86_64-v1.2.0.zip …
+Downloading regexmate-macos-aarch64-v0.4.0.tar.gz …
 Verifying checksum…
 Installing …
-Updated to v1.2.0. Run `regexmate --version` to confirm.
+Updated to v0.4.0. Run `regexmate --version` to confirm.
 ```
 
 Standalone installs update themselves in place from GitHub Releases: the download's SHA-256 is verified against the published checksum, and the running binary is swapped safely (renamed aside, cleaned up on next start). `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
@@ -130,7 +132,7 @@ Newline-delimited JSON-RPC 2.0 over stdio, protocol `2024-11-05`. Tools: `regexm
 
 See [docs/agents-guide.md](docs/agents-guide.md) for the full walkthrough: the write → validate → test → lint → ship loop, the MCP tool reference, lint rule meanings and a worked example.
 
-## Agent workflow
+## Test and lint
 
 ```console
 $ printf '{"cases":[{"text":"2026-09-28","expect":"match","contains":"2026"},{"text":"2026-13-01","expect":"no-match"}]}' | regexmate test '\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])'
@@ -183,14 +185,13 @@ Human output is English by default. `--lang zh` or the `REGEXMATE_LANG=zh` envir
 
 ## Development
 
-
 ```bash
 racket run-tests.rkt      # unit tests
 bash scripts/smoke.sh     # CLI end-to-end smoke test
 racket scripts/check-version.rkt v1.0.0   # release gate
 ```
 
-CI runs the unit tests and smoke test on Ubuntu, Windows and macOS against Racket 9.2; tagged pushes build standalone binaries for all three platforms and publish a GitHub release with SHA-256 checksums.
+CI runs the unit tests and smoke test on Ubuntu, Windows and macOS against Racket 9.2, and compile-checks the GTK4 host; tagged pushes build the CLI and the native GUI for all three platforms and publish a GitHub release with SHA-256 checksums.
 
 ## Project structure
 
@@ -199,16 +200,16 @@ regexmate/
 ├── main.rkt                 # CLI entry point
 ├── version.rkt              # runtime version (must match info.rkt)
 ├── info.rkt                 # Racket package metadata
-├── core/
-│   ├── ast.rkt              # regex AST data structures
-│   ├── regex-parser.rkt     # recursive-descent parser (pregexp-aligned)
-│   ├── regex-engine.rkt     # matching / replacing on pregexp
-│   └── i18n.rkt             # en/zh message tables
-├── output/
-│   ├── json-format.rkt      # regexmate/v1 envelopes
-│   ├── human-format.rkt     # bilingual human output + explainer
-│   ├── highlight.rkt        # ANSI match highlighting
-│   └── railroad.rkt         # AST → pict → SVG diagrams
+├── core/                    # regex AST, parser, engine, i18n
+├── output/                  # JSON envelopes, human output, ANSI, railroad
+├── server/
+│   └── mcp.rkt              # stdio MCP server
+├── app/
+│   └── backend.rkt          # Rivet backend (typed RPC surface for the GUIs)
+├── macos-host/              # SwiftUI host (SwiftPM)
+├── windows/                 # WinUI 3 host (C++/WinRT)
+├── linux/                   # GTK4 host (CMake)
+├── branding/                # app icon (SVG source, .icns, .ico)
 ├── tests/                   # rackunit suites
 ├── scripts/                 # smoke.sh, check-version.rkt
 ├── docs/                    # product homepage (GitHub Pages)
@@ -217,10 +218,9 @@ regexmate/
 
 ## Roadmap
 
-- Desktop GUI on the same core (diagrams, live match table, explain pane)
-- MCP server exposing the regex tools as native agent tools
-- Flavor linting (catastrophic backtracking warnings, portability checks)
-- Package-manager distribution (Homebrew, winget, AUR)
+- Signed installers and notarization (the macOS GUI is ad-hoc signed today)
+- More package managers (AUR PKGBUILD is ready, awaiting an AUR account)
+- Named capture groups `(?<name>…)` when the engine grows them
 
 ## License
 
