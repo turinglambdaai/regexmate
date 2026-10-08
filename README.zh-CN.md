@@ -4,24 +4,8 @@
 版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
 [![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.4.0-037A55)
+
 [English](README.md) · **中文**
-
-
-## 为什么做这个
-
-现有正则工具要么只在网页里（regex101），要么偏检索（ripgrep），要么沉默寡言（grep）。RegexMate 是一个诚实的小 CLI，把七个动词做好，并且原生说 JSON：
-
-- **validate** —— 按 Racket `pregexp` 方言校验语法，报错保持单行
-- **match** —— 对文本或 stdin 执行匹配；终端里高亮，管道里结构化
-- **explain** —— 用平实的英文或中文逐部分讲解正则
-- **replace** —— 带反向引用的替换，并报告替换次数
-- **graph** —— 渲染 SVG 铁路图，用于规格文档和代码评审
-- **test** —— 对 JSON 用例批量断言并给出逐条证据：agent 迭代正则的「写→测→改」闭环
-- **lint** —— 确定性静态发现（灾难性回溯嵌套、量化断言、空/重复/被遮蔽的交替分支），`--strict` 可做 CI 门禁
-- **mcp** —— stdio MCP server，把全部七个工具原生暴露给编码智能体
-- **schema** —— 机器可读契约，由工具自我描述
-
-所有平台都提供独立二进制——目标机器无需安装 Racket。仓库自带 [`SKILL.md`](SKILL.md)，供加载技能卡的 agent 平台使用。
 
 ## 安装
 
