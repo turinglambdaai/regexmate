@@ -3,10 +3,26 @@
 **The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
 Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.4.0-037A55)
-
 **English** · [中文](README.zh-CN.md)
 
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.5.0-037A55)
+
+## Why
+
+Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or silent (grep). RegexMate is a small, honest CLI that does seven verbs well and speaks JSON natively:
+
+- **validate** — check a pattern against the Racket `pregexp` flavor, single-line error messages
+- **match** — run a pattern against text or stdin; highlighted in a terminal, structured over a pipe
+- **explain** — narrate every part of a pattern in plain English or 中文
+- **replace** — substitute with backreferences, with a replacement count
+- **graph** — render a railroad diagram as SVG, for specs and pull requests
+- **test** — assert a pattern against JSON cases and get per-case evidence: the write → test → refine loop agents need
+- **lint** — deterministic static findings (catastrophic-backtracking nesting, quantified assertions, empty/duplicate/shadowed alternation branches), `--strict` gates CI
+- **cookbook** — 23 commented starter patterns (email, dates, URLs, IPv4, passwords, log lines…) with per-segment teaching notes: learn while you use
+- **mcp** — a stdio MCP server exposing all eight tools natively to coding agents
+- **schema** — the machine-readable contract, described by the tool itself
+
+Everything ships as a standalone binary — no Racket installation required on target machines. A [`SKILL.md`](SKILL.md) ships in the repository for agent platforms that load skill cards.
 
 ## Install
 
