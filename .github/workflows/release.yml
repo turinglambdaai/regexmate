@@ -130,14 +130,21 @@ jobs:
         run: |
           raco rivet package
           mkdir -p stage/gui
-          GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui*' | head -1)
-          cp -r "$GUI_DIR"/* stage/gui/
-          rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
-          # the WinUI runtime resolves <exe-name>.pri/.winmd next to the exe
-          if [ '${{ runner.os }}' = 'Windows' ]; then
-            mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
-            mv stage/gui/RivetHost.pri stage/gui/regexmate-gui.pri
-            mv stage/gui/RivetHost.winmd stage/gui/regexmate-gui.winmd
+          if [ '${{ runner.os }}' = 'macOS' ]; then
+            # the .app bundle ships whole — copying its contents would strip
+            # the bundle level
+            GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui.app' | head -1)
+            cp -r "$GUI_DIR" stage/gui/
+          else
+            GUI_DIR=$(find dist -maxdepth 1 -type d -name 'regexmate-gui-*' | head -1)
+            cp -r "$GUI_DIR"/* stage/gui/
+            rm -f stage/gui/*.pdb stage/gui/*.exp stage/gui/*.lib
+            # the WinUI runtime resolves <exe-name>.pri/.winmd next to the exe
+            if [ '${{ runner.os }}' = 'Windows' ]; then
+              mv stage/gui/RivetHost.exe stage/gui/regexmate-gui.exe
+              mv stage/gui/RivetHost.pri stage/gui/regexmate-gui.pri
+              mv stage/gui/RivetHost.winmd stage/gui/regexmate-gui.winmd
+            fi
           fi
           ls -la stage/gui
 
