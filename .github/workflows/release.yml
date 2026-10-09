@@ -257,7 +257,9 @@ jobs:
           distribution: full
 
       - name: Install Rivet and crypto (manifest signer)
-        run: raco pkg install --auto --no-docs --link "$GITHUB_WORKSPACE/rivet/rivet" "$GITHUB_WORKSPACE/rivet/rivet-cli" crypto
+        run: |
+          raco pkg install --auto --no-docs --link "$GITHUB_WORKSPACE/rivet/rivet" "$GITHUB_WORKSPACE/rivet/rivet-cli"
+          raco pkg install --auto --no-docs crypto
 
       - name: Flatten artifact dirs
         run: |
