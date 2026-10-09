@@ -367,7 +367,8 @@
         ;; system* returns a boolean, not an exit code
         (unless (system* tar "-xf" (tar-path-string archive)
                          "-C" (tar-path-string dest))
-          (error 'update "archive extraction failed")))))
+          (error 'update "archive extraction failed"))))
+    #:exists 'truncate)
   #t)
 
 ;; ---- installation --------------------------------------------------------

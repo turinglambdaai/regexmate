@@ -197,6 +197,25 @@
                 (lambda () (verify-downloaded! plan tmp)))
      (delete-file tmp))
 
+   ;; ---- extraction ----------------------------------------------------------
+   (test-case "extract-archive unpacks a tarball"
+     (define tmp (make-temporary-file "rmtar~a" 'directory))
+     (define payload (build-path tmp "payload"))
+     (make-directory* payload)
+     (call-with-output-file (build-path payload "regexmate")
+       (lambda (o) (display "hi" o)) #:exists 'truncate)
+     (define tarball (build-path tmp "a.tar.gz"))
+     (define tar (find-tar))
+     (unless tar (error 'extract-test "system tar not found"))
+     (parameterize ([current-output-port (open-output-nowhere)]
+                    [current-error-port (open-output-nowhere)])
+       (system* tar "-czf" (path->string tarball)
+                "-C" (path->string payload) "regexmate"))
+     (define out (build-path tmp "out"))
+     (extract-archive tarball out)
+     (check-equal? (file->string (build-path out "regexmate")) "hi")
+     (delete-directory/files tmp))
+
    ;; ---- staged layout + swap mechanics ---------------------------------------
    ;; unix distribute nests the exe under bin/ with lib/ and gui/ at the
    ;; root; windows distribute is flat. Both layouts swap whole: exe, lib
