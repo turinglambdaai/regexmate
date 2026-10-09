@@ -86,16 +86,15 @@ SVG 已保存到: diagram.svg
 
 ```console
 $ regexmate update --check
-Latest release: v0.4.0 (installed: 0.3.0)
+Latest release: v0.6.0 (installed: 0.5.0)
 
 $ regexmate update
-Downloading regexmate-macos-aarch64-v0.4.0.tar.gz …
-Verifying checksum…
+Downloading regexmate-macos-aarch64-v0.6.0.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.4.0. Run `regexmate --version` to confirm.
+Updated to v0.6.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
-独立二进制安装可原地自更新：下载包先对照发布页校验 SHA-256，运行中的二进制安全换装（改名移开、下次启动清理残留）。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。
+安装版可原地自更新：先用内嵌公钥验证 Ed25519 签名的更新清单（key id `regexmate-2026-10`），再把下载包的字节数与 SHA-256 对照该签名清单核对，最后运行中的二进制安全换装（改名移开、下次启动清理残留）。GUI 与 CLI 同包发布，随同更新——更新后请重启应用。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。
 
 ## 桌面 GUI
 

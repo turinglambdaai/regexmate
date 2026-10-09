@@ -231,12 +231,18 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish GitHub Release
+    name: Sign update manifest + publish
     needs: build
     runs-on: ubuntu-22.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
+      - name: Checkout Rivet
+        uses: actions/checkout@v4
+        with:
+          repository: turinglambdaai/rivet
+          path: rivet
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
@@ -244,14 +250,36 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Generate SHA-256 checksums
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.3'
+          distribution: full
+
+      - name: Install Rivet and crypto (manifest signer)
+        run: raco pkg install --auto --no-docs --link "$GITHUB_WORKSPACE/rivet/rivet" "$GITHUB_WORKSPACE/rivet/rivet-cli" crypto
+
+      - name: Flatten artifact dirs
+        run: |
+          find artifacts -mindepth 2 -maxdepth 2 -type f -exec mv {} artifacts/ \;
+          find artifacts -mindepth 1 -maxdepth 1 -type d -empty -delete
+          ls -la artifacts/
+
+      - name: Generate + sign update manifest
+        env:
+          RIVET_UPDATE_KEY_ID: regexmate-2026-10
+          UPDATE_ED25519_PRIVATE_KEY_B64: ${{ secrets.UPDATE_ED25519_PRIVATE_KEY_B64 }}
+        run: |
+          KEY_DER="$(mktemp -d)/update-ed25519-private.der"
+          printf '%s' "$UPDATE_ED25519_PRIVATE_KEY_B64" | base64 -d > "$KEY_DER"
+          RELEASE_ASSET_BASE_URL="https://github.com/turinglambdaai/regexmate/releases/download/${{ github.ref_name }}" \
+            bash scripts/make-update-manifest.sh "${{ github.ref_name }}" artifacts "$KEY_DER"
+          rm -f "$KEY_DER"
+
+      - name: Verify SHA256SUMS
         run: |
           cd artifacts
-          for f in regexmate-*v*.tar.gz regexmate-*v*.zip regexmate-standalone-*.exe; do
-            [ -f "$f" ] || continue
-            sha256sum "$f"
-          done > ../SHA256SUMS
-          cat ../SHA256SUMS
+          shasum -a 256 --check SHA256SUMS
 
       - name: Build release body (changelog section + checksums)
         run: |
@@ -269,9 +297,11 @@ jobs:
             echo ""
             echo "Standalone binaries — no Racket installation required."
             echo ""
+            echo "The CLI self-updates: \`regexmate update\` verifies the Ed25519-signed \`update-stable.json\` manifest before touching your install."
+            echo ""
             echo "### Checksums (SHA-256)"
             echo '```'
-            cat SHA256SUMS
+            cat artifacts/SHA256SUMS
             echo '```'
           } >> release-body.md
 
@@ -283,6 +313,7 @@ jobs:
             artifacts/regexmate-*-v*.zip
             artifacts/regexmate-*-v*.sha256
             artifacts/regexmate-standalone-*.exe
-            SHA256SUMS
+            artifacts/update-stable.json
+            artifacts/SHA256SUMS
           body_path: release-body.md
           generate_release_notes: true

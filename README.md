@@ -92,16 +92,15 @@ Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 
 
 ```console
 $ regexmate update --check
-Latest release: v0.4.0 (installed: 0.3.0)
+Latest release: v0.6.0 (installed: 0.5.0)
 
 $ regexmate update
-Downloading regexmate-macos-aarch64-v0.4.0.tar.gz …
-Verifying checksum…
+Downloading regexmate-macos-aarch64-v0.6.0.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.4.0. Run `regexmate --version` to confirm.
+Updated to v0.6.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
-Standalone installs update themselves in place from GitHub Releases: the download's SHA-256 is verified against the published checksum, and the running binary is swapped safely (renamed aside, cleaned up on next start). `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
+Installs update themselves in place from GitHub Releases: the Ed25519-signed channel manifest is verified against the public key embedded in the binary (key id `regexmate-2026-10`), the download's byte size and SHA-256 are checked against that signed manifest, and the running binary is swapped safely (renamed aside, cleaned up on next start). The GUI ships in the same archive and is refreshed by the same update — restart it afterwards. `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
 
 ## MCP server
 

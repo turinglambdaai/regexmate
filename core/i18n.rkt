@@ -36,7 +36,7 @@
      "  regexmate lint <pattern> [--strict] [--json]  Static risk findings (ReDoS etc.)\n"
      "  regexmate cookbook [id|topic] [--json]        Commented starter patterns to learn from\n"
      "  regexmate schema [--json]                     Print the machine-readable contract\n"
-     "  regexmate update [--check] [--json]           Self-update from GitHub Releases\n"
+     "  regexmate update [--check] [--json]           Self-update from Ed25519-signed GitHub Releases\n"
      "  regexmate mcp                                 Run the stdio MCP server (JSON-RPC 2.0)\n"
      "\n"
      "Options:\n"
@@ -60,7 +60,7 @@
      "  regexmate lint <正则> [--strict] [--json]  静态风险分析（ReDoS 等）\n"
      "  regexmate cookbook [id|主题] [--json]      带讲解的入门正则配方，边用边学\n"
      "  regexmate schema [--json]                  打印机器可读契约\n"
-     "  regexmate update [--check] [--json]        从 GitHub Releases 自更新\n"
+     "  regexmate update [--check] [--json]        从 Ed25519 签名的 GitHub Releases 自更新\n"
      "  regexmate mcp                              启动 stdio MCP server（JSON-RPC 2.0）\n"
      "\n"
      "选项:\n"
@@ -106,10 +106,10 @@
    'update-checking (cons "Checking for updates…\n" "正在检查更新…\n")
    'update-check-result (cons "Latest release: ~a (installed: ~a)\n" "最新版本: ~a（当前安装: ~a）\n")
    'update-up-to-date (cons "Already up to date (regexmate ~a).\n" "已是最新版本（regexmate ~a）。\n")
-   'update-downloading (cons "Downloading ~a …\n" "正在下载 ~a …\n")
-   'update-verifying (cons "Verifying checksum…\n" "正在校验 SHA-256…\n")
+   'update-downloading (cons "Downloading ~a (signature and checksum verified) …\n" "正在下载 ~a（签名与校验和已核对）…\n")
    'update-installing (cons "Installing …\n" "正在安装…\n")
-   'update-done (cons "Updated to ~a. Run `regexmate --version` to confirm.\n" "已更新到 ~a。运行 `regexmate --version` 确认。\n")
+   'update-done (cons "Updated to ~a. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.\n"
+                      "已更新到 ~a。运行 `regexmate --version` 确认；如果 RegexMate 应用正在运行，请重启它。\n")
    'update-source (cons "regexmate is running from source; update via `git pull` or `raco pkg update`.\n"
                         "regexmate 正以源码方式运行；请用 `git pull` 或 `raco pkg update` 更新。\n")
    'update-failed (cons "Update failed: ~a\n" "更新失败: ~a\n")

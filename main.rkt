@@ -12,6 +12,10 @@
          "core/cookbook.rkt"
          "output/report.rkt"
          "core/updater.rkt"
+         (only-in rivet/distribution
+                  update-manifest-version
+                  update-artifact-url
+                  update-artifact-installer)
          "output/json-format.rkt"
          "output/highlight.rkt"
          "output/human-format.rkt"
@@ -278,15 +282,16 @@
                             (hash-ref w 'message)))))))
   (exit (if (and strict? (not (null? warnings))) EXIT-NO-MATCH EXIT-OK)))
 
-(define (update-envelope action current latest asset)
+(define (update-envelope action latest asset)
   (hasheq 'schema SCHEMA
           'command "update"
           'ok #t
-          'current current
+          'current regexmate-version
           'latest latest
-          'updateAvailable (version<? current latest)
+          'updateAvailable (and latest (version<? regexmate-version latest))
           'action action
-          'asset asset))
+          'asset asset
+          'keyId regexmate-update-key-id))
 
 (define (cmd-update check-only? json?)
   (unless (installed-mode?)
@@ -304,77 +309,51 @@
               (display (msg 'update-failed m)))
           (exit EXIT-INVALID))])
     (unless json? (display (msg 'update-checking)))
-    (define latest (fetch-latest-release))
-    (define tag (hash-ref latest 'tag))
-    (define current regexmate-version)
+    (define plan (check-for-update))
     (cond
-      [check-only?
-       (if json?
-           (displayln (jsexpr->line (update-envelope "checked" current tag #f)))
-           (display (msg 'update-check-result tag current)))
-       (exit EXIT-OK)]
-      [(not (version<? current tag))
-       (if json?
-           (displayln (jsexpr->line (update-envelope "none" current tag #f)))
-           (display (msg 'update-up-to-date current)))
+      [(or check-only? (not plan))
+       (if plan
+           (let* ([manifest (update-plan-manifest plan)]
+                  [version (update-manifest-version manifest)])
+             (if json?
+                 (displayln (jsexpr->line
+                             (update-envelope "checked" version #f)))
+                 (display (msg 'update-check-result version regexmate-version))))
+           (if json?
+               (displayln (jsexpr->line (update-envelope "none" #f #f)))
+               (display (msg 'update-up-to-date regexmate-version))))
        (exit EXIT-OK)]
       [else
-       (define asset-name (asset-name tag))
-       (define asset-def
-         (for/first ([a (in-list (hash-ref latest 'assets))]
-                     #:when (string=? (hash-ref a 'name) asset-name))
-           a))
-       (unless asset-def
-         (error 'update (format "release asset ~a not found" asset-name)))
-       (define sha-name (string-append asset-name ".sha256"))
-       (define sha-def
-         (for/first ([a (in-list (hash-ref latest 'assets))]
-                     #:when (string=? (hash-ref a 'name) sha-name))
-           a))
-       (define stage (build-path (install-dir)
+       (define artifact (update-plan-artifact plan))
+       (define version
+         (update-manifest-version (update-plan-manifest plan)))
+       ;; the file name rides in the signed manifest's artifact URL
+       (define filename
+         (last (regexp-split #rx"/" (update-artifact-url artifact))))
+       (define standalone?
+         (eq? (update-artifact-installer artifact) 'exe))
+       (define stage (build-path (install-root)
                                  (string-append "regexmate-update-"
                                                 (number->string (current-milliseconds)))))
        (make-directory* stage)
-       (define archive (build-path stage asset-name))
-       (unless json? (display (msg 'update-downloading asset-name)))
-       (download-to-file
-        (hash-ref asset-def 'url) archive
-        (and (not json?)
-             (lambda (done)
-               (when (number? done)
-                 (fprintf (current-error-port) "  ~a MB\r"
-                          (quotient done 1048576))))))
-       (when sha-def
-         (unless json? (display (msg 'update-verifying)))
-         (define sha-file (build-path stage sha-name))
-         (download-to-file (hash-ref sha-def 'url) sha-file #f)
-         (define want
-           (first (string-split (string-trim (port->string (open-input-file sha-file))))))
-         (define got (sha256-file archive))
-         (unless (string-ci=? want got)
-           (error 'update (format "checksum mismatch: want ~a, got ~a" want got))))
+       (define downloaded (build-path stage filename))
+       (unless json? (display (msg 'update-downloading filename)))
+       ;; size + SHA-256 verified against the signed manifest inside
+       (download-candidate! plan downloaded)
        (unless json? (display (msg 'update-installing)))
-       (define extract-dir (build-path stage "unpacked"))
-       (extract-archive archive extract-dir)
-       ;; windows archives are flat (regexmate.exe + lib/); unix ones use
-       ;; bin/ layout (bin/regexmate + lib/)
-       (define flat-exe (build-path extract-dir (exe-name)))
-       (define bin-exe (build-path extract-dir "bin" (exe-name)))
-       (define-values (new-exe new-lib)
-         (cond
-           [(file-exists? flat-exe)
-            (values flat-exe
-                    (let ([l (build-path extract-dir "lib")])
-                      (and (directory-exists? l) l)))]
-           [(file-exists? bin-exe)
-            (values bin-exe
-                    (let ([l (build-path extract-dir "lib")])
-                      (and (directory-exists? l) l)))]
-           [else (error 'update "unexpected archive layout")]))
-       (swap-install new-exe new-lib)
+       (define-values (new-exe new-lib new-gui)
+         (if standalone?
+             ;; the standalone exe ships as itself, no archive
+             (values downloaded #f #f)
+             (let ([extract-dir (build-path stage "unpacked")])
+               (extract-archive downloaded extract-dir)
+               (staged-pieces extract-dir))))
+       (install-update! new-exe new-lib new-gui)
+       (rmtree stage)
        (if json?
-           (displayln (jsexpr->line (update-envelope "updated" current tag asset-name)))
-           (display (msg 'update-done tag)))
+           (displayln (jsexpr->line
+                       (update-envelope "updated" version filename)))
+           (display (msg 'update-done version)))
        (exit EXIT-OK)])))
 
 (define (cmd-report pattern text-file cases-file out-file json?)

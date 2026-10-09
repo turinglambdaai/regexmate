@@ -3,6 +3,35 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-10-09
+
+The trust release: online updates now verify a signature before they touch
+your install.
+
+### Added
+
+- **Ed25519-verified online updates**: `regexmate update` and
+  `regexmate update --check` now read an Ed25519-signed channel manifest
+  (`update-stable.json`, published alongside every release) instead of
+  probing the GitHub API. The signature is checked against the public key
+  embedded in the binary (key id `regexmate-2026-10`) before anything else,
+  then the download's byte size and SHA-256 are checked against that same
+  signed manifest — a compromised mirror can no longer serve a tampered
+  archive. Release CI signs one merged manifest covering exactly the
+  shipped artifacts: the Linux and macOS archives, the Windows archive and
+  the Windows standalone exe.
+
+### Changed
+
+- **Updates cover the whole install**: the CLI, its runtime and the bundled
+  GUI are all swapped in place (renamed aside; leftovers cleaned on next
+  start). The GUI is refreshed by the same update — restart the app
+  afterwards. Standalone single-file Windows installs update to the
+  standalone exe artifact.
+- **Update flow is one request**: the check fetches a single signed
+  manifest instead of hitting the rate-limited GitHub releases API —
+  friendlier for agents and CI that run `regexmate update --check` often.
+
 ## [0.5.0] — 2026-10-08
 
 The learning release: regex is a skill, and the workbench now teaches it.

@@ -28,6 +28,9 @@ jobs:
           distribution: full
           variant: CS
 
+      - name: Install Rivet and crypto (updater dependencies)
+        run: raco pkg install --auto --no-docs https://github.com/turinglambdaai/rivet.git crypto
+
       - name: Compile
         run: raco make main.rkt run-tests.rkt
 
