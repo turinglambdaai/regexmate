@@ -213,11 +213,16 @@ jobs:
           VERSION="${GITHUB_REF_NAME#v}"
           if [ '${{ matrix.archive }}' = 'zip' ]; then
             ARCHIVE="regexmate-${VERSION}-windows-x86_64.zip"
+            STANDALONE="regexmate-${VERSION}-windows-x86_64-standalone.exe"
           else
             ARCHIVE="regexmate-${VERSION}-${{ matrix.asset }}.tar.gz"
           fi
           sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
           cat "$ARCHIVE.sha256"
+          # the standalone exe ships its own sidecar like every other asset
+          if [ -n "${STANDALONE:-}" ]; then
+            sha256sum "$STANDALONE" > "$STANDALONE.sha256"
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
