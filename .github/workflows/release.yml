@@ -187,7 +187,7 @@ jobs:
           raco exe --embed-dlls -o "regexmate-${VERSION}-windows-x86_64-standalone.exe" main.rkt
           # verify it truly runs standalone: no sibling runtime, empty dir
           mkdir -p standalone-check
-          cp "regexmate-standalone-windows-x86_64-v${VERSION}.exe" standalone-check/regexmate.exe
+          cp "regexmate-${VERSION}-windows-x86_64-standalone.exe" standalone-check/regexmate.exe
           ./standalone-check/regexmate.exe --version
           ./standalone-check/regexmate.exe match '\d+' 'abc 123' --json
           ./standalone-check/regexmate.exe graph 'ab(c|d)*[0-9]+' -o standalone-check/s.svg
