@@ -1,7 +1,7 @@
 #lang racket/base
 
 ;; Online update for RegexMate, built on rivet/distribution. `regexmate
-;; update` fetches the Ed25519-signed channel manifest (update-stable.json,
+;; update` fetches the Ed25519-signed channel manifest (update-manifest.json,
 ;; published alongside each GitHub release), verifies the signature against
 ;; the embedded public key, applies rivet's selection policy (identity,
 ;; channel, SemVer precedence, rollout), and downloads the artifact for this
@@ -125,7 +125,7 @@
 (define (manifest-url)
   (define base
     (or (getenv "RIVET_UPDATE_BASE_URL") regexmate-default-update-base-url))
-  (string-append (string-trim base "/" #:right? #t) "/update-stable.json"))
+  (string-append (string-trim base "/" #:right? #t) "/update-manifest.json"))
 
 ;; ---- version comparison ------------------------------------------------
 

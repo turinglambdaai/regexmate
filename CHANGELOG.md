@@ -3,6 +3,23 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.1] — 2026-10-11
+
+Naming and feed alignment with the family packaging benchmark (taskly).
+No behavior changes beyond the manifest location.
+
+### Changed
+
+- Release assets rename to the family scheme `regexmate-<version>-<os>-<arch>.<ext>`
+  (`regexmate-0.6.1-linux-x86_64.tar.gz`, `regexmate-0.6.1-macos-arm64.tar.gz`,
+  `regexmate-0.6.1-windows-x86_64.zip`, plus
+  `regexmate-0.6.1-windows-x86_64-standalone.exe`) — the version moves out
+  of the middle of the file name and the macOS arch follows the family
+  spelling
+- The signed update feed publishes as `update-manifest.json` (family
+  convention); a byte-identical `update-stable.json` alias keeps pre-0.6.1
+  builds self-updating until the field has moved on
+
 ## [0.6.0] — 2026-10-09
 
 The trust release: online updates now verify a signature before they touch

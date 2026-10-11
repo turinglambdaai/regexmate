@@ -6,16 +6,17 @@
 #   <tag>          release tag, e.g. v0.6.0 (must match rivet.rktd version)
 #   <dist-dir>     directory containing the packaged platform archives as
 #                  uploaded to the release:
-#                    regexmate-linux-x86_64-v<version>.tar.gz
-#                    regexmate-macos-aarch64-v<version>.tar.gz
-#                    regexmate-windows-x86_64-v<version>.zip
-#                    regexmate-standalone-windows-x86_64-v<version>.exe
+#                    regexmate-<version>-linux-x86_64.tar.gz
+#                    regexmate-<version>-macos-arm64.tar.gz
+#                    regexmate-<version>-windows-x86_64.zip
+#                    regexmate-<version>-windows-x86_64-standalone.exe
 #   <key-der-path> Ed25519 private key in DER (OneAsymmetricKey) form; the
 #                  CI secret stores it base64-encoded.
 #
-# Emits <dist-dir>/update-stable.json — a single signed channel manifest
+# Emits <dist-dir>/update-manifest.json — a single signed channel manifest
 # carrying every platform artifact (and the Windows standalone exe) — plus
-# SHA256SUMS over all files. Env overrides: RELEASE_ASSET_BASE_URL,
+# SHA256SUMS over all files. A byte-identical update-stable.json alias
+# keeps pre-0.6.1 clients self-updating. Env overrides: RELEASE_ASSET_BASE_URL,
 # RIVET_UPDATE_KEY_ID.
 
 set -euo pipefail
@@ -35,7 +36,7 @@ if [ "$VERSION" != "$RKTD_VERSION" ]; then
 fi
 
 # ---- build + sign the merged manifest with rivet's own signer ---------------
-MANIFEST="$DIST/update-stable.json"
+MANIFEST="$DIST/update-manifest.json"
 
 SCRIPT="$(mktemp /tmp/regexmate-manifest-XXXXXX.rkt)"
 trap 'rm -f "$SCRIPT"' EXIT
@@ -57,11 +58,11 @@ cat > "$SCRIPT" <<RKT
 
 ;; (platform architecture installer filename)
 (define wanted
-  (list (list 'linux 'x64 'targz (format "regexmate-linux-x86_64-v~a.tar.gz" version))
-        (list 'macos 'arm64 'targz (format "regexmate-macos-aarch64-v~a.tar.gz" version))
-        (list 'windows 'x64 'zip (format "regexmate-windows-x86_64-v~a.zip" version))
+  (list (list 'linux 'x64 'targz (format "regexmate-~a-linux-x86_64.tar.gz" version))
+        (list 'macos 'arm64 'targz (format "regexmate-~a-macos-arm64.tar.gz" version))
+        (list 'windows 'x64 'zip (format "regexmate-~a-windows-x86_64.zip" version))
         (list 'windows 'x64 'exe
-              (format "regexmate-standalone-windows-x86_64-v~a.exe" version))))
+              (format "regexmate-~a-windows-x86_64-standalone.exe" version))))
 
 (define (artifact platform architecture installer file)
   (define path (build-path dist file))
@@ -108,7 +109,7 @@ cat > "$SCRIPT" <<RKT
                    100
                    artifacts))
 
-(call-with-output-file (build-path dist "update-stable.json")
+(call-with-output-file (build-path dist "update-manifest.json")
   #:exists 'truncate/replace
   (lambda (out)
     (write-signed-manifest manifest
@@ -117,11 +118,15 @@ cat > "$SCRIPT" <<RKT
                            out)
     (newline out)))
 (printf "manifest: ~a (~a artifacts)\\n"
-        (build-path dist "update-stable.json") (length artifacts))
+        (build-path dist "update-manifest.json") (length artifacts))
 RKT
 
 # rivet must be installed for the signer; the release job links a checkout
 racket "$SCRIPT"
+
+# byte-identical alias: pre-0.6.1 clients poll update-stable.json (the
+# signature covers the payload, not the file name)
+cp "$DIST/update-manifest.json" "$DIST/update-stable.json"
 
 # ---- checksums (paths relative to the dist dir, so --check works from it) ----
 ( cd "$DIST" && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \
