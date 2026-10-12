@@ -38,11 +38,11 @@
    (test-case "manifest url: default and env override"
      (check-equal? (manifest-url)
                    (string-append regexmate-default-update-base-url
-                                  "/update-stable.json"))
+                                  "/update-manifest.json"))
      (dynamic-wind
        (lambda () (putenv "RIVET_UPDATE_BASE_URL" "https://example.com/staging/"))
        (lambda ()
-         (check-equal? (manifest-url) "https://example.com/staging/update-stable.json"))
+         (check-equal? (manifest-url) "https://example.com/staging/update-manifest.json"))
        (lambda () (putenv "RIVET_UPDATE_BASE_URL" ""))))
 
    ;; ---- platform & install layout ---------------------------------------
