@@ -70,38 +70,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev
 
-      - name: Install Rivet (native GUI host toolchain)
-        run: raco pkg install --auto https://github.com/turinglambdaai/rivet.git
-
-      - name: Build embeddable Racket CS (Linux GUI needs the static runtime)
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          set -euo pipefail
-          archive="$RUNNER_TEMP/racket-minimal-9.3-src-builtpkgs.tgz"
-          source_root="$RUNNER_TEMP/racket-9.3"
-          build_root="$RUNNER_TEMP/racket-embed-build"
-          embed_prefix="$RUNNER_TEMP/racket-embed"
-
-          curl --fail --location --retry 3 \
-            --output "$archive" \
-            https://download.racket-lang.org/releases/9.3/installers/racket-minimal-9.3-src-builtpkgs.tgz
-          echo "3a01324d559a15e3f1f58b0c57a92bb344dce534e72e564e0d8b75e3b9c65295  $archive" |
-            sha256sum --check
-          tar -xzf "$archive" -C "$RUNNER_TEMP"
-          mkdir -p "$build_root"
-          cd "$build_root"
-          "$source_root/src/configure" --prefix="$embed_prefix"
-          make -j"$(nproc)"
-          make install
-
-          boot_dir="$(find "$embed_prefix" -name petite.boot -print -quit | xargs dirname)"
-          echo "RIVET_RACKET_BOOT_DIR=$boot_dir" >> "$GITHUB_ENV"
-          echo "RIVET_RACKET_LIBRARY=$embed_prefix/lib/libracketcs.a" >> "$GITHUB_ENV"
-          echo "RIVET_RACKET_LIB_DIR=$embed_prefix/lib" >> "$GITHUB_ENV"
-          # embedding headers (chezscheme.h) come from the full installation
-          racket_include="$(racket -e '(require setup/dirs) (display (path->string (find-include-dir)))')"
-          echo "RIVET_RACKET_INCLUDE=$racket_include" >> "$GITHUB_ENV"
+      - name: Install Rivet (catalog)
+        run: raco pkg install --auto --no-docs rivet
 
       - name: Compile
         run: raco make main.rkt
@@ -124,6 +94,18 @@ jobs:
             Windows) raco distribute stage build/regexmate.exe ;;
             *)       raco distribute stage build/regexmate ;;
           esac
+
+      # The Linux GUI host links the static Racket CS runtime; set up the
+      # embeddable build and re-resolve Rivet against it (the minimal build
+      # ships no packages, so this pulls cext-lib and the rest of the
+      # catalog closure into view) right before packaging so the CLI steps
+      # above keep using the full Racket.
+      - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
+        if: runner.os == 'Linux'
+        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@main
+      - name: Re-install Rivet against the embeddable runtime
+        if: runner.os == 'Linux'
+        run: raco pkg install --auto --no-docs rivet
 
       - name: Build native GUI and bundle into the archive (all platforms)
         shell: bash
