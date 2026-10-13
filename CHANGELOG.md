@@ -3,6 +3,32 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.2] — 2026-10-14
+
+Engineering alignment with the family benchmark (taskly). No CLI behavior
+changes.
+
+### Changed
+
+- **The signing tools and the engine share one pin**: CI and release
+  workflows install Rivet from `rivet.git#v0.11.0` instead of floating on
+  the package catalog, the release signing leg checks out the same
+  `v0.11.0` ref before linking the manifest signer, and
+  `setup-embed-racket` runs at the tagged ref — the tool versions that
+  sign and build a release can no longer drift
+- **Host packages consume the Rivet platform as a package target**: the
+  Linux host links `rivet::platform` via `add_subdirectory` and the
+  Windows host references `rivet-host.vcxproj` via `ProjectReference`,
+  replacing hand-copied Rivet translation units — rivet adding a source
+  file no longer needs a downstream change
+- The site drops the version pill (the homepage no longer states a
+  version), aligns the palette with the family values, upgrades dark mode
+  to the full scheme (manual toggle with `localStorage` persistence and a
+  no-flash inline head script) and defaults to Chinese with the shared
+  `data-i18n` dictionary pattern
+- A `VERSION` file now sits at the repository root, matching the family
+  convention
+
 ## [0.6.1] — 2026-10-11
 
 Naming and feed alignment with the family packaging benchmark (taskly).

@@ -3,7 +3,7 @@
 **The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
 Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.6.1-037A55)
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.6.2-037A55)
 
 **English** · [中文](README.zh-CN.md)
 
@@ -92,12 +92,12 @@ Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 
 
 ```console
 $ regexmate update --check
-Latest release: v0.6.1 (installed: 0.5.0)
+Latest release: v0.6.2 (installed: 0.5.0)
 
 $ regexmate update
-Downloading regexmate-0.6.1-macos-arm64.tar.gz (signature and checksum verified) …
+Downloading regexmate-0.6.2-macos-arm64.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.6.1. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
+Updated to v0.6.2. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
 Installs update themselves in place from GitHub Releases: the Ed25519-signed channel manifest is verified against the public key embedded in the binary (key id `regexmate-2026-10`), the download's byte size and SHA-256 are checked against that signed manifest, and the running binary is swapped safely (renamed aside, cleaned up on next start). The GUI ships in the same archive and is refreshed by the same update — restart it afterwards. `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
