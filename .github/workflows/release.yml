@@ -40,7 +40,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
+          # ubuntu-latest (24.04) because the rivet platform package now
+          # configures with gtk4>=4.10 — 22.04 only ships GTK 4.6
+          - os: ubuntu-latest
             asset: linux-x86_64
             archive: tar.gz
             racket-arch: x64
