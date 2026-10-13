@@ -2,13 +2,16 @@
 
 ;; Online update for RegexMate, built on rivet/distribution. `regexmate
 ;; update` fetches the Ed25519-signed channel manifest (update-manifest.json,
-;; published alongside each GitHub release), verifies the signature against
-;; the embedded public key, applies rivet's selection policy (identity,
-;; channel, SemVer precedence, rollout), and downloads the artifact for this
-;; install — byte size and SHA-256 are checked against the signed manifest
-;; before anything is trusted. The archive is extracted with the system tar
-;; and swapped into place (renames keep a running process alive on
-;; Windows); stale .old leftovers are cleaned on the next startup.
+;; published alongside each GitHub release) through rivet's
+;; fetch-update-manifest — HTTPS enforced, body capped, release-asset
+;; redirects built in, signature verified before anything else looks at the
+;; bytes — applies rivet's selection policy (identity, channel, SemVer
+;; precedence, rollout), and downloads the artifact for this install through
+;; rivet's download-update under a stall/total watchdog (a stalled
+;; connection without RST/FIN would otherwise park the CLI forever). The
+;; archive is extracted with the system tar and swapped into place (renames
+;; keep a running process alive on Windows); stale .old leftovers are
+;; cleaned on the next startup.
 ;;
 ;; The flow is deliberately CLI-shaped: the GUI ships inside the same
 ;; archive and cannot replace itself while running, so the CLI performs the
@@ -17,13 +20,10 @@
 (require crypto
          (only-in crypto/libcrypto libcrypto-factory)
          net/base64
-         net/head
-         net/url
          rivet/distribution
          racket/file
          racket/list
          racket/path
-         racket/port
          (only-in racket/system system*)
          racket/string
          "../version.rkt")
@@ -149,115 +149,76 @@
       [else (loop (cdr x) (cdr y))])))
 
 ;; ---- transport -----------------------------------------------------------
-;; GitHub Releases serves every asset (and the releases/latest alias)
-;; behind redirects, and only get-pure-port accepts #:redirections — with no
-;; way to see the final status. The transport below follows redirects
-;; manually with status checks; the trust machinery (verify-signed-manifest,
-;; select-update, verify-update-artifact!) stays rivet's.
+;; rivet owns both network legs: fetch-update-manifest enforces HTTPS, caps
+;; the body, follows the release-asset redirects (rivet#153's built-in
+;; budget) and verifies the Ed25519 signature before anything else looks at
+;; the bytes; download-update owns the artifact path (redirect-following
+;; fetch, signed-size cap, .partial cleanup on every failure, SHA-256 + size
+;; verification, atomic rename).
+;;
+;; Timeouts: rivet's copy loop waits on read-bytes-avail! with no deadline —
+;; net/url ports have no read timeout, so a connection that stalls without
+;; RST/FIN would park the CLI forever. Both legs run on a supervised worker
+;; thread that a watchdog breaks on the stall limit (no byte progress) or
+;; the total wall-clock limit (the taskly updater's download watchdog,
+;; adapted to a synchronous CLI — there is no UI state box to poll here).
 
-(define (http-get once-url)
-  ;; one raw HTTP GET; -> (values status-code header-lines body-port)
-  (define in (get-impure-port (string->url once-url)
-                              (list "User-Agent: regexmate-updater/1")))
-  (define status-code
-    (let ([line (read-line in 'return-linefeed)])
-      (cond
-        [(eof-object? line) (error 'update "empty response from ~a" once-url)]
-        [else
-         (define m (regexp-match #px"^HTTP/[0-9.]+ +(\\d{3})" line))
-         (or (and m (string->number (cadr m)))
-             (error 'update "malformed response from ~a" once-url))])))
-  (define header-lines
-    (let loop ([lines '()])
-      (define line (read-line in 'return-linefeed))
-      (cond
-        [(eof-object? line) (reverse lines)]
-        [(string=? (string-trim line) "") (reverse lines)]
-        [else (loop (cons (string-trim line) lines))])))
-  (values status-code header-lines in))
+(define manifest-deadline-seconds 60)
+(define download-stall-limit-seconds 120)
+(define download-total-limit-seconds (* 30 60))
 
-;; resolve a Location header (absolute, host-relative or path-relative)
-(define (resolve-redirect base-str location)
+;; Run THUNK (receiving a `touch` procedure that refreshes the stall clock)
+;; on a worker thread under a watchdog. Returns the thunk's value; a
+;; timeout or worker failure raises. The download leg passes `touch` as the
+;; downloader's #:on-progress so a slow-but-alive link never false-trips
+;; the stall limit; the manifest fetch has no progress surface and ignores
+;; it (its deadline is the stall limit).
+(define (call-under-watchdog! who stall-limit-seconds total-limit-seconds thunk)
+  (define last-tick (box (current-seconds)))
+  (define outcome (box #f))
+  (define timed-out? (box #f))
+  (define worker
+    (thread
+     (lambda ()
+       (with-handlers ([(lambda (e) #t)
+                        (lambda (e) (set-box! outcome (cons 'raised e)))])
+         (set-box! outcome
+                   (cons 'returned
+                         (thunk (lambda ()
+                                  (set-box! last-tick (current-seconds))))))))))
+  (define started (current-seconds))
+  (thread
+   (lambda ()
+     (let loop ()
+       (cond
+         [(sync/timeout stall-limit-seconds (thread-dead-evt worker)) (void)]
+         [(or (> (- (current-seconds) (unbox last-tick)) stall-limit-seconds)
+              (> (- (current-seconds) started) total-limit-seconds))
+          (set-box! timed-out? #t)
+          (break-thread worker)]
+         [else (loop)]))))
+  ;; The watchdog breaks the worker at the limits; wait a little past them
+  ;; so the break lands before this call gives up on the worker.
+  (unless (sync/timeout (+ total-limit-seconds 30) worker)
+    (error who "update transfer outlived its watchdog budget"))
+  (define record (unbox outcome))
   (cond
-    [(regexp-match? #rx"^https?://" location) location]
-    [(string-prefix? location "/")
-     (define m (regexp-match #rx"^(https?://[^/]+)" base-str))
-     (if m
-         (string-append (cadr m) location)
-         (error 'update "cannot resolve redirect ~a from ~a" location base-str))]
-    [else
-     (string-append (regexp-replace #rx"[^/]+$" base-str "") location)]))
-
-;; GET with redirect following; errors unless the final status is 200 and
-;; returns the response-body port
-(define (http-get-redirecting url-str)
-  (let loop ([current url-str] [hops 0])
-    (when (> hops 10)
-      (error 'update "too many redirects fetching ~a" url-str))
-    (define-values (status headers in) (http-get current))
-    (define location
-      (and (member status '(301 302 303 307 308))
-           (extract-field "Location" (string-join headers "\r\n"))))
-    (cond
-      [location
-       (close-input-port in)
-       (define next
-         (with-handlers
-             ([exn:fail?
-               (lambda (e)
-                 (error 'update "bad redirect from ~a: ~a"
-                        current (exn-message e)))])
-           (resolve-redirect current location)))
-       (loop next (add1 hops))]
-      [(= status 200) in]
-      [else
-       (close-input-port in)
-       (error 'update "fetch failed (HTTP ~a): ~a" status current)])))
+    [(and record (eq? (car record) 'returned)) (cdr record)]
+    [(unbox timed-out?)
+     (error who "update transfer timed out (stall or wall-clock limit)")]
+    [(and record (eq? (car record) 'raised)) (raise (cdr record))]
+    [else (error who "update worker failed without a result")]))
 
 ;; fetch and signature-verify the channel manifest at url-str
 (define (fetch-manifest url-str)
-  (define in (http-get-redirecting url-str))
-  (define body (port->bytes in))
-  (close-input-port in)
-  (verify-signed-manifest (open-input-bytes body)
-                          (embedded-public-key)
-                          #:key-id regexmate-update-key-id))
-
-(define (copy-bytes-with-limit! in out limit)
-  (define buffer (make-bytes 65536))
-  (let loop ([total 0])
-    (define count (read-bytes-avail! buffer in))
-    (cond
-      [(eof-object? count) total]
-      [else
-       (define next (+ total count))
-       (when (> next limit)
-         (error 'download-candidate! "update exceeds the download limit"))
-       (write-bytes buffer out 0 count)
-       (loop next)])))
-
-;; download url-str to destination with a byte cap; the caller verifies the
-;; result against the signed manifest before trusting it
-(define (download-artifact url-str destination limit)
-  (make-parent-directory* destination)
-  (define temporary (path-add-extension destination #".partial"))
-  (when (file-exists? temporary) (delete-file temporary))
-  (define in (http-get-redirecting url-str))
-  (dynamic-wind
-    void
-    (lambda ()
-      (with-handlers
-          ([exn:fail?
-            (lambda (e)
-              (when (file-exists? temporary) (delete-file temporary))
-              (raise e))])
-        (call-with-output-file temporary
-          #:exists 'truncate
-          #:mode 'binary
-          (lambda (out) (copy-bytes-with-limit! in out limit)))))
-    (lambda () (close-input-port in)))
-  (rename-file-or-directory temporary destination #t)
-  destination)
+  (call-under-watchdog!
+   'check-for-update
+   manifest-deadline-seconds
+   manifest-deadline-seconds
+   (lambda (_touch)
+     (fetch-update-manifest url-str
+                            (embedded-public-key)
+                            #:key-id regexmate-update-key-id))))
 
 ;; ---- check ---------------------------------------------------------------
 
@@ -312,15 +273,25 @@
             (platform-symbol)
             (architecture-symbol))]))
 
-;; download the plan's artifact to `destination`, then verify byte size and
-;; SHA-256 against the signed manifest before the file is trusted
+;; download the plan's artifact to `destination` through rivet's
+;; download-update (redirect-following fetch, signed-size cap, .partial
+;; cleanup, SHA-256 + size verification against the signed manifest,
+;; atomic rename) under the watchdog, then re-verify the bytes before the
+;; caller extracts anything
 (define (download-candidate! plan destination)
   (define artifact (update-plan-artifact plan))
   (when (> (update-artifact-size artifact) maximum-download-bytes)
     (error 'download-candidate! "signed artifact size exceeds the download limit"))
-  (download-artifact (update-artifact-url artifact)
-                     destination
-                     maximum-download-bytes)
+  (call-under-watchdog!
+   'download-candidate!
+   download-stall-limit-seconds
+   download-total-limit-seconds
+   (lambda (touch)
+     (download-update
+      (make-config)
+      (update-candidate (update-plan-manifest plan) artifact)
+      destination
+      #:on-progress (lambda (_bytes) (touch)))))
   (verify-downloaded! plan destination)
   destination)
 
