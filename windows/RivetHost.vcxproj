@@ -48,6 +48,12 @@
 
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup>
+    <!-- Forwarded to the rivet-host library via ProjectReference so the
+         static link never mixes RuntimeLibrary flavors (LNK2038). -->
+    <RivetRuntimeLibrary Condition="'$(Configuration)'=='Debug'">MultiThreadedDebug</RivetRuntimeLibrary>
+    <RivetRuntimeLibrary Condition="'$(Configuration)'=='Release'">MultiThreaded</RivetRuntimeLibrary>
+  </PropertyGroup>
   <ImportGroup Label="ExtensionSettings" />
   <ImportGroup Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -72,6 +78,12 @@
   </ItemDefinitionGroup>
 
   <ItemGroup>
+    <ProjectReference Include="$(RIVET_ROOT)\platform\windows\rivet-host.vcxproj"
+                      Properties="RivetRuntimeLibrary=$(RivetRuntimeLibrary)">
+      <Project>dc7f7b91-5def-4f64-8fdc-06562c2ac64b</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
     <PackageReference Include="Microsoft.Windows.CppWinRT" Version="3.0.260818.1" />
   </ItemGroup>
@@ -83,17 +95,12 @@
     <ClInclude Include="GeneratedBackend.hpp" />
     <ClInclude Include="$(RIVET_ROOT)\platform\windows\runtime\backend.hpp" />
     <ClInclude Include="$(RIVET_ROOT)\platform\windows\runtime\win32_pipe_transport.hpp" />
-    <ClInclude Include="$(RIVET_ROOT)\platform\windows\system\system_services.hpp" />
     <ClInclude Include="$(RIVET_ROOT)\runtime\include\rivet\protocol.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp"><PrecompiledHeader>Create</PrecompiledHeader></ClCompile>
     <ClCompile Include="App.xaml.cpp"><DependentUpon>App.xaml</DependentUpon></ClCompile>
     <ClCompile Include="MainWindow.xaml.cpp"><DependentUpon>MainWindow.xaml</DependentUpon></ClCompile>
-    <ClCompile Include="$(RIVET_ROOT)\platform\windows\runtime\backend.cpp"><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
-    <ClCompile Include="$(RIVET_ROOT)\platform\windows\runtime\win32_pipe_transport.cpp"><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
-    <ClCompile Include="$(RIVET_ROOT)\platform\windows\system\system_services.cpp"><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
-    <ClCompile Include="$(RIVET_ROOT)\runtime\src\protocol.cpp"><PrecompiledHeader>NotUsing</PrecompiledHeader></ClCompile>
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
   </ItemGroup>
   <ItemGroup><Midl Include="Project.idl"><SubType>Code</SubType></Midl></ItemGroup>

@@ -70,8 +70,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev
 
-      - name: Install Rivet (catalog)
-        run: raco pkg install --auto --no-docs rivet
+      - name: Install Rivet (pinned to the release engine version)
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
 
       - name: Compile
         run: raco make main.rkt
@@ -102,10 +102,10 @@ jobs:
       # above keep using the full Racket.
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@main
-      - name: Re-install Rivet against the embeddable runtime
+        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@v0.11.0
+      - name: Re-install Rivet against the embeddable runtime (pinned)
         if: runner.os == 'Linux'
-        run: raco pkg install --auto --no-docs rivet
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
 
       - name: Build native GUI and bundle into the archive (all platforms)
         shell: bash
@@ -225,10 +225,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout Rivet
+      - name: Checkout Rivet (same pin as the engine install — the signing
+          tools must match the engine that built the binaries)
         uses: actions/checkout@v4
         with:
           repository: turinglambdaai/rivet
+          ref: v0.11.0
           path: rivet
 
       - name: Download all artifacts

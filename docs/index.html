@@ -1,17 +1,26 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RegexMate — the regex workbench for humans and agents</title>
-    <meta name="description" content="Validate, match, explain, replace, graph, batch-test and lint regular expressions from one CLI — with a versioned JSON contract, an MCP server and online self-update. Standalone binaries for Windows, Linux and macOS.">
-    <meta property="og:title" content="RegexMate — the regex workbench for humans and agents">
-    <meta property="og:description" content="One CLI for every regex job: validate, match, explain, replace, graph, test, lint. Versioned JSON contract, native MCP server, self-update.">
+    <title>RegexMate — 给人和智能体的正则工作台</title>
+    <meta name="description" content="一条 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、批量测试、风险分析。版本化 JSON 契约、MCP server、在线自更新。Windows / Linux / macOS 免安装二进制。">
+    <meta property="og:title" content="RegexMate — 给人和智能体的正则工作台">
+    <meta property="og:description" content="一条 CLI 包办所有正则工作：校验、匹配、解释、替换、绘图、测试、风险分析。版本化 JSON 契约、原生 MCP server、自更新。">
     <meta property="og:type" content="website">
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAFAF8">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf7f2">
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0B">
+    <script>
+      // anti-flash: resolve the theme before the stylesheet applies —
+      // localStorage wins when the user picked manually, else the OS setting
+      (function () {
+        var t = localStorage.getItem('regexmate-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
 
@@ -28,21 +37,22 @@
                 RegexMate
             </a>
             <div class="nav-links">
-                <a href="#workbench" data-en="Workbench" data-zh="工作台">Workbench</a>
-                <a href="#diagrams" data-en="Diagrams" data-zh="图解">Diagrams</a>
-                <a href="#agents" data-en="Agents" data-zh="智能体">Agents</a>
-                <a href="#install" data-en="Install" data-zh="安装">Install</a>
+                <a href="#workbench" data-i18n="nav.workbench">工作台</a>
+                <a href="#diagrams" data-i18n="nav.diagrams">图解</a>
+                <a href="#agents" data-i18n="nav.agents">智能体</a>
+                <a href="#install" data-i18n="nav.install">安装</a>
                 <a href="https://github.com/turinglambdaai/regexmate" class="nav-github">GitHub</a>
                 <div class="lang-dropdown-wrapper">
                     <button class="lang-btn" type="button" onclick="void 0" aria-label="Switch language">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
-                        <span id="current-lang-label" data-en="English" data-zh="简体中文">English</span>
+                        <span id="current-lang-label">English</span>
                     </button>
                     <ul class="lang-menu">
                         <li onclick="setLanguage('en')">English</li>
                         <li onclick="setLanguage('zh')">简体中文</li>
                     </ul>
                 </div>
+                <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle theme">◐</button>
             </div>
         </div>
     </nav>
@@ -51,25 +61,22 @@
     <header class="hero">
         <div class="container">
             <div class="hero-eyebrow reveal">
-                <span class="pill pill-accent">v0.5.0</span>
-                <span class="pill" data-en="Windows · Linux · macOS" data-zh="Windows · Linux · macOS">Windows · Linux · macOS</span>
+                <span class="pill">Windows · Linux · macOS</span>
                 <span class="pill">MIT</span>
             </div>
-            <h1 class="hero-title reveal" data-en="Regular expressions, explained." data-zh="正则表达式，一眼看懂。">Regular expressions, explained.</h1>
-            <p class="hero-sub reveal"
-               data-en="One quiet CLI for every regex job — validate, match, explain, replace, graph, test, lint. It speaks JSON to your agents, plain English to you, and updates itself."
-               data-zh="一条安静的 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、测试、风险分析。对 agent 说 JSON，对你说人话，还会自己更新。">
-                One quiet CLI for every regex job — validate, match, explain, replace, graph, test, lint. It speaks JSON to your agents, plain English to you, and updates itself.
+            <h1 class="hero-title reveal" data-i18n="hero.title">正则表达式，一眼看懂。</h1>
+            <p class="hero-sub reveal" data-i18n="hero.sub">
+                一条安静的 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、测试、风险分析。对 agent 说 JSON，对你说人话，还会自己更新。
             </p>
             <div class="hero-cta reveal">
-                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download" data-zh="下载">Download</a>
-                <a class="btn btn-quiet" href="#agents" data-en="Connect your agent →" data-zh="接入你的智能体 →">Connect your agent →</a>
+                <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-i18n="hero.download">下载</a>
+                <a class="btn btn-quiet" href="#agents" data-i18n="hero.agents">接入你的智能体 →</a>
             </div>
-            <p class="hero-note reveal" data-en="Rivet rewrite in progress — the current v1.x (CLI + GUI) stays available and maintained." data-zh="Rivet 重构进行中——当前 v1.x（CLI + GUI）继续可用、照常维护。">
-                Rivet rewrite in progress — the current v1.x (CLI + GUI) stays available and maintained.
+            <p class="hero-note reveal" data-i18n="hero.note.rewrite">
+                Rivet 重构进行中——当前 v1.x（CLI + GUI）继续可用、照常维护。
             </p>
-            <p class="hero-note reveal" data-en="No runtime to install" data-zh="免装运行时">
-                No runtime to install
+            <p class="hero-note reveal" data-i18n="hero.note.runtime">
+                免装运行时
             </p>
         </div>
         <div class="hero-visual reveal">
@@ -84,21 +91,19 @@
     <section class="section" id="workbench">
         <div class="container">
             <div class="reveal">
-                <p class="section-eyebrow" data-en="The workbench" data-zh="工作台">The workbench</p>
-                <h2 class="section-title" data-en="Seven verbs. One contract." data-zh="七个动词，一套契约。">Seven verbs. One contract.</h2>
-                <p class="section-lede" data-en="Every command speaks the same versioned JSON — <code>schema</code>, <code>command</code>, <code>ok</code> — with absolute spans and 1-based capture groups. Humans get quiet, readable output; agents get structure; nothing changes between releases without a version bump."
-                   data-zh="所有命令共用同一套版本化 JSON——<code>schema</code>、<code>command</code>、<code>ok</code>——绝对区间、从 1 计数的捕获组。人类得到安静的输出，agent 得到结构，版本变更绝不悄悄破坏契约。">
-                    Every command speaks the same versioned JSON — <code>schema</code>, <code>command</code>, <code>ok</code> — with absolute spans and 1-based capture groups. Humans get quiet, readable output; agents get structure; nothing changes between releases without a version bump.
+                <p class="section-eyebrow" data-i18n="wb.eyebrow">工作台</p>
+                <h2 class="section-title" data-i18n="wb.title">七个动词，一套契约。</h2>
+                <p class="section-lede" data-i18n="wb.lede">
+                    所有命令共用同一套版本化 JSON——<code>schema</code>、<code>command</code>、<code>ok</code>——绝对区间、从 1 计数的捕获组。人类得到安静的输出，agent 得到结构，版本变更绝不悄悄破坏契约。
                 </p>
             </div>
 
             <div class="bento">
                 <div class="cell cell--wide reveal">
-                    <p class="cell-tag" data-en="For agents" data-zh="为智能体">For agents</p>
-                    <h3 data-en="A contract, not a screenscape" data-zh="是契约，不是屏幕刮取">A contract, not a screenscape</h3>
-                    <p data-en="Exit codes mean something, errors are single-line, absent groups are null — never missing keys. Point any tool loop at it."
-                       data-zh="退出码有语义、错误保持单行、缺席组是 null 而非缺键。任何工具循环直接接入。">
-                        Exit codes mean something, errors are single-line, absent groups are null — never missing keys. Point any tool loop at it.
+                    <p class="cell-tag" data-i18n="wb.contract.tag">为智能体</p>
+                    <h3 data-i18n="wb.contract.title">是契约，不是屏幕刮取</h3>
+                    <p data-i18n="wb.contract.body">
+                        退出码有语义、错误保持单行、缺席组是 null 而非缺键。任何工具循环直接接入。
                     </p>
                     <div class="cell-visual">
 <div class="snippet"><code>{
@@ -114,11 +119,10 @@
                 </div>
 
                 <div class="cell reveal">
-                    <p class="cell-tag" data-en="For humans" data-zh="为人类">For humans</p>
-                    <h3 data-en="Explain, in plain language" data-zh="人话解释">Explain, in plain language</h3>
-                    <p data-en="Inherited a pattern you don't trust? <code>explain</code> walks it part by part — in English or 中文."
-                       data-zh="接手一个不敢信的正则？<code>explain</code> 逐段讲清楚——英文或中文。">
-                        Inherited a pattern you don't trust? <code>explain</code> walks it part by part — in English or 中文.
+                    <p class="cell-tag" data-i18n="wb.explain.tag">为人类</p>
+                    <h3 data-i18n="wb.explain.title">人话解释</h3>
+                    <p data-i18n="wb.explain.body">
+                        接手一个不敢信的正则？<code>explain</code> 逐段讲清楚——英文或中文。
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="dim">$</span> regexmate explain '(?:\d{2,4}|[a-z]+)(?=x)'
@@ -132,11 +136,10 @@
                 </div>
 
                 <div class="cell reveal">
-                    <p class="cell-tag" data-en="Iterate" data-zh="迭代">Iterate</p>
-                    <h3 data-en="Test before you ship" data-zh="上线前先测">Test before you ship</h3>
-                    <p data-en="Assert positives and negatives; lint catches ReDoS and dead branches with <code>--strict</code> as a CI gate."
-                       data-zh="正反用例批量断言；lint 抓住 ReDoS 与死分支，<code>--strict</code> 做成 CI 门禁。">
-                        Assert positives and negatives; lint catches ReDoS and dead branches with <code>--strict</code> as a CI gate.
+                    <p class="cell-tag" data-i18n="wb.test.tag">迭代</p>
+                    <h3 data-i18n="wb.test.title">上线前先测</h3>
+                    <p data-i18n="wb.test.body">
+                        正反用例批量断言；lint 抓住 ReDoS 与死分支，<code>--strict</code> 做成 CI 门禁。
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="ok">✓</span> "2026-09-28"
@@ -147,11 +150,10 @@
                 </div>
 
                 <div class="cell cell--wide reveal">
-                    <p class="cell-tag" data-en="Native" data-zh="原生">Native</p>
-                    <h3 data-en="A desktop app, not a wrapper" data-zh="桌面应用，不是套壳">A desktop app, not a wrapper</h3>
-                    <p data-en="Every release ships <code>regexmate-gui</code> — a native desktop app (SwiftUI / WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation, lint findings and a live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron."
-                       data-zh="每个平台的发布包都带 <code>regexmate-gui</code>——原生桌面应用（SwiftUI / WinUI 3 / GTK4），边输入边求值：匹配直接高亮在样本文字里，旁有解释、lint 与实时铁路图。与 CLI 同一核心、进程内嵌——无服务、无 Electron。">
-                        Every release ships <code>regexmate-gui</code> — a native desktop app (SwiftUI / WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation, lint findings and a live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron.
+                    <p class="cell-tag" data-i18n="wb.native.tag">原生</p>
+                    <h3 data-i18n="wb.native.title">桌面应用，不是套壳</h3>
+                    <p data-i18n="wb.native.body">
+                        每个平台的发布包都带 <code>regexmate-gui</code>——原生桌面应用（SwiftUI / WinUI 3 / GTK4），边输入边求值：匹配直接高亮在样本文字里，旁有解释、lint 与实时铁路图。与 CLI 同一核心、进程内嵌——无服务、无 Electron。
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="dim">$</span> tar -tf regexmate-macos.tar.gz
@@ -162,25 +164,23 @@ lib/</div>
                 </div>
 
                 <div class="cell cell--wide reveal">
-                    <p class="cell-tag" data-en="Stays current" data-zh="保持最新">Stays current</p>
-                    <h3 data-en="Updates itself" data-zh="自己更新自己">Updates itself</h3>
-                    <p data-en="One command pulls the latest release, verifies the Ed25519-signed update manifest and the download's checksum, and swaps the install in place — while it runs."
-                       data-zh="一条命令拉取最新发布、验证 Ed25519 签名的更新清单与下载校验和、运行中原地换装。">
-                        One command pulls the latest release, verifies the Ed25519-signed update manifest and the download's checksum, and swaps the install in place — while it runs.
+                    <p class="cell-tag" data-i18n="wb.update.tag">保持最新</p>
+                    <h3 data-i18n="wb.update.title">自己更新自己</h3>
+                    <p data-i18n="wb.update.body">
+                        一条命令拉取最新发布、验证 Ed25519 签名的更新清单与下载校验和、运行中原地换装。
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="dim">$</span> regexmate update
-<span class="dim">Downloading regexmate-0.6.1-macos-arm64.tar.gz (signature and checksum verified) …</span>
-<span class="ok">Updated to v0.6.1.</span></div>
+<span class="dim">Downloading regexmate-macos-arm64.tar.gz (signature and checksum verified) …</span>
+<span class="ok">Updated.</span></div>
                     </div>
                 </div>
 
                 <div class="cell reveal">
-                    <p class="cell-tag" data-en="Discoverable" data-zh="可发现">Discoverable</p>
-                    <h3 data-en="Describes itself" data-zh="自我描述">Describes itself</h3>
-                    <p data-en="The contract is machine-readable from the binary — commands, flags, exit codes, MCP tools."
-                       data-zh="契约可从二进制直接机读——命令、旗标、退出码、MCP 工具。">
-                        The contract is machine-readable from the binary — commands, flags, exit codes, MCP tools.
+                    <p class="cell-tag" data-i18n="wb.discover.tag">可发现</p>
+                    <h3 data-i18n="wb.discover.title">自我描述</h3>
+                    <p data-i18n="wb.discover.body">
+                        契约可从二进制直接机读——命令、旗标、退出码、MCP 工具。
                     </p>
                     <div class="cell-visual">
 <div class="out"><span class="dim">$</span> regexmate schema
@@ -196,11 +196,10 @@ lib/</div>
     <section class="section" id="diagrams">
         <div class="container">
             <div class="reveal">
-                <p class="section-eyebrow" data-en="Diagrams" data-zh="图解">Diagrams</p>
-                <h2 class="section-title" data-en="See the pattern" data-zh="把正则画出来">See the pattern</h2>
-                <p class="section-lede" data-en="<code>graph</code> turns any pattern into a railroad diagram for specs and pull requests. This one is the tool's own output."
-                   data-zh="<code>graph</code> 把任意正则变成铁路图，用于规格文档和代码评审。这张就是工具自己的输出。">
-                    <code>graph</code> turns any pattern into a railroad diagram for specs and pull requests. This one is the tool's own output.
+                <p class="section-eyebrow" data-i18n="dg.eyebrow">图解</p>
+                <h2 class="section-title" data-i18n="dg.title">把正则画出来</h2>
+                <p class="section-lede" data-i18n="dg.lede">
+                    <code>graph</code> 把任意正则变成铁路图，用于规格文档和代码评审。这张就是工具自己的输出。
                 </p>
             </div>
             <figure class="showcase reveal">
@@ -214,15 +213,14 @@ lib/</div>
     <section class="section" id="agents">
         <div class="container">
             <div class="reveal">
-                <p class="section-eyebrow" data-en="Agents" data-zh="智能体">Agents</p>
-                <h2 class="section-title" data-en="Built for the tool loop" data-zh="为工具循环而生">Built for the tool loop</h2>
+                <p class="section-eyebrow" data-i18n="ag.eyebrow">智能体</p>
+                <h2 class="section-title" data-i18n="ag.title">为工具循环而生</h2>
             </div>
             <div class="agent-grid">
                 <div class="agent-col reveal">
                     <h3>MCP server <span style="font-size:0.6em;color:var(--ink-3);font-weight:500">· also on <a href="https://github.com/turinglambdaai/regexmate/blob/main/docs/agents-guide.md" style="color:var(--accent)">agents-guide</a></span></h3>
-                    <p data-en="Seven tools with input schemas, over stdio JSON-RPC. Add one block to your agent config — no glue code."
-                       data-zh="七个带输入 schema 的工具，走 stdio JSON-RPC。配置里加一段即可——零胶水代码。">
-                        Seven tools with input schemas, over stdio JSON-RPC. Add one block to your agent config — no glue code.
+                    <p data-i18n="ag.mcp.body">
+                        七个带输入 schema 的工具，走 stdio JSON-RPC。配置里加一段即可——零胶水代码。
                     </p>
 <div class="snippet"><code>{
   <span class="k">"mcpServers"</span>: {
@@ -232,19 +230,18 @@ lib/</div>
     }
   }
 }</code></div>
-                    <h3 class="mt" data-en="Exit codes that mean something" data-zh="有语义的退出码">Exit codes that mean something</h3>
+                    <h3 class="mt" data-i18n="ag.exit.title">有语义的退出码</h3>
                     <table class="exit-table">
-                        <tr><td><code>0</code></td><td data-en="ok — match found / pattern valid / replacement done" data-zh="成功——有匹配 / 语法有效 / 完成替换">ok — match found / pattern valid / replacement done</td></tr>
-                        <tr><td><code>1</code></td><td data-en="invalid regular expression" data-zh="正则表达式无效">invalid regular expression</td></tr>
-                        <tr><td><code>2</code></td><td data-en="usage error (bad flag, unknown command)" data-zh="用法错误（错误选项、未知命令）">usage error (bad flag, unknown command)</td></tr>
-                        <tr><td><code>3</code></td><td data-en="valid pattern, zero matches / zero replacements / failing cases" data-zh="语法有效但零匹配 / 零替换 / 用例失败">valid pattern, zero matches / zero replacements / failing cases</td></tr>
+                        <tr><td><code>0</code></td><td data-i18n="ag.exit.0">成功——有匹配 / 语法有效 / 完成替换</td></tr>
+                        <tr><td><code>1</code></td><td data-i18n="ag.exit.1">正则表达式无效</td></tr>
+                        <tr><td><code>2</code></td><td data-i18n="ag.exit.2">用法错误（错误选项、未知命令）</td></tr>
+                        <tr><td><code>3</code></td><td data-i18n="ag.exit.3">语法有效但零匹配 / 零替换 / 用例失败</td></tr>
                     </table>
                 </div>
                 <div class="agent-col reveal">
-                    <h3 data-en="Scriptable to the core" data-zh="脚本友好到骨子里">Scriptable to the core</h3>
-                    <p data-en="Text comes from an argument or stdin. <code>NO_COLOR</code> and <code>REGEXMATE_LANG</code> are honored; <code>--lang</code> switches output language."
-                       data-zh="文本可来自参数或 stdin。支持 <code>NO_COLOR</code> 与 <code>REGEXMATE_LANG</code>；<code>--lang</code> 切换输出语言。">
-                        Text comes from an argument or stdin. <code>NO_COLOR</code> and <code>REGEXMATE_LANG</code> are honored; <code>--lang</code> switches output language.
+                    <h3 data-i18n="ag.script.title">脚本友好到骨子里</h3>
+                    <p data-i18n="ag.script.body">
+                        文本可来自参数或 stdin。支持 <code>NO_COLOR</code> 与 <code>REGEXMATE_LANG</code>；<code>--lang</code> 切换输出语言。
                     </p>
 <div class="out"><span class="dim"># stdin in, JSON out — chain it anywhere</span>
 cat access.log | regexmate match <span class="ok">'ERROR \d+'</span> - --json
@@ -254,9 +251,8 @@ regexmate match <span class="ok">'ERROR'</span> <span class="ok">"$log"</span> -
 
 <span class="dim"># the contract describes itself</span>
 regexmate schema</div>
-                    <p class="agent-note" data-en="Spans are absolute and [start, end). Capture groups are 1-based; absent groups are null — never missing keys."
-                       data-zh="区间为绝对下标、[start, end) 半开。捕获组从 1 计数；缺席组是 null——绝不缺键。">
-                        Spans are absolute and [start, end). Capture groups are 1-based; absent groups are null — never missing keys.
+                    <p class="agent-note" data-i18n="ag.script.note">
+                        区间为绝对下标、[start, end) 半开。捕获组从 1 计数；缺席组是 null——绝不缺键。
                     </p>
                 </div>
             </div>
@@ -267,23 +263,23 @@ regexmate schema</div>
     <section class="section" id="install">
         <div class="container">
             <div class="reveal">
-                <p class="section-eyebrow" data-en="Install" data-zh="安装">Install</p>
-                <h2 class="section-title" data-en="Up and running in a minute" data-zh="一分钟跑起来">Up and running in a minute</h2>
+                <p class="section-eyebrow" data-i18n="in.eyebrow">安装</p>
+                <h2 class="section-title" data-i18n="in.title">一分钟跑起来</h2>
             </div>
             <div class="install-grid">
                 <div class="install-col reveal">
-                    <h3 data-en="Binary" data-zh="二进制">Binary</h3>
-                    <p data-en="Windows, Linux and macOS. Unzip and run — no runtime needed. Windows also gets a single-file <code>regexmate-standalone-*.exe</code>." data-zh="Windows、Linux、macOS。解压即用——免运行时。Windows 另有单文件 <code>regexmate-standalone-*.exe</code>。">Windows, Linux and macOS. Unzip and run — no runtime needed. Windows also gets a single-file <code>regexmate-standalone-*.exe</code>.</p>
-                    <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-en="Download" data-zh="下载">Download</a>
+                    <h3 data-i18n="in.binary.title">二进制</h3>
+                    <p data-i18n="in.binary.body">Windows、Linux、macOS。解压即用——免运行时。Windows 另有单文件 <code>regexmate-standalone-*.exe</code>。</p>
+                    <a class="btn btn-primary" href="https://github.com/turinglambdaai/regexmate/releases" data-i18n="in.binary.cta">下载</a>
                 </div>
                 <div class="install-col reveal">
                     <h3>Racket</h3>
-                    <p data-en="Already running Racket? Install straight from the repository." data-zh="已在用 Racket？直接从仓库安装。">Already running Racket? Install straight from the repository.</p>
+                    <p data-i18n="in.racket.body">已在用 Racket？直接从仓库安装。</p>
 <code class="code-pill">raco pkg install https://github.com/turinglambdaai/regexmate.git</code>
                 </div>
                 <div class="install-col reveal">
-                    <h3 data-en="Source" data-zh="源码">Source</h3>
-                    <p data-en="Clone, test, build your own binary. Three commands, Racket 9.x." data-zh="克隆、测试、构建自己的二进制。三条命令，Racket 9.x。">Clone, test, build your own binary. Three commands, Racket 9.x.</p>
+                    <h3 data-i18n="in.source.title">源码</h3>
+                    <p data-i18n="in.source.body">克隆、测试、构建自己的二进制。三条命令，Racket 9.x。</p>
 <code class="code-pill">racket run-tests.rkt
 raco exe -o regexmate main.rkt</code>
                 </div>
@@ -295,17 +291,17 @@ raco exe -o regexmate main.rkt</code>
     <section class="section" id="next">
         <div class="container">
             <div class="reveal">
-                <p class="section-eyebrow" data-en="What's next" data-zh="接下来">What's next</p>
-                <h2 class="section-title" data-en="On the bench" data-zh="工作台上">On the bench</h2>
+                <p class="section-eyebrow" data-i18n="nx.eyebrow">接下来</p>
+                <h2 class="section-title" data-i18n="nx.title">工作台上</h2>
             </div>
             <div class="next-rows">
                 <div class="next-row reveal">
-                    <span class="tag" data-en="next" data-zh="下一步">next</span>
-                    <span data-en="AUR PKGBUILD ready, awaiting an AUR account" data-zh="AUR PKGBUILD 已备好，待注册账号">AUR PKGBUILD ready, awaiting an AUR account</span>
+                    <span class="tag" data-i18n="nx.tag">下一步</span>
+                    <span data-i18n="nx.aur">AUR PKGBUILD 已备好，待注册账号</span>
                 </div>
                 <div class="next-row reveal">
-                    <span class="tag" data-en="next" data-zh="下一步">next</span>
-                    <span data-en="signed installers and notarization" data-zh="签名安装包与公证">signed installers and notarization</span>
+                    <span class="tag" data-i18n="nx.tag">下一步</span>
+                    <span data-i18n="nx.installers">签名安装包与公证</span>
                 </div>
             </div>
         </div>
@@ -324,12 +320,12 @@ raco exe -o regexmate main.rkt</code>
                     </svg>
                     RegexMate
                 </div>
-                <p class="footer-note" data-en="The regex workbench for humans and agents." data-zh="面向人与智能体的正则工作台。">The regex workbench for humans and agents.</p>
+                <p class="footer-note" data-i18n="ft.note">面向人与智能体的正则工作台。</p>
             </div>
             <div class="footer-links">
                 <a href="https://github.com/turinglambdaai/regexmate">GitHub</a>
-                <a href="https://github.com/turinglambdaai/regexmate/releases" data-en="Releases" data-zh="发布">Releases</a>
-                <a href="https://github.com/turinglambdaai/regexmate/blob/main/README.zh-CN.md" data-en="中文文档" data-zh="中文文档">中文文档</a>
+                <a href="https://github.com/turinglambdaai/regexmate/releases" data-i18n="ft.releases">发布</a>
+                <a href="https://github.com/turinglambdaai/regexmate/blob/main/README.zh-CN.md">中文文档</a>
                 <a href="https://jrtx.site">TuringLambdaAI</a>
             </div>
             <p class="footer-copy">MIT · © 2026 TuringLambdaAI</p>
@@ -343,9 +339,109 @@ raco exe -o regexmate main.rkt</code>
             document.documentElement.classList.add('js');
         }
 
+        // i18n dictionaries — the static markup is the zh-CN default
+        var zh = {
+            "meta.title": "RegexMate — 给人和智能体的正则工作台",
+            "meta.description": "一条 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、批量测试、风险分析。版本化 JSON 契约、MCP server、在线自更新。Windows / Linux / macOS 免安装二进制。",
+            "meta.og.title": "RegexMate — 给人和智能体的正则工作台",
+            "meta.og.description": "一条 CLI 包办所有正则工作：校验、匹配、解释、替换、绘图、测试、风险分析。版本化 JSON 契约、原生 MCP server、自更新。",
+            "nav.workbench": "工作台", "nav.diagrams": "图解", "nav.agents": "智能体", "nav.install": "安装",
+            "hero.title": "正则表达式，一眼看懂。",
+            "hero.sub": "一条安静的 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、测试、风险分析。对 agent 说 JSON，对你说人话，还会自己更新。",
+            "hero.download": "下载", "hero.agents": "接入你的智能体 →",
+            "hero.note.rewrite": "Rivet 重构进行中——当前 v1.x（CLI + GUI）继续可用、照常维护。",
+            "hero.note.runtime": "免装运行时",
+            "wb.eyebrow": "工作台", "wb.title": "七个动词，一套契约。",
+            "wb.lede": "所有命令共用同一套版本化 JSON——<code>schema</code>、<code>command</code>、<code>ok</code>——绝对区间、从 1 计数的捕获组。人类得到安静的输出，agent 得到结构，版本变更绝不悄悄破坏契约。",
+            "wb.contract.tag": "为智能体", "wb.contract.title": "是契约，不是屏幕刮取",
+            "wb.contract.body": "退出码有语义、错误保持单行、缺席组是 null 而非缺键。任何工具循环直接接入。",
+            "wb.explain.tag": "为人类", "wb.explain.title": "人话解释",
+            "wb.explain.body": "接手一个不敢信的正则？<code>explain</code> 逐段讲清楚——英文或中文。",
+            "wb.test.tag": "迭代", "wb.test.title": "上线前先测",
+            "wb.test.body": "正反用例批量断言；lint 抓住 ReDoS 与死分支，<code>--strict</code> 做成 CI 门禁。",
+            "wb.native.tag": "原生", "wb.native.title": "桌面应用，不是套壳",
+            "wb.native.body": "每个平台的发布包都带 <code>regexmate-gui</code>——原生桌面应用（SwiftUI / WinUI 3 / GTK4），边输入边求值：匹配直接高亮在样本文字里，旁有解释、lint 与实时铁路图。与 CLI 同一核心、进程内嵌——无服务、无 Electron。",
+            "wb.update.tag": "保持最新", "wb.update.title": "自己更新自己",
+            "wb.update.body": "一条命令拉取最新发布、验证 Ed25519 签名的更新清单与下载校验和、运行中原地换装。",
+            "wb.discover.tag": "可发现", "wb.discover.title": "自我描述",
+            "wb.discover.body": "契约可从二进制直接机读——命令、旗标、退出码、MCP 工具。",
+            "dg.eyebrow": "图解", "dg.title": "把正则画出来",
+            "dg.lede": "<code>graph</code> 把任意正则变成铁路图，用于规格文档和代码评审。这张就是工具自己的输出。",
+            "ag.eyebrow": "智能体", "ag.title": "为工具循环而生",
+            "ag.mcp.body": "七个带输入 schema 的工具，走 stdio JSON-RPC。配置里加一段即可——零胶水代码。",
+            "ag.exit.title": "有语义的退出码",
+            "ag.exit.0": "成功——有匹配 / 语法有效 / 完成替换",
+            "ag.exit.1": "正则表达式无效",
+            "ag.exit.2": "用法错误（错误选项、未知命令）",
+            "ag.exit.3": "语法有效但零匹配 / 零替换 / 用例失败",
+            "ag.script.title": "脚本友好到骨子里",
+            "ag.script.body": "文本可来自参数或 stdin。支持 <code>NO_COLOR</code> 与 <code>REGEXMATE_LANG</code>；<code>--lang</code> 切换输出语言。",
+            "ag.script.note": "区间为绝对下标、[start, end) 半开。捕获组从 1 计数；缺席组是 null——绝不缺键。",
+            "in.eyebrow": "安装", "in.title": "一分钟跑起来",
+            "in.binary.title": "二进制",
+            "in.binary.body": "Windows、Linux、macOS。解压即用——免运行时。Windows 另有单文件 <code>regexmate-standalone-*.exe</code>。",
+            "in.binary.cta": "下载",
+            "in.racket.body": "已在用 Racket？直接从仓库安装。",
+            "in.source.title": "源码",
+            "in.source.body": "克隆、测试、构建自己的二进制。三条命令，Racket 9.x。",
+            "nx.eyebrow": "接下来", "nx.title": "工作台上", "nx.tag": "下一步",
+            "nx.aur": "AUR PKGBUILD 已备好，待注册账号",
+            "nx.installers": "签名安装包与公证",
+            "ft.note": "面向人与智能体的正则工作台。", "ft.releases": "发布"
+        };
+        var en = {
+            "meta.title": "RegexMate — the regex workbench for humans and agents",
+            "meta.description": "Validate, match, explain, replace, graph, batch-test and lint regular expressions from one CLI — with a versioned JSON contract, an MCP server and online self-update. Standalone binaries for Windows, Linux and macOS.",
+            "meta.og.title": "RegexMate — the regex workbench for humans and agents",
+            "meta.og.description": "One CLI for every regex job: validate, match, explain, replace, graph, test, lint. Versioned JSON contract, native MCP server, self-update.",
+            "nav.workbench": "Workbench", "nav.diagrams": "Diagrams", "nav.agents": "Agents", "nav.install": "Install",
+            "hero.title": "Regular expressions, explained.",
+            "hero.sub": "One quiet CLI for every regex job — validate, match, explain, replace, graph, test, lint. It speaks JSON to your agents, plain English to you, and updates itself.",
+            "hero.download": "Download", "hero.agents": "Connect your agent →",
+            "hero.note.rewrite": "Rivet rewrite in progress — the current v1.x (CLI + GUI) stays available and maintained.",
+            "hero.note.runtime": "No runtime to install",
+            "wb.eyebrow": "The workbench", "wb.title": "Seven verbs. One contract.",
+            "wb.lede": "Every command speaks the same versioned JSON — <code>schema</code>, <code>command</code>, <code>ok</code> — with absolute spans and 1-based capture groups. Humans get quiet, readable output; agents get structure; nothing changes between releases without a version bump.",
+            "wb.contract.tag": "For agents", "wb.contract.title": "A contract, not a screenscape",
+            "wb.contract.body": "Exit codes mean something, errors are single-line, absent groups are null — never missing keys. Point any tool loop at it.",
+            "wb.explain.tag": "For humans", "wb.explain.title": "Explain, in plain language",
+            "wb.explain.body": "Inherited a pattern you don't trust? <code>explain</code> walks it part by part — in English or 中文.",
+            "wb.test.tag": "Iterate", "wb.test.title": "Test before you ship",
+            "wb.test.body": "Assert positives and negatives; lint catches ReDoS and dead branches with <code>--strict</code> as a CI gate.",
+            "wb.native.tag": "Native", "wb.native.title": "A desktop app, not a wrapper",
+            "wb.native.body": "Every release ships <code>regexmate-gui</code> — a native desktop app (SwiftUI / WinUI 3 / GTK4) that re-evaluates as you type: matches highlighted inside your sample text, explanation, lint findings and a live railroad diagram beside it. Same core as the CLI, embedded in the process — no server, no Electron.",
+            "wb.update.tag": "Stays current", "wb.update.title": "Updates itself",
+            "wb.update.body": "One command pulls the latest release, verifies the Ed25519-signed update manifest and the download's checksum, and swaps the install in place — while it runs.",
+            "wb.discover.tag": "Discoverable", "wb.discover.title": "Describes itself",
+            "wb.discover.body": "The contract is machine-readable from the binary — commands, flags, exit codes, MCP tools.",
+            "dg.eyebrow": "Diagrams", "dg.title": "See the pattern",
+            "dg.lede": "<code>graph</code> turns any pattern into a railroad diagram for specs and pull requests. This one is the tool's own output.",
+            "ag.eyebrow": "Agents", "ag.title": "Built for the tool loop",
+            "ag.mcp.body": "Seven tools with input schemas, over stdio JSON-RPC. Add one block to your agent config — no glue code.",
+            "ag.exit.title": "Exit codes that mean something",
+            "ag.exit.0": "ok — match found / pattern valid / replacement done",
+            "ag.exit.1": "invalid regular expression",
+            "ag.exit.2": "usage error (bad flag, unknown command)",
+            "ag.exit.3": "valid pattern, zero matches / zero replacements / failing cases",
+            "ag.script.title": "Scriptable to the core",
+            "ag.script.body": "Text comes from an argument or stdin. <code>NO_COLOR</code> and <code>REGEXMATE_LANG</code> are honored; <code>--lang</code> switches output language.",
+            "ag.script.note": "Spans are absolute and [start, end). Capture groups are 1-based; absent groups are null — never missing keys.",
+            "in.eyebrow": "Install", "in.title": "Up and running in a minute",
+            "in.binary.title": "Binary",
+            "in.binary.body": "Windows, Linux and macOS. Unzip and run — no runtime needed. Windows also gets a single-file <code>regexmate-standalone-*.exe</code>.",
+            "in.binary.cta": "Download",
+            "in.racket.body": "Already running Racket? Install straight from the repository.",
+            "in.source.title": "Source",
+            "in.source.body": "Clone, test, build your own binary. Three commands, Racket 9.x.",
+            "nx.eyebrow": "What's next", "nx.title": "On the bench", "nx.tag": "next",
+            "nx.aur": "AUR PKGBUILD ready, awaiting an AUR account",
+            "nx.installers": "signed installers and notarization",
+            "ft.note": "The regex workbench for humans and agents.", "ft.releases": "Releases"
+        };
         // language dropdown: unified family policy (explicit choice wins; otherwise browser locale)
         var LANGUAGE_OVERRIDE_KEY = 'regexmate-lang-override-v2';
         var LANGUAGE_LEGACY_KEYS = ['regexmate-lang', 'site-lang'];
+        var current, isZh;
 
         function readLanguageOverride() {
             try {
@@ -364,16 +460,26 @@ raco exe -o regexmate main.rkt</code>
             return String(locale).toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
         }
         function apply(lang) {
-            document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+            current = lang === 'en' ? en : zh;
+            isZh = lang === 'zh';
+            document.documentElement.lang = isZh ? 'zh-CN' : 'en';
             document.documentElement.setAttribute('data-language', lang);
-            var nodes = document.querySelectorAll('[data-en]');
+            // title and meta descriptions follow the language
+            document.title = current['meta.title'];
+            var metas = document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]');
+            for (var m = 0; m < metas.length; m++) {
+                var key = metas[m].getAttribute('name') === 'description' ? 'meta.description'
+                    : metas[m].getAttribute('property') === 'og:title' ? 'meta.og.title'
+                    : 'meta.og.description';
+                metas[m].setAttribute('content', current[key]);
+            }
+            var nodes = document.querySelectorAll('[data-i18n]');
             for (var i = 0; i < nodes.length; i++) {
-                var el = nodes[i];
-                var v = el.getAttribute(lang === 'zh' ? 'data-zh' : 'data-en');
-                if (v !== null) el.innerHTML = v;
+                var key = nodes[i].getAttribute('data-i18n');
+                if (current[key]) nodes[i].innerHTML = current[key];
             }
             var label = document.getElementById('current-lang-label');
-            if (label) label.textContent = lang === 'zh' ? '简体中文' : 'English';
+            if (label) label.textContent = isZh ? '简体中文' : 'English';
         }
         window.setLanguage = function (lang) {
             if (lang !== 'zh' && lang !== 'en') return;
@@ -386,11 +492,21 @@ raco exe -o regexmate main.rkt</code>
             if (!readLanguageOverride()) apply(detectBrowserLanguage());
         });
 
+        // theme toggle: flip data-theme and remember the choice
+        var themeBtn = document.getElementById('theme-btn');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', function () {
+                var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                try { localStorage.setItem('regexmate-theme', next); } catch (e) {}
+            });
+        }
+
         // reveal on scroll
         if ('IntersectionObserver' in window) {
             var io = new IntersectionObserver(function (entries) {
-                entries.forEach(function (en) {
-                    if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); }
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) { entry.target.classList.add('in'); io.unobserve(entry.target); }
                 });
             }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
             document.querySelectorAll('.reveal').forEach(function (el) { io.observe(el); });
