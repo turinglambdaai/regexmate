@@ -3,7 +3,7 @@
 ;; Runtime-facing version. Must stay in sync with `version` in info.rkt;
 ;; scripts/check-version.rkt enforces this on every tagged release.
 
-(define regexmate-version "0.6.2")
+(define regexmate-version "0.6.3")
 
 ;; Release identity duplicated from rivet.rktd. The packaged binary cannot
 ;; read the project file at runtime, so the updater embeds these constants.
@@ -23,8 +23,8 @@
 (define regexmate-update-public-key-b64
   "MCowBQYDK2VwAyEAclFzW5zuizRL++Fc4xotnEgtadOhGQ4MajblHrQNDXc=")
 
-;; Signed channel manifest (update-stable.json) location: the latest release
-;; of this repository on GitHub Releases.
+;; Signed channel manifest (update-manifest.json) location: the latest
+;; release of this repository on GitHub Releases.
 (define regexmate-default-update-base-url
   "https://github.com/turinglambdaai/regexmate/releases/latest/download")
 

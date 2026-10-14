@@ -15,8 +15,7 @@
 #
 # Emits <dist-dir>/update-manifest.json — a single signed channel manifest
 # carrying every platform artifact (and the Windows standalone exe) — plus
-# SHA256SUMS over all files. A byte-identical update-stable.json alias
-# keeps pre-0.6.1 clients self-updating. Env overrides: RELEASE_ASSET_BASE_URL,
+# SHA256SUMS over all files. Env overrides: RELEASE_ASSET_BASE_URL,
 # RIVET_UPDATE_KEY_ID.
 
 set -euo pipefail
@@ -123,10 +122,6 @@ RKT
 
 # rivet must be installed for the signer; the release job links a checkout
 racket "$SCRIPT"
-
-# byte-identical alias: pre-0.6.1 clients poll update-stable.json (the
-# signature covers the payload, not the file name)
-cp "$DIST/update-manifest.json" "$DIST/update-stable.json"
 
 # ---- checksums (paths relative to the dist dir, so --check works from it) ----
 ( cd "$DIST" && find . -maxdepth 1 -type f ! -name SHA256SUMS -print0 \

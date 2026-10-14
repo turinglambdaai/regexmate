@@ -328,7 +328,6 @@ jobs:
             artifacts/regexmate-*.sha256
             artifacts/regexmate-*-standalone.exe
             artifacts/update-manifest.json
-            artifacts/update-stable.json
             artifacts/SHA256SUMS
           body_path: release-body.md
           generate_release_notes: true

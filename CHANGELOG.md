@@ -3,6 +3,13 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.3] — 2026-10-14
+
+The `update-stable.json` byte-level alias retires: there is no pre-0.6.1
+installed base to keep self-updating, so releases publish the signed
+`update-manifest.json` only (the versionless installer download aliases
+are unaffected).
+
 ## [0.6.2] — 2026-10-14
 
 Engineering alignment with the family benchmark (taskly). No CLI behavior

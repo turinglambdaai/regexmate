@@ -2,7 +2,7 @@
 
 (define collection "regexmate")
 
-(define version "0.6.2")
+(define version "0.6.3")
 
 (define deps '("base" "pict-lib"))
 
