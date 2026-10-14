@@ -238,14 +238,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Checkout Rivet (same pin as the engine install — the signing
-          tools must match the engine that built the binaries)
-        uses: actions/checkout@v4
-        with:
-          repository: turinglambdaai/rivet
-          ref: v0.11.0
-          path: rivet
-
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
@@ -258,10 +250,13 @@ jobs:
           version: '9.3'
           distribution: full
 
-      - name: Install Rivet and crypto (manifest signer)
-        run: |
-          raco pkg install --auto --no-docs crypto
-          raco pkg install --auto --no-docs --link "$GITHUB_WORKSPACE/rivet/rivet" "$GITHUB_WORKSPACE/rivet/rivet-cli"
+      - name: Install pinned Rivet (catalog install — the signing tools match
+          the engine that built the binaries)
+        # Same install the build legs use: the catalog resolution auto-pulls
+        # the dependency closure (keel, crypto-lib, ...), which the previous
+        # checkout + --link install could not — the linked packages declare
+        # no deps, so raco setup died compiling rivet/keel.rkt.
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
 
       - name: Flatten artifact dirs
         run: |
