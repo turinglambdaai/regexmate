@@ -97,24 +97,32 @@ jobs:
             *)       raco distribute stage build/regexmate ;;
           esac
 
-      # The Linux GUI host links the static Racket CS runtime; switch to the
+      # The Linux GUI host links the static Racket CS runtime; set up the
       # embeddable build right before packaging so the CLI steps above keep
-      # using the full Racket. Both runtimes are 9.3 and share the user
-      # package scope, so the pinned Rivet install (and its dependency
-      # closure from the CLI leg) is already visible here — --skip-installed
-      # keeps the step idempotent and still installs fresh if that ever
-      # stops holding.
+      # using the full Racket. The embeddable build is minimal — its collects
+      # have no racket/draw — so `raco rivet package` must keep compiling the
+      # backend with the full runtime's raco (recorded below before the
+      # embeddable setup shadows it on PATH); rivet still links the
+      # embeddable artifacts via the RIVET_RACKET_* environment the action
+      # exports, and the shared 9.3 user scope keeps rivet + pict visible to
+      # the full runtime.
+      - name: Record the full runtime's raco (the embeddable setup replaces it on PATH)
+        if: runner.os == 'Linux'
+        run: echo "FULL_RACKET_RACO=$(command -v raco)" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
         uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@v0.11.0
-      - name: Ensure Rivet is visible to the embeddable runtime (pinned)
-        if: runner.os == 'Linux'
-        run: raco pkg install --auto --no-docs --skip-installed 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
 
       - name: Build native GUI and bundle into the archive (all platforms)
         shell: bash
         run: |
-          raco rivet package
+          # linux compiles with the full runtime (see the embeddable setup
+          # above) — the minimal embeddable collects lack racket/draw
+          if [ '${{ runner.os }}' = 'Linux' ]; then
+            "$FULL_RACKET_RACO" rivet package
+          else
+            raco rivet package
+          fi
           mkdir -p stage/gui
           if [ '${{ runner.os }}' = 'macOS' ]; then
             # the .app bundle ships whole — copying its contents would strip
