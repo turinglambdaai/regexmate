@@ -100,12 +100,14 @@ jobs:
       # The Linux GUI host links the static Racket CS runtime; set up the
       # embeddable build right before packaging so the CLI steps above keep
       # using the full Racket. The embeddable build is minimal — its collects
-      # have no racket/draw — so `raco rivet package` must keep compiling the
-      # backend with the full runtime's raco (recorded below before the
-      # embeddable setup shadows it on PATH); rivet still links the
-      # embeddable artifacts via the RIVET_RACKET_* environment the action
-      # exports, and the shared 9.3 user scope keeps rivet + pict visible to
-      # the full runtime.
+      # have no racket/draw and its raco has no `make` — so packaging must
+      # keep using the full runtime:rivet shells out to `raco make` /
+      # `raco ctool` via `find-executable-path "raco"`, so putting the full
+      # runtime's bin back in front of PATH (recorded before the embeddable
+      # setup shadows it) covers rivet's internal calls too; rivet still
+      # links the embeddable artifacts via the RIVET_RACKET_* environment
+      # the action exports, and the shared 9.3 user scope keeps rivet + pict
+      # visible to the full runtime.
       - name: Record the full runtime's raco (the embeddable setup replaces it on PATH)
         if: runner.os == 'Linux'
         run: echo "FULL_RACKET_RACO=$(command -v raco)" >> "$GITHUB_ENV"
@@ -119,10 +121,9 @@ jobs:
           # linux compiles with the full runtime (see the embeddable setup
           # above) — the minimal embeddable collects lack racket/draw
           if [ '${{ runner.os }}' = 'Linux' ]; then
-            "$FULL_RACKET_RACO" rivet package
-          else
-            raco rivet package
+            export PATH="$(dirname "$FULL_RACKET_RACO"):$PATH"
           fi
+          raco rivet package
           mkdir -p stage/gui
           if [ '${{ runner.os }}' = 'macOS' ]; then
             # the .app bundle ships whole — copying its contents would strip
@@ -307,6 +308,21 @@ jobs:
             cat artifacts/SHA256SUMS
             echo '```'
           } >> release-body.md
+
+      - name: Create stable download aliases
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd artifacts
+          # Stable, version-free names so releases/latest/download links
+          # survive the next tag. Byte-identical copies of the tagged
+          # assets, created after SHA256SUMS so it stays versioned-only;
+          # the publish globs below pick the aliases up unchanged.
+          cp "regexmate-${VERSION}-macos-arm64.tar.gz" "regexmate-macos-arm64.tar.gz"
+          cp "regexmate-${VERSION}-linux-x86_64.tar.gz" "regexmate-linux-x86_64.tar.gz"
+          cp "regexmate-${VERSION}-windows-x86_64.zip" "regexmate-windows-x86_64.zip"
+          cp "regexmate-${VERSION}-windows-x86_64-standalone.exe" \
+             "regexmate-windows-x86_64-standalone.exe"
+          ls -la
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
