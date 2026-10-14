@@ -30,6 +30,11 @@ changes.
   Windows host references `rivet-host.vcxproj` via `ProjectReference`,
   replacing hand-copied Rivet translation units — rivet adding a source
   file no longer needs a downstream change
+- **The Linux release leg rides rivet's own tooling end to end**: it
+  builds on `ubuntu-latest` (the rivet platform configures with
+  `gtk4>=4.10`), switches to the embeddable runtime through rivet's
+  pinned `setup-embed-racket` action and keeps the Rivet install
+  idempotent across the two Racket installations
 - The site drops the version pill (the homepage no longer states a
   version), aligns the palette with the family values, upgrades dark mode
   to the full scheme (manual toggle with `localStorage` persistence and a

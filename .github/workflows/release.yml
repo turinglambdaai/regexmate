@@ -97,17 +97,19 @@ jobs:
             *)       raco distribute stage build/regexmate ;;
           esac
 
-      # The Linux GUI host links the static Racket CS runtime; set up the
-      # embeddable build and re-resolve Rivet against it (the minimal build
-      # ships no packages, so this pulls cext-lib and the rest of the
-      # catalog closure into view) right before packaging so the CLI steps
-      # above keep using the full Racket.
+      # The Linux GUI host links the static Racket CS runtime; switch to the
+      # embeddable build right before packaging so the CLI steps above keep
+      # using the full Racket. Both runtimes are 9.3 and share the user
+      # package scope, so the pinned Rivet install (and its dependency
+      # closure from the CLI leg) is already visible here — --skip-installed
+      # keeps the step idempotent and still installs fresh if that ever
+      # stops holding.
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
         uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@v0.11.0
-      - name: Re-install Rivet against the embeddable runtime (pinned)
+      - name: Ensure Rivet is visible to the embeddable runtime (pinned)
         if: runner.os == 'Linux'
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
+        run: raco pkg install --auto --no-docs --skip-installed 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
 
       - name: Build native GUI and bundle into the archive (all platforms)
         shell: bash
