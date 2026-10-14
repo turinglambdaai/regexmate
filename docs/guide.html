@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RegexMate — 用户手册</title>
+    <meta name="description" content="RegexMate 用户手册：五分钟上手、每个命令的真实示例、MCP server 接入、版本化 JSON 契约与常见问题。面向开发者与 coding agents。">
+    <meta property="og:title" content="RegexMate — 用户手册">
+    <meta property="og:description" content="五分钟上手、每个命令的真实示例、MCP 接入、版本化 JSON 契约与常见问题。面向开发者与 coding agents。">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#faf7f2">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0A0B">
+    <script>
+      // anti-flash: resolve the theme before the stylesheet applies —
+      // localStorage wins when the user picked manually, else the OS setting
+      (function () {
+        var t = localStorage.getItem('regexmate-theme');
+        if (!t) t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        document.documentElement.dataset.theme = t;
+      })();
+    </script>
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="stylesheet" href="styles.css?v=4">
+</head>
+<body>
+
+    <!-- Nav -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="index.html">
+                <svg width="22" height="22" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+                    <rect width="512" height="512" rx="115" fill="#037A55"/>
+                    <circle cx="150" cy="200" r="42" fill="#FFFFFF"/>
+                    <path d="M 250 170 L 330 342 M 330 170 L 250 342" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                    <path d="M 366 342 L 420 170" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                </svg>
+                RegexMate
+            </a>
+            <div class="nav-links">
+                <a href="index.html#workbench" data-i18n="nav.workbench">工作台</a>
+                <a href="index.html#diagrams" data-i18n="nav.diagrams">图解</a>
+                <a href="index.html#agents" data-i18n="nav.agents">智能体</a>
+                <a href="index.html#install" data-i18n="nav.install">安装</a>
+                <a href="guide.html" data-i18n="nav.manual" style="color:var(--accent)">手册</a>
+                <a href="https://github.com/turinglambdaai/regexmate" class="nav-github">GitHub</a>
+                <div class="lang-dropdown-wrapper">
+                    <button class="lang-btn" type="button" onclick="void 0" aria-label="Switch language">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                        <span id="current-lang-label">简体中文</span>
+                    </button>
+                    <ul class="lang-menu">
+                        <li onclick="setLanguage('en')">English</li>
+                        <li onclick="setLanguage('zh')">简体中文</li>
+                    </ul>
+                </div>
+                <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle theme">◐</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="manual-hero">
+        <div class="container">
+            <p class="eyebrow" data-i18n="gd.eyebrow">用户手册</p>
+            <h1 data-i18n="gd.title">一条命令一个动词，示例即真相。</h1>
+            <p class="lead" data-i18n="gd.lead">五分钟上手、每个命令的真实输出、MCP 接入与版本化 JSON 契约——面向开发者与 coding agents。本页所有示例都由真实二进制产出。</p>
+        </div>
+    </header>
+
+    <!-- Two-column: TOC + content -->
+    <div class="manual-layout">
+
+        <aside class="manual-toc" id="toc">
+            <div class="manual-toc-group" data-i18n="gd.toc.start">上手</div>
+            <a href="#quickstart" data-i18n="gd.toc.quickstart">五分钟上手</a>
+            <div class="manual-toc-group" data-i18n="gd.toc.cmds">命令</div>
+            <a href="#validate">validate</a>
+            <a href="#match">match</a>
+            <a href="#explain">explain</a>
+            <a href="#replace">replace</a>
+            <a href="#graph">graph</a>
+            <a href="#test">test</a>
+            <a href="#lint">lint</a>
+            <a href="#cheatsheet" data-i18n="gd.toc.more">其余命令速查</a>
+            <div class="manual-toc-group" data-i18n="gd.toc.agents">智能体</div>
+            <a href="#mcp">MCP server</a>
+            <a href="#contract" data-i18n="gd.toc.contract">JSON 契约</a>
+            <div class="manual-toc-group">FAQ</div>
+            <a href="#faq-platforms" data-i18n="gd.toc.platforms">平台覆盖</a>
+            <a href="#faq-mcp" data-i18n="gd.toc.mcp">MCP 配置</a>
+            <a href="#faq-update" data-i18n="gd.toc.update">更新</a>
+            <a href="#faq-uninstall" data-i18n="gd.toc.uninstall">卸载</a>
+        </aside>
+
+        <main>
+
+            <!-- =================== Quick start =================== -->
+            <section class="manual-section" id="quickstart">
+                <h2 class="manual-h2"><span class="h2-emoji">🚀</span><span data-i18n="gd.qs.title">五分钟上手</span></h2>
+                <p data-i18n="gd.qs.p1">RegexMate 免安装、免运行时：下载、解压、运行。以下四步走完，你已经把它接进了你的工具链。</p>
+                <ol>
+                    <li data-i18n="gd.qs.s1"><strong>下载二进制。</strong>到 <a href="https://github.com/turinglambdaai/regexmate/releases/latest">Releases</a> 页取对应平台的包（macOS Apple Silicon / Windows x64 / Linux x64），解压即得 <code>regexmate</code> CLI——包里还带原生桌面应用，不需要可略过。详见 <a href="#faq-platforms">平台覆盖</a>。</li>
+                    <li data-i18n="gd.qs.s2"><strong>第一条 validate。</strong>确认一个正则写没写对——错误单行输出，还带修复提示：</li>
+                </ol>
+                <div class="out"><span class="prompt">$</span> regexmate validate '^\d{4}-\d{2}-\d{2}$'
+Pattern: ^\d{4}-\d{2}-\d{2}$
+✓ Valid syntax</div>
+                <ol start="3">
+                    <li data-i18n="gd.qs.s3"><strong>第一条 match。</strong>对文本（参数或 stdin）执行匹配，退出码语义化：</li>
+                </ol>
+                <div class="out"><span class="prompt">$</span> regexmate match '<span class="flag">\d+</span>' 'abc 123 def 456'
+Found 2 match(es):
+  at 4-7: "123"
+  at 12-15: "456"</div>
+                <ol start="4">
+                    <li data-i18n="gd.qs.s4"><strong>接进你的 agent。</strong>在 MCP 客户端配置里加一段 JSON，八个工具即刻可用（完整说明见 <a href="#mcp">MCP server</a>）：</li>
+                </ol>
+                <div class="out">{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"regexmate"</span>: { <span class="flag">"command"</span>: "regexmate", <span class="flag">"args"</span>: ["mcp"] }
+  }
+}</div>
+                <p data-i18n="gd.qs.note">就这些。人类直接读彩色输出，agent 加一个 <code>--json</code>——其余章节都是可选的。</p>
+            </section>
+
+            <!-- =================== validate =================== -->
+            <section class="manual-section" id="validate">
+                <h2 class="manual-h2"><span class="h2-emoji">✅</span><span>validate</span></h2>
+                <p data-i18n="gd.validate.p1">检查正则语法（Racket <code>pregexp</code> 方言）。语法错误时输出单行错误和一行 <code>Hint:</code> 修复建议——这是 validate 独有的。</p>
+                <div class="out"><span class="prompt">$</span> regexmate validate '[a-z'
+Pattern: [a-z
+✗ Invalid syntax: missing closing square bracket in pattern
+Hint: a character class opens with [ and must close with ] — e.g. [a-z0-9]</div>
+                <p data-i18n="gd.validate.p2">退出码：<code>0</code> 语法有效 · <code>1</code> 语法无效。加 <code>--json</code> 时错误对象同样携带 <code>error</code> 与 <code>hint</code> 键，agent 读 hint 再重试即可。</p>
+            </section>
+
+            <!-- =================== match =================== -->
+            <section class="manual-section" id="match">
+                <h2 class="manual-h2"><span class="h2-emoji">🔍</span><span>match</span></h2>
+                <p data-i18n="gd.match.p1">对文本执行匹配。文本来自第二个参数，或用 <code>-</code> 从 stdin 读——管道里随手就能接。</p>
+                <div class="out"><span class="comment"># stdin in, human out</span>
+<span class="prompt">$</span> echo 'ERROR 404' | regexmate match 'ERROR <span class="flag">\d+</span>' -
+Found 1 match(es):
+  at 0-9: "ERROR 404"</div>
+                <p data-i18n="gd.match.p2"><code>--json</code> 时输出结构化匹配：绝对区间 <code>[start, end)</code>、从 1 计数的捕获组。下面是 <code>match '(\w+)@(\w+)' 'mail a@b and c@d' --json</code> 的真实输出：</p>
+                <div class="out">{"command":"match","count":2,"matches":[{"end":8,"groups":[{"end":6,"index":1,"name":false,"start":5,"value":"a"},{"end":8,"index":2,"name":false,"start":7,"value":"b"}],"start":5,"value":"a@b"},{"end":16,"groups":[{"end":14,"index":1,"name":false,"start":13,"value":"c"},{"end":16,"index":2,"name":false,"start":15,"value":"d"}],"start":13,"value":"c@d"}],"ok":true,"pattern":"(\\w+)@(\\w+)","schema":"regexmate/v1","text":"mail a@b and c@d"}</div>
+                <p data-i18n="gd.match.p3">退出码：<code>0</code> 有匹配 · <code>3</code> 语法有效但零匹配 · <code>1</code> 正则无效。</p>
+            </section>
+
+            <!-- =================== explain =================== -->
+            <section class="manual-section" id="explain">
+                <h2 class="manual-h2"><span class="h2-emoji">💡</span><span>explain</span></h2>
+                <p data-i18n="gd.explain.p1">逐段解释一个正则——接手别人的正则时先跑一遍。默认英文，<code>--lang zh</code> 或环境变量 <code>REGEXMATE_LANG=zh</code> 切中文：</p>
+                <div class="out"><span class="prompt">$</span> regexmate explain '(?:\d{2,4}|[a-z]+)(?=x)'
+Pattern: (?:\d{2,4}|[a-z]+)(?=x)
+
+Components:
+  1. [group] (?:\d{2,4}|[a-z]+)  ← Non-capturing group (?:...): Digit (\d) × {2,4} | Character class: [a-z] × +
+  2. [lookaround] (?=x)  ← Positive lookahead (?=...): Literal: x
+
+<span class="comment"># --lang zh</span>
+<span class="prompt">$</span> regexmate explain '<span class="flag">\d+</span>' --lang zh
+正则表达式: \d+
+
+组成部分:
+  1. [quantifier] \d+  ← 数字 (\d) × +</div>
+            </section>
+
+            <!-- =================== replace =================== -->
+            <section class="manual-section" id="replace">
+                <h2 class="manual-h2"><span class="h2-emoji">🔁</span><span>replace</span></h2>
+                <p data-i18n="gd.replace.p1">替换并报告替换次数，替换文本里用 <code>\1</code>–<code>\9</code> 反向引用捕获组：</p>
+                <div class="out"><span class="prompt">$</span> regexmate replace '(\d{4})-(\d{2})-(\d{2})' '<span class="flag">\3/\2/\1</span>' 'due 2026-10-14 ok'
+Replaced 1 occurrence(s).
+Result: due 14/10/2026 ok</div>
+                <p data-i18n="gd.replace.p2">退出码：<code>0</code> 有替换 · <code>3</code> 语法有效但零替换 · <code>1</code> 正则无效。</p>
+            </section>
+
+            <!-- =================== graph =================== -->
+            <section class="manual-section" id="graph">
+                <h2 class="manual-h2"><span class="h2-emoji">🗺️</span><span>graph</span></h2>
+                <p data-i18n="gd.graph.p1">把正则渲染成铁路图 SVG，用于规格文档和代码评审。默认写 stdout，<code>-o FILE</code> 落盘：</p>
+                <div class="out"><span class="prompt">$</span> regexmate graph '<span class="flag">\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])</span>' -o date.svg
+SVG saved to: date.svg</div>
+                <p data-i18n="gd.graph.p2"><code>--json</code> 时 SVG 直接内嵌在 <code>svg</code> 键里；与 <code>-o</code> 同用时则报告 <code>output</code>（路径）和 <code>bytes</code>（大小）两个键。首页那张铁路图就是这个命令自己的输出。</p>
+            </section>
+
+            <!-- =================== test =================== -->
+            <section class="manual-section" id="test">
+                <h2 class="manual-h2"><span class="h2-emoji">🧪</span><span>test</span></h2>
+                <p data-i18n="gd.test.p1">批量断言：正反用例各来一遍，逐条给出证据。用例是 JSON——<code>text</code> 必填，<code>expect</code> 取 <code>match</code> / <code>no-match</code>，可选 <code>contains</code> 检查匹配内容。用例文件参数或 stdin（<code>-</code>）皆可：</p>
+                <div class="out"><span class="prompt">$</span> regexmate test '<span class="flag">\d{4}-\d{2}-\d{2}</span>' - &lt;&lt;'EOF'
+{"cases":[
+  {"text":"2026-09-28","expect":"match"},
+  {"text":"2026-13-01","expect":"match"},
+  {"text":"2026-9-28","expect":"match"}
+]}
+EOF
+  ✓ "2026-09-28"
+  ✓ "2026-13-01"
+  ✗ "2026-9-28" — expected a match but none was found
+Passed 2 of 3 case(s).<span class="comment">   # exit code 3</span></div>
+                <p data-i18n="gd.test.p2">这就是 agent 的 write → test → refine 循环：退出码 <code>0</code> 全部通过 · <code>3</code> 有用例失败（JSON 输出里逐条带 <code>reason</code>）· <code>1</code> 正则本身无效。把通过的 JSON 输出留作改动证据。</p>
+            </section>
+
+            <!-- =================== lint =================== -->
+            <section class="manual-section" id="lint">
+                <h2 class="manual-h2"><span class="h2-emoji">🔬</span><span>lint</span></h2>
+                <p data-i18n="gd.lint.p1">确定性静态分析，抓 ReDoS 与死分支。不加 <code>--strict</code> 时只报告、退出码仍为 <code>0</code>：</p>
+                <div class="out"><span class="prompt">$</span> regexmate lint '(a+)+$'
+1 finding(s):
+  [warning] nested-quantifier at 0: nested quantifiers over a group can backtrack catastrophically on non-matching input</div>
+                <p data-i18n="gd.lint.p2"><code>--strict</code> 把任何发现变成退出码 <code>3</code>——CI 门禁就靠它。规则一览：</p>
+                <table class="syntax-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="gd.lint.th1">规则</th>
+                            <th data-i18n="gd.lint.th2">含义</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>nested-quantifier</code></td><td data-i18n="gd.lint.r1">组上再叠无界量词——灾难性回溯（ReDoS）风险</td></tr>
+                        <tr><td><code>quantified-assertion</code></td><td data-i18n="gd.lint.r2">环视/锚点上的量词无效果或掩盖 bug</td></tr>
+                        <tr><td><code>empty-branch</code></td><td data-i18n="gd.lint.r3">空分支匹配一切——通常是 bug</td></tr>
+                        <tr><td><code>duplicate-branch</code></td><td data-i18n="gd.lint.r4">同一分支出现两次</td></tr>
+                        <tr><td><code>shadowed-branch</code></td><td data-i18n="gd.lint.r5">前面的分支永远命中，后面的分支不可达——调整顺序</td></tr>
+                        <tr><td><code>portability</code></td><td data-i18n="gd.lint.r6">该构造在 Racket 之外行为不同（原子组、内嵌旗标、POSIX/unicode 类、反向引用）</td></tr>
+                        <tr><td><code>redundant-atomic</code></td><td data-i18n="gd.lint.r7">单元素上的原子组不起作用</td></tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- =================== cheatsheet =================== -->
+            <section class="manual-section" id="cheatsheet">
+                <h2 class="manual-h2"><span class="h2-emoji">🗂️</span><span data-i18n="gd.cheat.title">其余命令速查</span></h2>
+                <table class="syntax-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="gd.cheat.th1">命令</th>
+                            <th data-i18n="gd.cheat.th2">作用</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>cookbook [id|topic]</code></td><td data-i18n="gd.cheat.c1">23 个带讲解的入门配方（<code>cookbook date-iso</code> 看单条；<code>cookbook contact</code> 按主题）</td></tr>
+                        <tr><td><code>schema</code></td><td data-i18n="gd.cheat.c2">打印机器可读契约：命令、旗标、退出码、MCP 工具</td></tr>
+                        <tr><td><code>completions &lt;shell&gt;</code></td><td data-i18n="gd.cheat.c3">输出 shell 补全脚本（<code>bash|zsh|pwsh</code>）</td></tr>
+                        <tr><td><code>update [--check]</code></td><td data-i18n="gd.cheat.c4">自更新（见 <a href="#faq-update">FAQ·更新</a>）</td></tr>
+                    </tbody>
+                </table>
+                <p data-i18n="gd.cheat.note">通用旗标：<code>--json</code> 结构化输出 · <code>--lang en|zh</code> 输出语言 · <code>NO_COLOR</code> 关闭 ANSI 高亮。用 <code>regexmate --help</code> 看全表。</p>
+            </section>
+
+            <!-- =================== MCP =================== -->
+            <section class="manual-section" id="mcp">
+                <h2 class="manual-h2"><span class="h2-emoji">🤖</span><span>MCP server</span></h2>
+                <p data-i18n="gd.mcp.p1"><code>regexmate mcp</code> 启动 stdio 上的 JSON-RPC 2.0（换行分隔，协议版本 <code>2024-11-05</code>）MCP server。八个工具，各带输入 schema，可通过 <code>tools/list</code> 发现：</p>
+                <div class="out">regexmate_validate · regexmate_match · regexmate_explain · regexmate_replace
+regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
+                <p data-i18n="gd.mcp.p2">Claude Code、Codex、Cursor 等任何支持 stdio MCP 的客户端都认这一段配置：</p>
+                <div class="out">{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"regexmate"</span>: { <span class="flag">"command"</span>: "regexmate", <span class="flag">"args"</span>: ["mcp"] }
+  }
+}</div>
+                <p data-i18n="gd.mcp.p3">给 agent 的完整工作流（write → validate → test → lint → ship 循环与实例）见仓库里的 <a href="https://github.com/turinglambdaai/regexmate/blob/main/docs/agents-guide.md">agents-guide.md</a>。</p>
+            </section>
+
+            <!-- =================== contract =================== -->
+            <section class="manual-section" id="contract">
+                <h2 class="manual-h2"><span class="h2-emoji">📜</span><span data-i18n="gd.contract.title">versioned JSON contract</span></h2>
+                <p data-i18n="gd.contract.p1">每个命令的 <code>--json</code> 输出都是单行信封，稳定键 <code>schema</code>（恒为 <code>regexmate/v1</code>）、<code>command</code>、<code>ok</code> 打头。规则：</p>
+                <ul>
+                    <li data-i18n="gd.contract.r1">区间是绝对下标、<code>[start, end)</code> 半开；捕获组从 1 计数。</li>
+                    <li data-i18n="gd.contract.r2">键永不缺席：未命名组 <code>"name":false</code>；缺席的组 <code>value/start/end</code> 用 <code>false</code> 占位。</li>
+                    <li data-i18n="gd.contract.r3">错误是单行 <code>error</code> 字符串（无内嵌换行）；validate 的错误附 <code>hint</code> 修复建议。</li>
+                    <li data-i18n="gd.contract.r4"><code>graph --json</code> 内嵌 <code>svg</code>；与 <code>-o</code> 同用时报告 <code>output</code> 与 <code>bytes</code>。</li>
+                    <li data-i18n="gd.contract.r5">契约本身机读：<code>regexmate schema</code>。破坏性变更必须先升 schema 版本，绝不悄悄改。</li>
+                </ul>
+                <p data-i18n="gd.contract.p2">退出码四档，语义从不撒谎：</p>
+                <table class="syntax-table">
+                    <thead>
+                        <tr><th data-i18n="gd.contract.th1">退出码</th><th data-i18n="gd.contract.th2">含义</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>0</code></td><td data-i18n="gd.contract.e0">成功——有匹配 / 语法有效 / 完成替换 / 用例全过</td></tr>
+                        <tr><td><code>1</code></td><td data-i18n="gd.contract.e1">正则表达式无效</td></tr>
+                        <tr><td><code>2</code></td><td data-i18n="gd.contract.e2">用法错误（错误选项、未知命令）</td></tr>
+                        <tr><td><code>3</code></td><td data-i18n="gd.contract.e3">语法有效但零匹配 / 零替换 / 用例失败 / lint --strict 有发现</td></tr>
+                    </tbody>
+                </table>
+                <p data-i18n="gd.contract.p3">正则方言是 Racket <code>pregexp</code>：支持环视、原子组、内嵌旗标、POSIX/Unicode 类、反向引用；不支持命名组 <code>(?&lt;name&gt;…)</code>、<code>\A</code>/<code>\z</code>、<code>\x41</code>——validate 会明确拒绝。</p>
+            </section>
+
+            <!-- =================== FAQ: platforms =================== -->
+            <section class="manual-section" id="faq-platforms">
+                <h2 class="manual-h2"><span class="h2-emoji">🖥️</span><span data-i18n="gd.faq.plat.title">FAQ · 平台覆盖</span></h2>
+                <p data-i18n="gd.faq.plat.p1">每个 release 的 CLI 三平台都在发，但架构覆盖现状如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：</p>
+                <table class="syntax-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="gd.faq.plat.th1">资产</th>
+                            <th data-i18n="gd.faq.plat.th2">平台</th>
+                            <th data-i18n="gd.faq.plat.th3">内容</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>regexmate-&lt;版本&gt;-macos-arm64.tar.gz</code></td><td data-i18n="gd.faq.plat.p4">macOS 14+（仅 Apple Silicon）</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-windows-x86_64.zip</code></td><td>Windows 10+ x64</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-windows-x86_64-standalone.exe</code></td><td>Windows 10+ x64</td><td data-i18n="gd.faq.plat.p5">仅 CLI 的单文件</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-linux-x86_64.tar.gz</code></td><td data-i18n="gd.faq.plat.p7">Linux x64（GUI 需 GTK4）</td><td>CLI + GUI</td></tr>
+                    </tbody>
+                </table>
+                <p data-i18n="gd.faq.plat.p6">每个资产都有同名 <code>.sha256</code> 边车和汇总的 <code>SHA256SUMS</code>。macOS 包为 ad-hoc 签名：首次打开 GUI 需右键 → 打开。</p>
+            </section>
+
+            <!-- =================== FAQ: MCP config =================== -->
+            <section class="manual-section" id="faq-mcp">
+                <h2 class="manual-h2"><span class="h2-emoji">🔌</span><span data-i18n="gd.faq.mcp.title">FAQ · MCP 配置</span></h2>
+                <p data-i18n="gd.faq.mcp.p1">前提只有一个：<code>regexmate</code> 可执行文件在 PATH 里（不在的话把 <code>command</code> 写成绝对路径）。把这段放进客户端的 MCP 配置：</p>
+                <div class="out">{
+  <span class="flag">"mcpServers"</span>: {
+    <span class="flag">"regexmate"</span>: { <span class="flag">"command"</span>: "regexmate", <span class="flag">"args"</span>: ["mcp"] }
+  }
+}</div>
+                <p data-i18n="gd.faq.mcp.p2">配置文件位置随客户端而异（Claude Code / Codex / Cursor 各有 <code>mcpServers</code> 段或等价界面）；保存后重启会话，用 <code>tools/list</code> 应能看到八个 <code>regexmate_*</code> 工具。</p>
+            </section>
+
+            <!-- =================== FAQ: update =================== -->
+            <section class="manual-section" id="faq-update">
+                <h2 class="manual-h2"><span class="h2-emoji">⬆️</span><span data-i18n="gd.faq.update.title">FAQ · 更新</span></h2>
+                <p data-i18n="gd.faq.update.p1"><strong>应用内自更新</strong>（推荐）：先 <code>regexmate update --check</code> 探一眼，再 <code>regexmate update</code>。更新流程会验证 Ed25519 签名的更新清单（内嵌公钥，key id <code>regexmate-2026-10</code>）、核对下载的 SHA-256 与大小，然后把运行中的二进制原地换装——更新完 <code>regexmate --version</code> 确认；GUI 在同一包里，重启即可。</p>
+                <p data-i18n="gd.faq.update.p2"><strong>手动更新</strong>：从 <a href="https://github.com/turinglambdaai/regexmate/releases/latest">Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。</p>
+            </section>
+
+            <!-- =================== FAQ: uninstall =================== -->
+            <section class="manual-section" id="faq-uninstall">
+                <h2 class="manual-h2"><span class="h2-emoji">🗑️</span><span data-i18n="gd.faq.un.title">FAQ · 卸载</span></h2>
+                <p data-i18n="gd.faq.un.p1">RegexMate 免安装：没有安装器、不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。</p>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-inner">
+            <div>
+                <div class="brand brand-footer">
+                    <svg width="16" height="16" viewBox="0 0 512 512" fill="none" aria-hidden="true">
+                        <rect width="512" height="512" rx="115" fill="#037A55"/>
+                        <circle cx="150" cy="200" r="42" fill="#FFFFFF"/>
+                        <path d="M 250 170 L 330 342 M 330 170 L 250 342" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                        <path d="M 366 342 L 420 170" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round"/>
+                    </svg>
+                    RegexMate
+                </div>
+                <p class="footer-note" data-i18n="ft.note">面向人与智能体的正则工作台。</p>
+            </div>
+            <div class="footer-links">
+                <a href="index.html" data-i18n="ft.home">首页</a>
+                <a href="https://github.com/turinglambdaai/regexmate">GitHub</a>
+                <a href="https://github.com/turinglambdaai/regexmate/releases" data-i18n="ft.releases">发布</a>
+                <a href="https://github.com/turinglambdaai/regexmate/blob/main/CHANGELOG.md" data-i18n="ft.changelog">更新日志</a>
+            </div>
+            <p class="footer-copy">MIT · © 2026 TuringLambdaAI</p>
+        </div>
+    </footer>
+
+    <script>
+    (function () {
+        // i18n dictionaries — the static markup is the zh-CN default
+        var zh = {
+            "meta.title": "RegexMate — 用户手册",
+            "meta.description": "RegexMate 用户手册：五分钟上手、每个命令的真实示例、MCP server 接入、版本化 JSON 契约与常见问题。面向开发者与 coding agents。",
+            "meta.og.title": "RegexMate — 用户手册",
+            "meta.og.description": "五分钟上手、每个命令的真实示例、MCP 接入、版本化 JSON 契约与常见问题。面向开发者与 coding agents。",
+            "nav.workbench": "工作台", "nav.diagrams": "图解", "nav.agents": "智能体", "nav.install": "安装", "nav.manual": "手册",
+            "gd.eyebrow": "用户手册",
+            "gd.title": "一条命令一个动词，示例即真相。",
+            "gd.lead": "五分钟上手、每个命令的真实输出、MCP 接入与版本化 JSON 契约——面向开发者与 coding agents。本页所有示例都由真实二进制产出。",
+            "gd.toc.start": "上手", "gd.toc.quickstart": "五分钟上手", "gd.toc.cmds": "命令", "gd.toc.more": "其余命令速查",
+            "gd.toc.agents": "智能体", "gd.toc.contract": "JSON 契约",
+            "gd.toc.platforms": "平台覆盖", "gd.toc.mcp": "MCP 配置", "gd.toc.update": "更新", "gd.toc.uninstall": "卸载",
+            "gd.qs.title": "五分钟上手",
+            "gd.qs.p1": "RegexMate 免安装、免运行时：下载、解压、运行。以下四步走完，你已经把它接进了你的工具链。",
+            "gd.qs.s1": "<strong>下载二进制。</strong>到 <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a> 页取对应平台的包（macOS Apple Silicon / Windows x64 / Linux x64），解压即得 <code>regexmate</code> CLI——包里还带原生桌面应用，不需要可略过。详见 <a href='#faq-platforms'>平台覆盖</a>。",
+            "gd.qs.s2": "<strong>第一条 validate。</strong>确认一个正则写没写对——错误单行输出，还带修复提示：",
+            "gd.qs.s3": "<strong>第一条 match。</strong>对文本（参数或 stdin）执行匹配，退出码语义化：",
+            "gd.qs.s4": "<strong>接进你的 agent。</strong>在 MCP 客户端配置里加一段 JSON，八个工具即刻可用（完整说明见 <a href='#mcp'>MCP server</a>）：",
+            "gd.qs.note": "就这些。人类直接读彩色输出，agent 加一个 <code>--json</code>——其余章节都是可选的。",
+            "gd.validate.p1": "检查正则语法（Racket <code>pregexp</code> 方言）。语法错误时输出单行错误和一行 <code>Hint:</code> 修复建议——这是 validate 独有的。",
+            "gd.validate.p2": "退出码：<code>0</code> 语法有效 · <code>1</code> 语法无效。加 <code>--json</code> 时错误对象同样携带 <code>error</code> 与 <code>hint</code> 键，agent 读 hint 再重试即可。",
+            "gd.match.p1": "对文本执行匹配。文本来自第二个参数，或用 <code>-</code> 从 stdin 读——管道里随手就能接。",
+            "gd.match.p2": "<code>--json</code> 时输出结构化匹配：绝对区间 <code>[start, end)</code>、从 1 计数的捕获组。下面是 <code>match '(\\w+)@(\\w+)' 'mail a@b and c@d' --json</code> 的真实输出：",
+            "gd.match.p3": "退出码：<code>0</code> 有匹配 · <code>3</code> 语法有效但零匹配 · <code>1</code> 正则无效。",
+            "gd.explain.p1": "逐段解释一个正则——接手别人的正则时先跑一遍。默认英文，<code>--lang zh</code> 或环境变量 <code>REGEXMATE_LANG=zh</code> 切中文：",
+            "gd.replace.p1": "替换并报告替换次数，替换文本里用 <code>\\1</code>–<code>\\9</code> 反向引用捕获组：",
+            "gd.replace.p2": "退出码：<code>0</code> 有替换 · <code>3</code> 语法有效但零替换 · <code>1</code> 正则无效。",
+            "gd.graph.p1": "把正则渲染成铁路图 SVG，用于规格文档和代码评审。默认写 stdout，<code>-o FILE</code> 落盘：",
+            "gd.graph.p2": "<code>--json</code> 时 SVG 直接内嵌在 <code>svg</code> 键里；与 <code>-o</code> 同用时则报告 <code>output</code>（路径）和 <code>bytes</code>（大小）两个键。首页那张铁路图就是这个命令自己的输出。",
+            "gd.test.p1": "批量断言：正反用例各来一遍，逐条给出证据。用例是 JSON——<code>text</code> 必填，<code>expect</code> 取 <code>match</code> / <code>no-match</code>，可选 <code>contains</code> 检查匹配内容。用例文件参数或 stdin（<code>-</code>）皆可：",
+            "gd.test.p2": "这就是 agent 的 write → test → refine 循环：退出码 <code>0</code> 全部通过 · <code>3</code> 有用例失败（JSON 输出里逐条带 <code>reason</code>）· <code>1</code> 正则本身无效。把通过的 JSON 输出留作改动证据。",
+            "gd.lint.p1": "确定性静态分析，抓 ReDoS 与死分支。不加 <code>--strict</code> 时只报告、退出码仍为 <code>0</code>：",
+            "gd.lint.p2": "<code>--strict</code> 把任何发现变成退出码 <code>3</code>——CI 门禁就靠它。规则一览：",
+            "gd.lint.th1": "规则", "gd.lint.th2": "含义",
+            "gd.lint.r1": "组上再叠无界量词——灾难性回溯（ReDoS）风险",
+            "gd.lint.r2": "环视/锚点上的量词无效果或掩盖 bug",
+            "gd.lint.r3": "空分支匹配一切——通常是 bug",
+            "gd.lint.r4": "同一分支出现两次",
+            "gd.lint.r5": "前面的分支永远命中，后面的分支不可达——调整顺序",
+            "gd.lint.r6": "该构造在 Racket 之外行为不同（原子组、内嵌旗标、POSIX/unicode 类、反向引用）",
+            "gd.lint.r7": "单元素上的原子组不起作用",
+            "gd.cheat.title": "其余命令速查",
+            "gd.cheat.th1": "命令", "gd.cheat.th2": "作用",
+            "gd.cheat.c1": "23 个带讲解的入门配方（<code>cookbook date-iso</code> 看单条；<code>cookbook contact</code> 按主题）",
+            "gd.cheat.c2": "打印机器可读契约：命令、旗标、退出码、MCP 工具",
+            "gd.cheat.c3": "输出 shell 补全脚本（<code>bash|zsh|pwsh</code>）",
+            "gd.cheat.c4": "自更新（见 <a href='#faq-update'>FAQ·更新</a>）",
+            "gd.cheat.note": "通用旗标：<code>--json</code> 结构化输出 · <code>--lang en|zh</code> 输出语言 · <code>NO_COLOR</code> 关闭 ANSI 高亮。用 <code>regexmate --help</code> 看全表。",
+            "gd.mcp.p1": "<code>regexmate mcp</code> 启动 stdio 上的 JSON-RPC 2.0（换行分隔，协议版本 <code>2024-11-05</code>）MCP server。八个工具，各带输入 schema，可通过 <code>tools/list</code> 发现：",
+            "gd.mcp.p2": "Claude Code、Codex、Cursor 等任何支持 stdio MCP 的客户端都认这一段配置：",
+            "gd.mcp.p3": "给 agent 的完整工作流（write → validate → test → lint → ship 循环与实例）见仓库里的 <a href='https://github.com/turinglambdaai/regexmate/blob/main/docs/agents-guide.md'>agents-guide.md</a>。",
+            "gd.contract.title": "versioned JSON contract",
+            "gd.contract.p1": "每个命令的 <code>--json</code> 输出都是单行信封，稳定键 <code>schema</code>（恒为 <code>regexmate/v1</code>）、<code>command</code>、<code>ok</code> 打头。规则：",
+            "gd.contract.r1": "区间是绝对下标、<code>[start, end)</code> 半开；捕获组从 1 计数。",
+            "gd.contract.r2": "键永不缺席：未命名组 <code>\"name\":false</code>；缺席的组 <code>value/start/end</code> 用 <code>false</code> 占位。",
+            "gd.contract.r3": "错误是单行 <code>error</code> 字符串（无内嵌换行）；validate 的错误附 <code>hint</code> 修复建议。",
+            "gd.contract.r4": "<code>graph --json</code> 内嵌 <code>svg</code>；与 <code>-o</code> 同用时报告 <code>output</code> 与 <code>bytes</code>。",
+            "gd.contract.r5": "契约本身机读：<code>regexmate schema</code>。破坏性变更必须先升 schema 版本，绝不悄悄改。",
+            "gd.contract.p2": "退出码四档，语义从不撒谎：",
+            "gd.contract.th1": "退出码", "gd.contract.th2": "含义",
+            "gd.contract.e0": "成功——有匹配 / 语法有效 / 完成替换 / 用例全过",
+            "gd.contract.e1": "正则表达式无效",
+            "gd.contract.e2": "用法错误（错误选项、未知命令）",
+            "gd.contract.e3": "语法有效但零匹配 / 零替换 / 用例失败 / lint --strict 有发现",
+            "gd.contract.p3": "正则方言是 Racket <code>pregexp</code>：支持环视、原子组、内嵌旗标、POSIX/Unicode 类、反向引用；不支持命名组 <code>(?&lt;name&gt;…)</code>、<code>\\A</code>/<code>\\z</code>、<code>\\x41</code>——validate 会明确拒绝。",
+            "gd.faq.plat.title": "FAQ · 平台覆盖",
+            "gd.faq.plat.p1": "每个 release 的 CLI 三平台都在发，但架构覆盖现状如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：",
+            "gd.faq.plat.th1": "资产", "gd.faq.plat.th2": "平台", "gd.faq.plat.th3": "内容",
+            "gd.faq.plat.p4": "macOS 14+（仅 Apple Silicon）",
+            "gd.faq.plat.p5": "仅 CLI 的单文件",
+            "gd.faq.plat.p6": "每个资产都有同名 <code>.sha256</code> 边车和汇总的 <code>SHA256SUMS</code>。macOS 包为 ad-hoc 签名：首次打开 GUI 需右键 → 打开。",
+            "gd.faq.mcp.title": "FAQ · MCP 配置",
+            "gd.faq.mcp.p1": "前提只有一个：<code>regexmate</code> 可执行文件在 PATH 里（不在的话把 <code>command</code> 写成绝对路径）。把这段放进客户端的 MCP 配置：",
+            "gd.faq.mcp.p2": "配置文件位置随客户端而异（Claude Code / Codex / Cursor 各有 <code>mcpServers</code> 段或等价界面）；保存后重启会话，用 <code>tools/list</code> 应能看到八个 <code>regexmate_*</code> 工具。",
+            "gd.faq.update.title": "FAQ · 更新",
+            "gd.faq.update.p1": "<strong>应用内自更新</strong>（推荐）：先 <code>regexmate update --check</code> 探一眼，再 <code>regexmate update</code>。更新流程会验证 Ed25519 签名的更新清单（内嵌公钥，key id <code>regexmate-2026-10</code>）、核对下载的 SHA-256 与大小，然后把运行中的二进制原地换装——更新完 <code>regexmate --version</code> 确认；GUI 在同一包里，重启即可。",
+            "gd.faq.update.p2": "<strong>手动更新</strong>：从 <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。",
+            "gd.faq.un.title": "FAQ · 卸载",
+            "gd.faq.un.p1": "RegexMate 免安装：没有安装器、不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。",
+            "ft.note": "面向人与智能体的正则工作台。", "ft.home": "首页", "ft.releases": "发布", "ft.changelog": "更新日志"
+        };
+        var en = {
+            "meta.title": "RegexMate — User Manual",
+            "meta.description": "The RegexMate user manual: a five-minute start, real examples for every command, MCP server setup, the versioned JSON contract and FAQ. For developers and coding agents.",
+            "meta.og.title": "RegexMate — User Manual",
+            "meta.og.description": "A five-minute start, real examples for every command, MCP setup, the versioned JSON contract and FAQ. For developers and coding agents.",
+            "nav.workbench": "Workbench", "nav.diagrams": "Diagrams", "nav.agents": "Agents", "nav.install": "Install", "nav.manual": "Manual",
+            "gd.eyebrow": "User Manual",
+            "gd.title": "One command, one verb. Examples are the truth.",
+            "gd.lead": "A five-minute start, real output for every command, MCP setup and the versioned JSON contract — for developers and coding agents. Every example on this page was produced by the real binary.",
+            "gd.toc.start": "Get started", "gd.toc.quickstart": "Five-minute start", "gd.toc.cmds": "Commands", "gd.toc.more": "The rest, briefly",
+            "gd.toc.agents": "Agents", "gd.toc.contract": "JSON contract",
+            "gd.toc.platforms": "Platforms", "gd.toc.mcp": "MCP config", "gd.toc.update": "Updating", "gd.toc.uninstall": "Uninstall",
+            "gd.qs.title": "Five-minute start",
+            "gd.qs.p1": "RegexMate needs no install and no runtime: download, unpack, run. Four steps and it is wired into your toolchain.",
+            "gd.qs.s1": "<strong>Download the binary.</strong> Grab the archive for your platform (macOS Apple Silicon / Windows x64 / Linux x64) from the <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a> page and unpack it — you get the <code>regexmate</code> CLI, plus the native desktop app you can ignore. See <a href='#faq-platforms'>platforms</a>.",
+            "gd.qs.s2": "<strong>Your first validate.</strong> Check that a pattern is well-formed — errors are one line and come with a repair hint:",
+            "gd.qs.s3": "<strong>Your first match.</strong> Run a pattern against text (an argument or stdin); exit codes mean something:",
+            "gd.qs.s4": "<strong>Wire in your agent.</strong> Add one JSON block to your MCP client config and eight tools appear (details under <a href='#mcp'>MCP server</a>):",
+            "gd.qs.note": "That is all. Humans read the colored output, agents add <code>--json</code> — everything else on this page is optional.",
+            "gd.validate.p1": "Checks pattern syntax (the Racket <code>pregexp</code> flavor). On error you get a single-line message plus a <code>Hint:</code> line — unique to validate.",
+            "gd.validate.p2": "Exit codes: <code>0</code> valid · <code>1</code> invalid. With <code>--json</code>, the error object carries the same <code>error</code> and <code>hint</code> keys — read the hint and retry.",
+            "gd.match.p1": "Runs a pattern against text. The text comes from the second argument, or from stdin with <code>-</code> — it drops straight into a pipeline.",
+            "gd.match.p2": "With <code>--json</code> you get structured matches: absolute spans <code>[start, end)</code> and 1-based capture groups. Real output of <code>match '(\\w+)@(\\w+)' 'mail a@b and c@d' --json</code>:",
+            "gd.match.p3": "Exit codes: <code>0</code> matches found · <code>3</code> valid pattern, zero matches · <code>1</code> invalid pattern.",
+            "gd.explain.p1": "Walks a pattern part by part — run it first whenever you inherit a regex. English by default; <code>--lang zh</code> or <code>REGEXMATE_LANG=zh</code> switches to Chinese:",
+            "gd.replace.p1": "Substitutes and reports the replacement count; use <code>\\1</code>–<code>\\9</code> in the replacement to reference capture groups:",
+            "gd.replace.p2": "Exit codes: <code>0</code> replacements done · <code>3</code> valid pattern, zero replacements · <code>1</code> invalid pattern.",
+            "gd.graph.p1": "Renders a pattern as a railroad-diagram SVG for specs and code review. Writes to stdout by default; <code>-o FILE</code> saves to disk:",
+            "gd.graph.p2": "With <code>--json</code> the SVG markup is embedded under the <code>svg</code> key; combined with <code>-o</code> you get <code>output</code> (path) and <code>bytes</code> (size) instead. The diagram on the homepage is this command's own output.",
+            "gd.test.p1": "Batch assertions: positives and negatives with per-case evidence. Cases are JSON — <code>text</code> required, <code>expect</code> is <code>match</code> / <code>no-match</code>, optional <code>contains</code> checks what matched. Cases come from a file or stdin (<code>-</code>):",
+            "gd.test.p2": "This is the agent's write → test → refine loop: exit <code>0</code> all passed · <code>3</code> at least one failed (each with a <code>reason</code> in the JSON) · <code>1</code> the pattern itself is broken. Keep the passing JSON output as evidence for your change.",
+            "gd.lint.p1": "Deterministic static analysis for ReDoS and dead branches. Without <code>--strict</code> it only reports and still exits <code>0</code>:",
+            "gd.lint.p2": "<code>--strict</code> turns any finding into exit code <code>3</code> — that is your CI gate. The rules:",
+            "gd.lint.th1": "Rule", "gd.lint.th2": "Meaning",
+            "gd.lint.r1": "unbounded quantifier over a group — catastrophic backtracking (ReDoS) risk",
+            "gd.lint.r2": "a quantifier over a lookaround/anchor has no effect or hides a bug",
+            "gd.lint.r3": "an empty alternative matches everything — usually a bug",
+            "gd.lint.r4": "the same alternative appears twice",
+            "gd.lint.r5": "an earlier alternative always wins, so a later one is unreachable — reorder",
+            "gd.lint.r6": "the construct behaves differently outside Racket (atomic groups, scoped flags, POSIX/unicode classes, backreferences)",
+            "gd.lint.r7": "an atomic group over a single element does nothing",
+            "gd.cheat.title": "The rest, briefly",
+            "gd.cheat.th1": "Command", "gd.cheat.th2": "What it does",
+            "gd.cheat.c1": "23 commented starter recipes (<code>cookbook date-iso</code> for one; <code>cookbook contact</code> by topic)",
+            "gd.cheat.c2": "Prints the machine-readable contract: commands, flags, exit codes, MCP tools",
+            "gd.cheat.c3": "Prints a shell completion script (<code>bash|zsh|pwsh</code>)",
+            "gd.cheat.c4": "Self-update (see <a href='#faq-update'>FAQ · Updating</a>)",
+            "gd.cheat.note": "Global flags: <code>--json</code> structured output · <code>--lang en|zh</code> output language · <code>NO_COLOR</code> disables ANSI highlighting. <code>regexmate --help</code> has the full table.",
+            "gd.mcp.p1": "<code>regexmate mcp</code> starts an MCP server speaking JSON-RPC 2.0 over stdio (newline-delimited, protocol <code>2024-11-05</code>). Eight tools, each with an input schema, discoverable via <code>tools/list</code>:",
+            "gd.mcp.p2": "One config block for every stdio-MCP client — Claude Code, Codex, Cursor and friends:",
+            "gd.mcp.p3": "For the full agent workflow (the write → validate → test → lint → ship loop with worked examples) see <a href='https://github.com/turinglambdaai/regexmate/blob/main/docs/agents-guide.md'>agents-guide.md</a> in the repository.",
+            "gd.contract.title": "versioned JSON contract",
+            "gd.contract.p1": "Every command's <code>--json</code> output is a single-line envelope opening with the stable keys <code>schema</code> (always <code>regexmate/v1</code>), <code>command</code> and <code>ok</code>. The rules:",
+            "gd.contract.r1": "Spans are absolute indices, <code>[start, end)</code>; capture groups are 1-based.",
+            "gd.contract.r2": "Keys are never missing: unnamed groups carry <code>\"name\":false</code>; an absent group's <code>value/start/end</code> are <code>false</code> placeholders.",
+            "gd.contract.r3": "Errors are a single-line <code>error</code> string (no embedded newlines); validate errors add a <code>hint</code>.",
+            "gd.contract.r4": "<code>graph --json</code> embeds <code>svg</code>; with <code>-o</code> it reports <code>output</code> and <code>bytes</code> instead.",
+            "gd.contract.r5": "The contract itself is machine-readable: <code>regexmate schema</code>. Breaking changes require a schema version bump — never a silent change.",
+            "gd.contract.p2": "Four exit codes, and they never lie:",
+            "gd.contract.th1": "Exit code", "gd.contract.th2": "Meaning",
+            "gd.contract.e0": "ok — match found / pattern valid / replacement done / all cases passed",
+            "gd.contract.e1": "invalid regular expression",
+            "gd.contract.e2": "usage error (bad flag, unknown command)",
+            "gd.contract.e3": "valid pattern, zero matches / zero replacements / failing cases / lint --strict findings",
+            "gd.contract.p3": "The flavor is Racket <code>pregexp</code>: lookarounds, atomic groups, scoped flags, POSIX/Unicode classes and backreferences are supported; named groups <code>(?&lt;name&gt;…)</code>, <code>\\A</code>/<code>\\z</code> and <code>\\x41</code> are not — validate rejects them explicitly.",
+            "gd.faq.plat.title": "FAQ · Platforms",
+            "gd.faq.plat.p1": "Every release ships the CLI on all three platforms, with this honest architecture coverage (anything else: build from source with <code>raco exe -o regexmate main.rkt</code>, Racket 9.x):",
+            "gd.faq.plat.th1": "Asset", "gd.faq.plat.th2": "Platform", "gd.faq.plat.th3": "Contents",
+            "gd.faq.plat.p4": "macOS 14+ (Apple Silicon only)",
+            "gd.faq.plat.p5": "single-file CLI only",
+            "gd.faq.plat.p7": "Linux x64 (GUI needs GTK4)",
+            "gd.faq.plat.p6": "Every asset has a matching <code>.sha256</code> sidecar plus a combined <code>SHA256SUMS</code>. The macOS app is ad-hoc signed: right-click → Open on first launch.",
+            "gd.faq.mcp.title": "FAQ · MCP config",
+            "gd.faq.mcp.p1": "One prerequisite: <code>regexmate</code> on your PATH (otherwise make <code>command</code> an absolute path). Put this in your client's MCP config:",
+            "gd.faq.mcp.p2": "Where that config lives differs per client (Claude Code / Codex / Cursor each have an <code>mcpServers</code> block or equivalent UI). Restart the session afterwards; <code>tools/list</code> should show the eight <code>regexmate_*</code> tools.",
+            "gd.faq.update.title": "FAQ · Updating",
+            "gd.faq.update.p1": "<strong>In-app self-update</strong> (recommended): peek with <code>regexmate update --check</code>, then <code>regexmate update</code>. It verifies the Ed25519-signed update manifest against the embedded public key (key id <code>regexmate-2026-10</code>), checks the download's SHA-256 and size, and swaps the running binary in place — confirm with <code>regexmate --version</code>; the GUI ships in the same archive, restart it afterwards.",
+            "gd.faq.update.p2": "<strong>Manual update</strong>: download the new archive from <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a>, unpack, replace — there is nothing installed to begin with. For <code>raco pkg</code> installs use <code>raco pkg update regexmate</code>; from source, <code>git pull</code> and re-run <code>raco exe</code>.",
+            "gd.faq.un.title": "FAQ · Uninstall",
+            "gd.faq.un.p1": "RegexMate installs nothing: no installer, nothing in your user config directories. Uninstalling is deleting the files you unpacked (the CLI binary, plus the GUI app if you do not want it). Update leftovers live only next to the binary and vanish with it. If you wired an MCP client, remove the <code>mcpServers</code> block too. For <code>raco pkg</code> installs: <code>raco pkg remove regexmate</code>.",
+            "ft.note": "The regex workbench for humans and agents.", "ft.home": "Home", "ft.releases": "Releases", "ft.changelog": "Changelog"
+        };
+        // language dropdown: unified family policy (explicit choice wins; otherwise browser locale)
+        var LANGUAGE_OVERRIDE_KEY = 'regexmate-lang-override-v2';
+        var LANGUAGE_LEGACY_KEYS = ['regexmate-lang', 'site-lang'];
+        var current, isZh;
+
+        function readLanguageOverride() {
+            try {
+                var v = localStorage.getItem(LANGUAGE_OVERRIDE_KEY);
+                if (v !== 'zh' && v !== 'en') {
+                    for (var i = 0; i < LANGUAGE_LEGACY_KEYS.length; i++) {
+                        var legacy = localStorage.getItem(LANGUAGE_LEGACY_KEYS[i]);
+                        if (legacy === 'zh' || legacy === 'en') { v = legacy; try { localStorage.setItem(LANGUAGE_OVERRIDE_KEY, v); } catch (e) {} break; }
+                    }
+                }
+                return v === 'zh' || v === 'en' ? v : null;
+            } catch (e) { return null; }
+        }
+        function detectBrowserLanguage() {
+            var locale = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+            return String(locale).toLowerCase().indexOf('zh') === 0 ? 'zh' : 'en';
+        }
+        function apply(lang) {
+            current = lang === 'en' ? en : zh;
+            isZh = lang === 'zh';
+            document.documentElement.lang = isZh ? 'zh-CN' : 'en';
+            document.documentElement.setAttribute('data-language', lang);
+            document.title = current['meta.title'];
+            var metas = document.querySelectorAll('meta[name="description"], meta[property="og:title"], meta[property="og:description"]');
+            for (var m = 0; m < metas.length; m++) {
+                var key = metas[m].getAttribute('name') === 'description' ? 'meta.description'
+                    : metas[m].getAttribute('property') === 'og:title' ? 'meta.og.title'
+                    : 'meta.og.description';
+                metas[m].setAttribute('content', current[key]);
+            }
+            var nodes = document.querySelectorAll('[data-i18n]');
+            for (var i = 0; i < nodes.length; i++) {
+                var k = nodes[i].getAttribute('data-i18n');
+                if (current[k]) nodes[i].innerHTML = current[k];
+            }
+            var label = document.getElementById('current-lang-label');
+            if (label) label.textContent = isZh ? '简体中文' : 'English';
+        }
+        window.setLanguage = function (lang) {
+            if (lang !== 'zh' && lang !== 'en') return;
+            try { localStorage.setItem(LANGUAGE_OVERRIDE_KEY, lang); } catch (e) {}
+            apply(lang);
+        };
+        apply(readLanguageOverride() || detectBrowserLanguage());
+        LANGUAGE_LEGACY_KEYS.forEach(function (k) { try { localStorage.removeItem(k); } catch (e) {} });
+        window.addEventListener('languagechange', function () {
+            if (!readLanguageOverride()) apply(detectBrowserLanguage());
+        });
+
+        // theme toggle: flip data-theme and remember the choice
+        var themeBtn = document.getElementById('theme-btn');
+        if (themeBtn) {
+            themeBtn.addEventListener('click', function () {
+                var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+                document.documentElement.dataset.theme = next;
+                try { localStorage.setItem('regexmate-theme', next); } catch (e) {}
+            });
+        }
+
+        // Active-TOC highlighting: mark the section currently in view.
+        if ('IntersectionObserver' in window) {
+            var links = document.querySelectorAll('.manual-toc a');
+            var sections = Array.prototype.map.call(links, function (a) {
+                var el = document.getElementById(a.getAttribute('href').slice(1));
+                return el ? { link: a, el: el } : null;
+            }).filter(Boolean);
+            var observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        links.forEach(function (l) { l.classList.remove('active'); });
+                        for (var i = 0; i < sections.length; i++) {
+                            if (sections[i].el === entry.target) { sections[i].link.classList.add('active'); break; }
+                        }
+                    }
+                });
+            }, { rootMargin: '-80px 0px -70% 0px' });
+            sections.forEach(function (s) { observer.observe(s.el); });
+        }
+    })();
+    </script>
+</body>
+</html>

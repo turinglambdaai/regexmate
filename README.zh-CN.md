@@ -25,6 +25,8 @@
 
 ## 安装
 
+第一次接触？双语[用户手册](https://regexmate.jrtx.site/guide.html)用真实输出逐个讲每个命令——源文件在 [docs/guide.html](docs/guide.html)。
+
 从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个压缩包都带 CLI 和原生桌面应用：
 
 | 平台 | 下载 | 内容 |
@@ -104,7 +106,7 @@ Updated to v0.6.2. Run `regexmate --version` to confirm; restart the RegexMate a
 
 ## Agent 工作流
 
-完整实战教程见 [docs/agents-guide.md](docs/agents-guide.md)：write → validate → test → lint → ship 循环、MCP 工具参考、lint 规则含义与完整示例。
+完整实战教程见 [docs/agents-guide.md](docs/agents-guide.md)：write → validate → test → lint → ship 循环、MCP 工具参考、lint 规则含义与完整示例。逐命令参考（含真实输出）见[用户手册](https://regexmate.jrtx.site/guide.html)。
 
 ## MCP server
 

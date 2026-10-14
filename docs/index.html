@@ -20,7 +20,7 @@
       })();
     </script>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-    <link rel="stylesheet" href="styles.css?v=3">
+    <link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 
@@ -41,6 +41,7 @@
                 <a href="#diagrams" data-i18n="nav.diagrams">图解</a>
                 <a href="#agents" data-i18n="nav.agents">智能体</a>
                 <a href="#install" data-i18n="nav.install">安装</a>
+                <a href="guide.html" data-i18n="nav.manual">手册</a>
                 <a href="https://github.com/turinglambdaai/regexmate" class="nav-github">GitHub</a>
                 <div class="lang-dropdown-wrapper">
                     <button class="lang-btn" type="button" onclick="void 0" aria-label="Switch language">
@@ -323,6 +324,7 @@ raco exe -o regexmate main.rkt</code>
                 <p class="footer-note" data-i18n="ft.note">面向人与智能体的正则工作台。</p>
             </div>
             <div class="footer-links">
+                <a href="guide.html" data-i18n="ft.manual">手册</a>
                 <a href="https://github.com/turinglambdaai/regexmate">GitHub</a>
                 <a href="https://github.com/turinglambdaai/regexmate/releases" data-i18n="ft.releases">发布</a>
                 <a href="https://github.com/turinglambdaai/regexmate/blob/main/README.zh-CN.md">中文文档</a>
@@ -345,7 +347,7 @@ raco exe -o regexmate main.rkt</code>
             "meta.description": "一条 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、批量测试、风险分析。版本化 JSON 契约、MCP server、在线自更新。Windows / Linux / macOS 免安装二进制。",
             "meta.og.title": "RegexMate — 给人和智能体的正则工作台",
             "meta.og.description": "一条 CLI 包办所有正则工作：校验、匹配、解释、替换、绘图、测试、风险分析。版本化 JSON 契约、原生 MCP server、自更新。",
-            "nav.workbench": "工作台", "nav.diagrams": "图解", "nav.agents": "智能体", "nav.install": "安装",
+            "nav.workbench": "工作台", "nav.diagrams": "图解", "nav.agents": "智能体", "nav.install": "安装", "nav.manual": "手册",
             "hero.title": "正则表达式，一眼看懂。",
             "hero.sub": "一条安静的 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、测试、风险分析。对 agent 说 JSON，对你说人话，还会自己更新。",
             "hero.download": "下载", "hero.agents": "接入你的智能体 →",
@@ -387,14 +389,14 @@ raco exe -o regexmate main.rkt</code>
             "nx.eyebrow": "接下来", "nx.title": "工作台上", "nx.tag": "下一步",
             "nx.aur": "AUR PKGBUILD 已备好，待注册账号",
             "nx.installers": "签名安装包与公证",
-            "ft.note": "面向人与智能体的正则工作台。", "ft.releases": "发布"
+            "ft.note": "面向人与智能体的正则工作台。", "ft.releases": "发布", "ft.manual": "手册"
         };
         var en = {
             "meta.title": "RegexMate — the regex workbench for humans and agents",
             "meta.description": "Validate, match, explain, replace, graph, batch-test and lint regular expressions from one CLI — with a versioned JSON contract, an MCP server and online self-update. Standalone binaries for Windows, Linux and macOS.",
             "meta.og.title": "RegexMate — the regex workbench for humans and agents",
             "meta.og.description": "One CLI for every regex job: validate, match, explain, replace, graph, test, lint. Versioned JSON contract, native MCP server, self-update.",
-            "nav.workbench": "Workbench", "nav.diagrams": "Diagrams", "nav.agents": "Agents", "nav.install": "Install",
+            "nav.workbench": "Workbench", "nav.diagrams": "Diagrams", "nav.agents": "Agents", "nav.install": "Install", "nav.manual": "Manual",
             "hero.title": "Regular expressions, explained.",
             "hero.sub": "One quiet CLI for every regex job — validate, match, explain, replace, graph, test, lint. It speaks JSON to your agents, plain English to you, and updates itself.",
             "hero.download": "Download", "hero.agents": "Connect your agent →",
@@ -436,7 +438,7 @@ raco exe -o regexmate main.rkt</code>
             "nx.eyebrow": "What's next", "nx.title": "On the bench", "nx.tag": "next",
             "nx.aur": "AUR PKGBUILD ready, awaiting an AUR account",
             "nx.installers": "signed installers and notarization",
-            "ft.note": "The regex workbench for humans and agents.", "ft.releases": "Releases"
+            "ft.note": "The regex workbench for humans and agents.", "ft.releases": "Releases", "ft.manual": "Manual"
         };
         // language dropdown: unified family policy (explicit choice wins; otherwise browser locale)
         var LANGUAGE_OVERRIDE_KEY = 'regexmate-lang-override-v2';

@@ -8,6 +8,15 @@ All notable changes to RegexMate are documented here. Format based on
 Engineering alignment with the family benchmark (taskly). No CLI behavior
 changes.
 
+### Added
+
+- **User manual** at `docs/guide.html` (live on the site under 手册 /
+  Manual): a five-minute start, one section per command with real output
+  produced by the binary, the MCP server setup, the versioned JSON
+  contract and an FAQ (platform coverage, MCP config, updating,
+  uninstalling) — bilingual via the same `data-i18n` dictionary mechanism
+  as the homepage, linked from the site nav and both READMEs
+
 ### Changed
 
 - **The signing tools and the engine share one pin**: CI and release

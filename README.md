@@ -25,6 +25,8 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 ## Install
 
+New to the tool? The bilingual [user manual](https://regexmate.jrtx.site/guide.html) walks through every command with real output — source at [docs/guide.html](docs/guide.html).
+
 Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — every archive carries the CLI and the native desktop app:
 
 | Platform | Download | Includes |
@@ -119,7 +121,7 @@ Newline-delimited JSON-RPC 2.0 over stdio, protocol `2024-11-05`. Tools: `regexm
 
 ## Agent workflow
 
-See [docs/agents-guide.md](docs/agents-guide.md) for the full walkthrough: the write → validate → test → lint → ship loop, the MCP tool reference, lint rule meanings and a worked example.
+See [docs/agents-guide.md](docs/agents-guide.md) for the full walkthrough: the write → validate → test → lint → ship loop, the MCP tool reference, lint rule meanings and a worked example. For command-by-command reference with real output, read the [user manual](https://regexmate.jrtx.site/guide.html).
 
 ## Test and lint
 
