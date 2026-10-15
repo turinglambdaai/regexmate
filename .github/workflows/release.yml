@@ -91,6 +91,13 @@ jobs:
       - name: Install Rivet (pinned to the release engine version)
         run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#${{ env.RIVET_PIN }}'
 
+      - name: Install WiX (v5; rivet's MSI toolchain)
+        # WiX 7 aborts with WIX7015 unless the Open Source Maintenance Fee
+        # EULA is accepted, so pin the 5.x line (rivet's own guidance).
+        if: runner.os == 'Windows'
+        run: dotnet tool install --global wix --version 5.0.2
+        shell: bash
+
       - name: Compile
         run: raco make main.rkt
 
