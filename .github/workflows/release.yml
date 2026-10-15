@@ -308,6 +308,10 @@ jobs:
               mv THIRD_PARTY_NOTICES.txt "regexmate-${VERSION}-${{ matrix.asset }}-THIRD_PARTY_NOTICES.txt"
               ;;
           esac
+          # rivet writes its sidecar with the installer (AppImage); renaming
+          # the body orphans the gui-named sidecar, and a sidecar without its
+          # body on the release is a dangling reference
+          rm -f regexmate-gui-*.sha256
           # rivet checksums only its portable zip; the installers ship without
           # sidecars until this loop adds them. rivet also leaves staging
           # directories (dist/regexmate-gui-linux-<arch>/ et al) beside the
