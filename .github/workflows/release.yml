@@ -309,11 +309,14 @@ jobs:
               ;;
           esac
           # rivet checksums only its portable zip; the installers ship without
-          # sidecars until this loop adds them
+          # sidecars until this loop adds them. rivet also leaves staging
+          # directories (dist/regexmate-gui-linux-<arch>/ et al) beside the
+          # installers — only files get sidecars.
           for f in regexmate-*; do
             case "$f" in
               *.sha256 | *.sbom.cdx.json | *-THIRD_PARTY_NOTICES.txt) ;;
-              *) [ -f "$f.sha256" ] || sha256sum "$f" > "$f.sha256" ;;
+              *) [ -f "$f" ] || continue
+                 [ -f "$f.sha256" ] || sha256sum "$f" > "$f.sha256" ;;
             esac
           done
           ls -la
