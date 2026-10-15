@@ -95,19 +95,22 @@ final class AppModel: ObservableObject {
             let backend = EmbeddedRacketBackend(configuration: config)
             self.backend = backend
 
-            Task.detached { [backend, weak self] in
+            // The Racket CS boot is a blocking call — keep it off the main
+            // actor via a detached task that captures only Sendable values
+            // (the backend is @unchecked Sendable). The outer task inherits
+            // the main actor, so touching self afterwards never crosses
+            // isolation; MainActor.run closure hops do not survive the
+            // strict-concurrency mode of newer toolchains.
+            Task { [weak self] in
                 do {
-                    try backend.start()
-                    let api = RivetAPI(client: backend.client)
-                    _ = try await api.status(pattern: "\\d+")
-                    await MainActor.run {
-                        self?.phase = .ready
-                        self?.refreshNow()
-                    }
+                    _ = try await Task.detached {
+                        try backend.start()
+                        let api = RivetAPI(client: backend.client)
+                        return try await api.status(pattern: "\\d+")
+                    }.value
+                    self?.finishStarting()
                 } catch {
-                    await MainActor.run {
-                        self?.phase = .failed("\(error)")
-                    }
+                    self?.failStarting("\(error)")
                 }
             }
         } catch {
@@ -131,19 +134,27 @@ final class AppModel: ObservableObject {
     // mutates its own bundle; the dialog points at Releases instead.
     func checkForUpdates() {
         guard let backend, isReady else { return }
+        let api = RivetAPI(client: backend.client)
         Task { [weak self] in
-            guard let self else { return }
-            let api = RivetAPI(client: backend.client)
             do {
                 let report = try await api.update_check()
-                await MainActor.run { self.presentUpdateReport(report) }
+                self?.presentUpdateReport(report)
             } catch {
-                await MainActor.run {
-                    self.updateAlert(title: "Check failed",
-                                     message: "\(error)")
-                }
+                self?.updateAlert(title: "Check failed",
+                                  message: "\(error)")
             }
         }
+    }
+
+    @MainActor
+    private func finishStarting() {
+        phase = .ready
+        refreshNow()
+    }
+
+    @MainActor
+    private func failStarting(_ message: String) {
+        phase = .failed(message)
     }
 
     @MainActor
