@@ -11,12 +11,17 @@ final class MatchHighlightLayoutManager: NSLayoutManager {
     var highlightColor = NSColor.controlAccentColor
 
     override func drawBackground(forGlyphRange glyphsToShow: NSRange, at origin: NSPoint) {
-        guard let owner, !owner.highlightRanges.isEmpty,
+        guard let owner,
               let container = textContainer(forGlyphAt: glyphsToShow.location, effectiveRange: nil) else { return }
+        // AppKit draws on the main thread, but toolchains disagree on how
+        // this override inherits the view's isolation (warning on one
+        // Xcode, error on another) — claim the main actor explicitly.
+        let ranges = MainActor.assumeIsolated { owner.highlightRanges }
+        guard !ranges.isEmpty else { return }
         let visibleChars = characterRange(forGlyphRange: glyphsToShow, actualGlyphRange: nil)
         let path = NSBezierPath()
 
-        for range in owner.highlightRanges {
+        for range in ranges {
             let inter = NSIntersectionRange(range, visibleChars)
             guard inter.length > 0 else { continue }
             let glyphRange = self.glyphRange(forCharacterRange: inter, actualCharacterRange: nil)
