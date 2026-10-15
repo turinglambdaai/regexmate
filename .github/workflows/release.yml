@@ -7,6 +7,15 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+# Single source of truth for the rivet pin; every install step below
+# references this so a bump is one edit, not a grep-replace across jobs.
+env:
+  RIVET_PIN: v0.11.0
+
 jobs:
   verify:
     name: Verify release metadata
@@ -23,6 +32,7 @@ jobs:
       - name: Sanity-check scripts
         run: |
           bash -n scripts/smoke.sh
+          bash -n scripts/make-update-manifest.sh
           test -f CHANGELOG.md
 
       - name: Tag must match repository version
@@ -35,7 +45,7 @@ jobs:
     name: Build (${{ matrix.asset }})
     needs: verify
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 25
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -44,15 +54,18 @@ jobs:
           # configures with gtk4>=4.10 — 22.04 only ships GTK 4.6
           - os: ubuntu-latest
             asset: linux-x86_64
-            archive: tar.gz
             racket-arch: x64
+          - os: ubuntu-24.04-arm
+            asset: linux-arm64
+            racket-arch: arm64
           - os: macos-latest
             asset: macos-arm64
-            archive: tar.gz
             racket-arch: arm64
+          - os: macos-15-intel
+            asset: macos-x64
+            racket-arch: x64
           - os: windows-latest
             asset: windows-x86_64
-            archive: zip
             racket-arch: x64
 
     steps:
@@ -70,10 +83,13 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev
+          # rpm + desktop-file-utils build the native packages, file is an
+          # appimage dependency-closure helper
+          sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev \
+            rpm desktop-file-utils file
 
       - name: Install Rivet (pinned to the release engine version)
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#${{ env.RIVET_PIN }}'
 
       - name: Compile
         run: raco make main.rkt
@@ -115,15 +131,23 @@ jobs:
         if: runner.os == 'Linux'
         uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@v0.11.0
 
-      - name: Build native GUI and bundle into the archive (all platforms)
+      # One command builds the native GUI package, every human installer for
+      # this platform (dmg / msi / deb + rpm + AppImage), the SBOM and the
+      # third-party notices — and launch-smokes the packaged app. The
+      # CLI-first distribution (the feed archive assembled below) is built
+      # separately so the self-update payload keeps its exact proven layout.
+      - name: Release installers (rivet)
         shell: bash
         run: |
-          # linux compiles with the full runtime (see the embeddable setup
-          # above) — the minimal embeddable collects lack racket/draw
           if [ '${{ runner.os }}' = 'Linux' ]; then
             export PATH="$(dirname "$FULL_RACKET_RACO"):$PATH"
+            export APPIMAGE_EXTRACT_AND_RUN=1
           fi
-          raco rivet package
+          raco rivet release --development --without-updates
+
+      - name: Bundle the GUI into the feed archive staging (all platforms)
+        shell: bash
+        run: |
           mkdir -p stage/gui
           if [ '${{ runner.os }}' = 'macOS' ]; then
             # the .app bundle ships whole — copying its contents would strip
@@ -189,24 +213,24 @@ jobs:
           test -s standalone-check/s.svg
 
       - name: Package (tar.gz)
-        if: matrix.archive == 'tar.gz'
+        if: matrix.asset == 'linux-x86_64' || matrix.asset == 'linux-arm64' || matrix.asset == 'macos-arm64' || matrix.asset == 'macos-x64'
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           tar -czf "regexmate-${VERSION}-${{ matrix.asset }}.tar.gz" -C stage .
 
       - name: Package (zip)
-        if: matrix.archive == 'zip'
+        if: matrix.asset == 'windows-x86_64'
         shell: pwsh
         run: |
           $version = $env:GITHUB_REF_NAME.Substring(1)
           Compress-Archive -Path stage/* -DestinationPath "regexmate-$version-windows-x86_64.zip"
 
-      - name: Checksum
+      - name: Checksum the feed archive
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          if [ '${{ matrix.archive }}' = 'zip' ]; then
+          if [ '${{ matrix.asset }}' = 'windows-x86_64' ]; then
             ARCHIVE="regexmate-${VERSION}-windows-x86_64.zip"
             STANDALONE="regexmate-${VERSION}-windows-x86_64-standalone.exe"
           else
@@ -219,6 +243,57 @@ jobs:
             sha256sum "$STANDALONE" > "$STANDALONE.sha256"
           fi
 
+      # rivet names installers after the GUI project (regexmate-gui) and
+      # leaves the rpm build number in the filename; rename to the family
+      # asset names the README and the download aliases promise, drop
+      # rivet's GUI-only portable archives (the feed archive above is the
+      # self-update payload), and checksum what ships.
+      - name: Family naming + checksums (installers)
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          cd dist
+          rm -f regexmate-gui-*.zip regexmate-gui-*.zip.sha256 \
+                regexmate-gui-*.tar.gz regexmate-gui-*.tar.gz.sha256 \
+                *.wixpdb
+          case '${{ runner.os }}' in
+            macOS)
+              mv "regexmate-gui-${VERSION}-macos.dmg" "regexmate-${VERSION}-${{ matrix.asset }}.dmg"
+              mv sbom.cdx.json "regexmate-${VERSION}-${{ matrix.asset }}.sbom.cdx.json"
+              mv THIRD_PARTY_NOTICES.txt "regexmate-${VERSION}-${{ matrix.asset }}-THIRD_PARTY_NOTICES.txt"
+              ;;
+            Windows)
+              mv "regexmate-gui-${VERSION}-windows-x64.msi" "regexmate-${VERSION}-windows-x64.msi"
+              mv sbom.cdx.json "regexmate-${VERSION}-${{ matrix.asset }}.sbom.cdx.json"
+              mv THIRD_PARTY_NOTICES.txt "regexmate-${VERSION}-${{ matrix.asset }}-THIRD_PARTY_NOTICES.txt"
+              ;;
+            Linux)
+              if [ '${{ matrix.racket-arch }}' = 'x64' ]; then
+                DEB_ARCH=amd64; RPM_ARCH=x86_64
+              else
+                DEB_ARCH=arm64; RPM_ARCH=aarch64
+              fi
+              mv regexmate-gui-"${VERSION}"-linux-"${DEB_ARCH}".deb \
+                 "regexmate-${VERSION}-linux-${DEB_ARCH}.deb"
+              mv regexmate-gui-"${VERSION}"-*-linux-"${RPM_ARCH}".rpm \
+                 "regexmate-${VERSION}-linux-${RPM_ARCH}.rpm"
+              mv "regexmate-gui-${VERSION}-linux-${RPM_ARCH}.AppImage" \
+                 "regexmate-${VERSION}-linux-${RPM_ARCH}.AppImage"
+              mv sbom.cdx.json "regexmate-${VERSION}-${{ matrix.asset }}.sbom.cdx.json"
+              mv THIRD_PARTY_NOTICES.txt "regexmate-${VERSION}-${{ matrix.asset }}-THIRD_PARTY_NOTICES.txt"
+              ;;
+          esac
+          # rivet checksums only its portable zip; the installers ship without
+          # sidecars until this loop adds them
+          for f in regexmate-*; do
+            case "$f" in
+              *.sha256 | *.sbom.cdx.json | *-THIRD_PARTY_NOTICES.txt) ;;
+              *) [ -f "$f.sha256" ] || sha256sum "$f" > "$f.sha256" ;;
+            esac
+          done
+          ls -la
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -228,6 +303,14 @@ jobs:
             regexmate-*.zip
             regexmate-*.sha256
             regexmate-*-standalone.exe
+            dist/regexmate-*.dmg
+            dist/regexmate-*.msi
+            dist/regexmate-*.deb
+            dist/regexmate-*.rpm
+            dist/regexmate-*.AppImage
+            dist/regexmate-*.sha256
+            dist/*.sbom.cdx.json
+            dist/*THIRD_PARTY_NOTICES.txt
           if-no-files-found: error
 
   publish:
@@ -256,7 +339,7 @@ jobs:
         # the dependency closure (keel, crypto-lib, ...), which the previous
         # checkout + --link install could not — the linked packages declare
         # no deps, so raco setup died compiling rivet/keel.rkt.
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0'
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#${{ env.RIVET_PIN }}'
 
       - name: Flatten artifact dirs
         run: |
@@ -313,10 +396,19 @@ jobs:
           # assets, created after SHA256SUMS so it stays versioned-only;
           # the publish globs below pick the aliases up unchanged.
           cp "regexmate-${VERSION}-macos-arm64.tar.gz" "regexmate-macos-arm64.tar.gz"
+          cp "regexmate-${VERSION}-macos-x64.tar.gz" "regexmate-macos-x64.tar.gz"
           cp "regexmate-${VERSION}-linux-x86_64.tar.gz" "regexmate-linux-x86_64.tar.gz"
+          cp "regexmate-${VERSION}-linux-arm64.tar.gz" "regexmate-linux-arm64.tar.gz"
           cp "regexmate-${VERSION}-windows-x86_64.zip" "regexmate-windows-x86_64.zip"
           cp "regexmate-${VERSION}-windows-x86_64-standalone.exe" \
              "regexmate-windows-x86_64-standalone.exe"
+          cp "regexmate-${VERSION}-macos-arm64.dmg" "regexmate-macos-arm64.dmg"
+          cp "regexmate-${VERSION}-macos-x64.dmg" "regexmate-macos-x64.dmg"
+          cp "regexmate-${VERSION}-windows-x64.msi" "regexmate-windows-x64.msi"
+          cp "regexmate-${VERSION}-linux-amd64.deb" "regexmate-linux-x64.deb"
+          cp "regexmate-${VERSION}-linux-arm64.deb" "regexmate-linux-arm64.deb"
+          cp "regexmate-${VERSION}-linux-x86_64.AppImage" "regexmate-linux-x64.AppImage"
+          cp "regexmate-${VERSION}-linux-aarch64.AppImage" "regexmate-linux-arm64.AppImage"
           ls -la
 
       - name: Publish release
@@ -325,8 +417,15 @@ jobs:
           files: |
             artifacts/regexmate-*.tar.gz
             artifacts/regexmate-*.zip
+            artifacts/regexmate-*.dmg
+            artifacts/regexmate-*.msi
+            artifacts/regexmate-*.deb
+            artifacts/regexmate-*.rpm
+            artifacts/regexmate-*.AppImage
             artifacts/regexmate-*.sha256
             artifacts/regexmate-*-standalone.exe
+            artifacts/*.sbom.cdx.json
+            artifacts/*THIRD_PARTY_NOTICES.txt
             artifacts/update-manifest.json
             artifacts/SHA256SUMS
           body_path: release-body.md

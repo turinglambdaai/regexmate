@@ -27,17 +27,19 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 New to the tool? The bilingual [user manual](https://regexmate.jrtx.site/guide.html) walks through every command with real output — source at [docs/guide.html](docs/guide.html).
 
-Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — every archive carries the CLI and the native desktop app:
+Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — a human installer and a portable archive per platform, the archive carrying the CLI and the native desktop app:
 
-| Platform | Download | Includes |
+| Platform | Installers | Portable archive (CLI + GUI) |
 |---|---|---|
-| macOS 14+ (Apple Silicon) | `regexmate-<version>-macos-arm64.tar.gz` | CLI + `gui/regexmate-gui.app` (ad-hoc signed — first launch: right-click → Open) |
-| Windows 10+ x64 | `regexmate-<version>-windows-x86_64.zip` | CLI + `gui\regexmate-gui.exe` |
-| Linux x64 | `regexmate-<version>-linux-x86_64.tar.gz` | CLI + `gui/RivetHost` (GTK4) |
+| macOS 14+ (Apple Silicon) | `regexmate-<version>-macos-arm64.dmg` | `regexmate-<version>-macos-arm64.tar.gz` — CLI + `gui/regexmate-gui.app` |
+| macOS 14+ (Intel) | `regexmate-<version>-macos-x64.dmg` | `regexmate-<version>-macos-x64.tar.gz` — CLI + `gui/regexmate-gui.app` |
+| Windows 10+ x64 | `regexmate-<version>-windows-x64.msi` | `regexmate-<version>-windows-x86_64.zip` — CLI + `gui\regexmate-gui.exe` |
+| Linux x64 | `regexmate-<version>-linux-amd64.deb` · `.rpm` · `.AppImage` | `regexmate-<version>-linux-x86_64.tar.gz` — CLI + `gui/RivetHost` (GTK4) |
+| Linux arm64 | `regexmate-<version>-linux-arm64.deb` · `.rpm` · `.AppImage` | `regexmate-<version>-linux-arm64.tar.gz` — CLI + `gui/RivetHost` (GTK4) |
 
-Every release carries per-file `.sha256` checksums and a `SHA256SUMS` manifest. The CLI updates itself in place — see [Self-update](#self-update).
+Every release carries per-file `.sha256` checksums and a `SHA256SUMS` manifest. The macOS app is ad-hoc signed — first launch: right-click → Open. The CLI updates itself in place — see [Self-update](#self-update).
 
-**Windows single-file exe** (CLI only, no GUI): grab `regexmate-standalone-windows-x86_64-*.exe` from the release and run it directly.
+**Windows single-file exe** (CLI only, no GUI): grab `regexmate-<version>-windows-x86_64-standalone.exe` from the release and run it directly.
 
 **Racket package:**
 

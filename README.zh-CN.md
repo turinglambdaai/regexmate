@@ -27,17 +27,19 @@
 
 第一次接触？双语[用户手册](https://regexmate.jrtx.site/guide.html)用真实输出逐个讲每个命令——源文件在 [docs/guide.html](docs/guide.html)。
 
-从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个压缩包都带 CLI 和原生桌面应用：
+从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个平台都有人类安装器与便携压缩包，压缩包带 CLI 和原生桌面应用：
 
-| 平台 | 下载 | 内容 |
+| 平台 | 安装器 | 便携压缩包（CLI + GUI） |
 |---|---|---|
-| macOS 14+（Apple Silicon） | `regexmate-<version>-macos-arm64.tar.gz` | CLI + `gui/regexmate-gui.app`（ad-hoc 签名——首次启动右键 → 打开） |
-| Windows 10+ x64 | `regexmate-<version>-windows-x86_64.zip` | CLI + `gui\regexmate-gui.exe` |
-| Linux x64 | `regexmate-<version>-linux-x86_64.tar.gz` | CLI + `gui/RivetHost`（GTK4） |
+| macOS 14+（Apple Silicon） | `regexmate-<version>-macos-arm64.dmg` | `regexmate-<version>-macos-arm64.tar.gz`——CLI + `gui/regexmate-gui.app` |
+| macOS 14+（Intel） | `regexmate-<version>-macos-x64.dmg` | `regexmate-<version>-macos-x64.tar.gz`——CLI + `gui/regexmate-gui.app` |
+| Windows 10+ x64 | `regexmate-<version>-windows-x64.msi` | `regexmate-<version>-windows-x86_64.zip`——CLI + `gui\regexmate-gui.exe` |
+| Linux x64 | `regexmate-<version>-linux-amd64.deb` · `.rpm` · `.AppImage` | `regexmate-<version>-linux-x86_64.tar.gz`——CLI + `gui/RivetHost`（GTK4） |
+| Linux arm64 | `regexmate-<version>-linux-arm64.deb` · `.rpm` · `.AppImage` | `regexmate-<version>-linux-arm64.tar.gz`——CLI + `gui/RivetHost`（GTK4） |
 
-每个发布都带逐文件 `.sha256` 校验和与 `SHA256SUMS` 清单。CLI 可原地自更新——见[自更新](#自更新)。
+每个发布都带逐文件 `.sha256` 校验和与 `SHA256SUMS` 清单。macOS 应用为 ad-hoc 签名——首次启动右键 → 打开。CLI 可原地自更新——见[自更新](#自更新)。
 
-**Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-standalone-windows-x86_64-*.exe`，下载即用。
+**Windows 单文件 exe**（仅 CLI，无 GUI）：从发布页取 `regexmate-<version>-windows-x86_64-standalone.exe`，下载即用。
 
 **Racket 包：**
 

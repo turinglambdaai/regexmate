@@ -3,6 +3,30 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Human installers on every platform** alongside the portable archives:
+  `dmg` on macOS (arm64 and, new, Intel x64), `msi` on Windows, and
+  `deb` / `rpm` / `AppImage` on Linux (x64 and, new, arm64) — all built by
+  `raco rivet release` with a launch smoke, an SBOM and third-party notices
+  per leg. The portable CLI+GUI archives keep their exact layout and stay
+  the self-update payload; the Windows standalone exe is unchanged.
+- **Feedback entrance**: `.github/ISSUE_TEMPLATE` bug/feature templates
+  with a docs contact link.
+
+### Changed
+
+- `scripts/check-version.rkt` is the single release gate: VERSION,
+  info.rkt, version.rkt, rivet.rktd and the README badges (en/zh) must
+  state one version — the badge shipped stale on 0.6.3 because nothing
+  checked it.
+- `rivet-schema.json` is committed as the backend-contract baseline and
+  gated in CI with `raco rivet schema check`.
+- Removed `packaging/aur`: distribution is GitHub Releases only.
+
+
 ## [0.6.3] — 2026-10-14
 
 The `update-stable.json` byte-level alias retires: there is no pre-0.6.1

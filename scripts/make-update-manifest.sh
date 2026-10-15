@@ -7,7 +7,9 @@
 #   <dist-dir>     directory containing the packaged platform archives as
 #                  uploaded to the release:
 #                    regexmate-<version>-linux-x86_64.tar.gz
+#                    regexmate-<version>-linux-arm64.tar.gz
 #                    regexmate-<version>-macos-arm64.tar.gz
+#                    regexmate-<version>-macos-x64.tar.gz
 #                    regexmate-<version>-windows-x86_64.zip
 #                    regexmate-<version>-windows-x86_64-standalone.exe
 #   <key-der-path> Ed25519 private key in DER (OneAsymmetricKey) form; the
@@ -55,10 +57,15 @@ cat > "$SCRIPT" <<RKT
 (define key-path (path->complete-path "$KEY_PATH"))
 (define build (hash-ref (file->value "rivet.rktd") 'build))
 
-;; (platform architecture installer filename)
+;; (platform architecture installer filename) — every self-update payload
+;; the release ships: the CLI+GUI feed archives for each platform/arch plus
+;; the Windows standalone exe. The native installers (dmg/msi/deb/rpm/
+;; AppImage) are not self-updating and stay out of the manifest.
 (define wanted
   (list (list 'linux 'x64 'targz (format "regexmate-~a-linux-x86_64.tar.gz" version))
+        (list 'linux 'arm64 'targz (format "regexmate-~a-linux-arm64.tar.gz" version))
         (list 'macos 'arm64 'targz (format "regexmate-~a-macos-arm64.tar.gz" version))
+        (list 'macos 'x64 'targz (format "regexmate-~a-macos-x64.tar.gz" version))
         (list 'windows 'x64 'zip (format "regexmate-~a-windows-x86_64.zip" version))
         (list 'windows 'x64 'exe
               (format "regexmate-~a-windows-x86_64-standalone.exe" version))))

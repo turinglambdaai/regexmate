@@ -7,8 +7,8 @@ public enum RivetGeneratedConfig {
     public static let moduleName = "backend"
     public static let entryName = "start"
     public static let displayName = "RegexMate"
-    public static let version = "0.4.0"
-    public static let build: Int64 = 2
+    public static let version = "0.6.3"
+    public static let build: Int64 = 4
     public static let identifier = "site.jrtx.regexmate"
     public static let releaseChannel = "stable"
 }
@@ -28,31 +28,31 @@ public struct RivetAPI: Sendable {
     public init(client: RivetClient) { self.client = client }
 
     public func diagram_diag(pattern: String) async throws -> String {
-        let result = try await client.call("diagram-diag", arguments: [encode_String(pattern)])
-        return try decode_String(result)
+        let rivetResult = try await client.call("diagram-diag", arguments: [encode_String(pattern)])
+        return try decode_String(rivetResult)
     }
     public func diagram_png(pattern: String) async throws -> Data {
-        let result = try await client.call("diagram-png", arguments: [encode_String(pattern)])
-        return try decode_Bytes(result)
+        let rivetResult = try await client.call("diagram-png", arguments: [encode_String(pattern)])
+        return try decode_Bytes(rivetResult)
     }
     public func explain_text(pattern: String) async throws -> String {
-        let result = try await client.call("explain-text", arguments: [encode_String(pattern)])
-        return try decode_String(result)
+        let rivetResult = try await client.call("explain-text", arguments: [encode_String(pattern)])
+        return try decode_String(rivetResult)
     }
     public func lint_rows(pattern: String) async throws -> [[String]] {
-        let result = try await client.call("lint-rows", arguments: [encode_String(pattern)])
-        return try decode__List_List_String_(result)
+        let rivetResult = try await client.call("lint-rows", arguments: [encode_String(pattern)])
+        return try decode__List_List_String_(rivetResult)
     }
     public func match_rows(pattern: String, text: String) async throws -> [[String]] {
-        let result = try await client.call("match-rows", arguments: [encode_String(pattern), encode_String(text)])
-        return try decode__List_List_String_(result)
+        let rivetResult = try await client.call("match-rows", arguments: [encode_String(pattern), encode_String(text)])
+        return try decode__List_List_String_(rivetResult)
     }
     public func report_html(pattern: String, text: String) async throws -> String {
-        let result = try await client.call("report-html", arguments: [encode_String(pattern), encode_String(text)])
-        return try decode_String(result)
+        let rivetResult = try await client.call("report-html", arguments: [encode_String(pattern), encode_String(text)])
+        return try decode_String(rivetResult)
     }
     public func status(pattern: String) async throws -> String {
-        let result = try await client.call("status", arguments: [encode_String(pattern)])
-        return try decode_String(result)
+        let rivetResult = try await client.call("status", arguments: [encode_String(pattern)])
+        return try decode_String(rivetResult)
     }
 }
