@@ -90,12 +90,12 @@ SVG 已保存到: diagram.svg
 
 ```console
 $ regexmate update --check
-Latest release: v0.6.2 (installed: 0.5.0)
+Latest release: v0.7.0 (installed: 0.6.2)
 
 $ regexmate update
 Downloading regexmate-0.6.2-macos-arm64.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.6.2. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
+Updated to v0.7.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
 安装版可原地自更新：先用内嵌公钥验证 Ed25519 签名的更新清单（key id `regexmate-2026-10`），再把下载包的字节数与 SHA-256 对照该签名清单核对，最后运行中的二进制安全换装（改名移开、下次启动清理残留）。GUI 与 CLI 同包发布，随同更新——更新后请重启应用。GUI 里另有只读的**检查更新**入口（应用菜单，macOS 上 ⇧⌘U），查询的是同一份签名清单；应用更新仍由 CLI 完成。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。

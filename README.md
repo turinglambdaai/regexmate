@@ -96,12 +96,12 @@ Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 
 
 ```console
 $ regexmate update --check
-Latest release: v0.6.2 (installed: 0.5.0)
+Latest release: v0.7.0 (installed: 0.6.2)
 
 $ regexmate update
 Downloading regexmate-0.6.2-macos-arm64.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.6.2. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
+Updated to v0.7.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
 Installs update themselves in place from GitHub Releases: the Ed25519-signed channel manifest is verified against the public key embedded in the binary (key id `regexmate-2026-10`), the download's byte size and SHA-256 are checked against that signed manifest, and the running binary is swapped safely (renamed aside, cleaned up on next start). The GUI ships in the same archive and is refreshed by the same update — restart it afterwards. The GUI also has a read-only **Check for Updates** item (app menu, ⇧⌘U on macOS) that queries the same signed manifest; applying the update remains the CLI's job. `--json` emits the standard envelope for agents and scripts. Source and `raco pkg` installs are pointed at `git pull` / `raco pkg update` instead.
