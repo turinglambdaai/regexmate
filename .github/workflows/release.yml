@@ -88,6 +88,18 @@ jobs:
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev \
             rpm desktop-file-utils file
 
+      # This leg installs the full Racket (CLI) plus the embeddable runtime
+      # (GUI) and stages deb + rpm + AppImage trees on top of the AppImage
+      # dependency closures — the hosted runner's default free disk does not
+      # survive that. The Android/GHC toolchains are dead weight here.
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc \
+            /usr/local/.ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h /
+
       - name: Install Rivet (pinned to the release engine version)
         run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#${{ env.RIVET_PIN }}'
 
@@ -151,6 +163,11 @@ jobs:
             export APPIMAGE_EXTRACT_AND_RUN=1
           fi
           raco rivet release --development --without-updates
+          # release cleans up its staging, taking dist/<name>.app with it;
+          # package restores it for the feed-archive bundling below — the
+          # native build is cached in .rivet/build, so this is a copy plus
+          # a launch smoke, not a rebuild
+          raco rivet package
 
       - name: Bundle the GUI into the feed archive staging (all platforms)
         shell: bash
