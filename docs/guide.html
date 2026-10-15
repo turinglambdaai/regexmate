@@ -303,7 +303,7 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             <!-- =================== FAQ: platforms =================== -->
             <section class="manual-section" id="faq-platforms">
                 <h2 class="manual-h2"><span class="h2-emoji">🖥️</span><span data-i18n="gd.faq.plat.title">FAQ · 平台覆盖</span></h2>
-                <p data-i18n="gd.faq.plat.p1">每个 release 的 CLI 三平台都在发，但架构覆盖现状如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：</p>
+                <p data-i18n="gd.faq.plat.p1">每个 release 提供两类资产：人类安装器（dmg / msi / deb / rpm / AppImage）与便携压缩包（CLI + GUI）。架构覆盖如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：</p>
                 <table class="syntax-table">
                     <thead>
                         <tr>
@@ -313,10 +313,17 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td><code>regexmate-&lt;版本&gt;-macos-arm64.tar.gz</code></td><td data-i18n="gd.faq.plat.p4">macOS 14+（仅 Apple Silicon）</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-macos-arm64.dmg</code></td><td data-i18n="gd.faq.plat.p4">macOS 14+（Apple Silicon）</td><td data-i18n="gd.faq.plat.p10">GUI 安装器</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-macos-arm64.tar.gz</code></td><td data-i18n="gd.faq.plat.p4">macOS 14+（Apple Silicon）</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-macos-x64.dmg</code></td><td data-i18n="gd.faq.plat.p8">macOS 14+（Intel）</td><td data-i18n="gd.faq.plat.p10">GUI 安装器</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-macos-x64.tar.gz</code></td><td data-i18n="gd.faq.plat.p8">macOS 14+（Intel）</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-windows-x64.msi</code></td><td>Windows 10+ x64</td><td data-i18n="gd.faq.plat.p10">GUI 安装器</td></tr>
                         <tr><td><code>regexmate-&lt;版本&gt;-windows-x86_64.zip</code></td><td>Windows 10+ x64</td><td>CLI + GUI</td></tr>
                         <tr><td><code>regexmate-&lt;版本&gt;-windows-x86_64-standalone.exe</code></td><td>Windows 10+ x64</td><td data-i18n="gd.faq.plat.p5">仅 CLI 的单文件</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-linux-amd64.deb</code> / <code>regexmate-&lt;版本&gt;-linux-x86_64.rpm</code> / <code>regexmate-&lt;版本&gt;-linux-x86_64.AppImage</code></td><td data-i18n="gd.faq.plat.p7">Linux x64（GUI 需 GTK4）</td><td data-i18n="gd.faq.plat.p10">GUI 安装器</td></tr>
                         <tr><td><code>regexmate-&lt;版本&gt;-linux-x86_64.tar.gz</code></td><td data-i18n="gd.faq.plat.p7">Linux x64（GUI 需 GTK4）</td><td>CLI + GUI</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-linux-arm64.deb</code> / <code>regexmate-&lt;版本&gt;-linux-aarch64.rpm</code> / <code>regexmate-&lt;版本&gt;-linux-aarch64.AppImage</code></td><td data-i18n="gd.faq.plat.p9">Linux arm64（GUI 需 GTK4）</td><td data-i18n="gd.faq.plat.p10">GUI 安装器</td></tr>
+                        <tr><td><code>regexmate-&lt;版本&gt;-linux-arm64.tar.gz</code></td><td data-i18n="gd.faq.plat.p9">Linux arm64（GUI 需 GTK4）</td><td>CLI + GUI</td></tr>
                     </tbody>
                 </table>
                 <p data-i18n="gd.faq.plat.p6">每个资产都有同名 <code>.sha256</code> 边车和汇总的 <code>SHA256SUMS</code>。macOS 包为 ad-hoc 签名：首次打开 GUI 需右键 → 打开。</p>
@@ -338,13 +345,13 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             <section class="manual-section" id="faq-update">
                 <h2 class="manual-h2"><span class="h2-emoji">⬆️</span><span data-i18n="gd.faq.update.title">FAQ · 更新</span></h2>
                 <p data-i18n="gd.faq.update.p1"><strong>应用内自更新</strong>（推荐）：先 <code>regexmate update --check</code> 探一眼，再 <code>regexmate update</code>。更新流程会验证 Ed25519 签名的更新清单（内嵌公钥，key id <code>regexmate-2026-10</code>）、核对下载的 SHA-256 与大小，然后把运行中的二进制原地换装——更新完 <code>regexmate --version</code> 确认；GUI 在同一包里，重启即可。</p>
-                <p data-i18n="gd.faq.update.p2"><strong>手动更新</strong>：从 <a href="https://github.com/turinglambdaai/regexmate/releases/latest">Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。</p>
+                <p data-i18n="gd.faq.update.p2"><strong>手动更新</strong>：便携包从 <a href="https://github.com/turinglambdaai/regexmate/releases/latest">Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装；安装器安装的重新下载新安装器覆盖安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。</p>
             </section>
 
             <!-- =================== FAQ: uninstall =================== -->
             <section class="manual-section" id="faq-uninstall">
                 <h2 class="manual-h2"><span class="h2-emoji">🗑️</span><span data-i18n="gd.faq.un.title">FAQ · 卸载</span></h2>
-                <p data-i18n="gd.faq.un.p1">RegexMate 免安装：没有安装器、不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。</p>
+                <p data-i18n="gd.faq.un.p1">便携包免安装：不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。安装器安装的从系统正常途径卸载：macOS 把应用拖进废纸篓，Windows 用「应用和功能」，Linux 用包管理器移除 <code>regexmate-gui</code> 包。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。</p>
             </section>
 
         </main>
@@ -444,9 +451,10 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             "gd.contract.e3": "语法有效但零匹配 / 零替换 / 用例失败 / lint --strict 有发现",
             "gd.contract.p3": "正则方言是 Racket <code>pregexp</code>：支持环视、原子组、内嵌旗标、POSIX/Unicode 类、反向引用；不支持命名组 <code>(?&lt;name&gt;…)</code>、<code>\\A</code>/<code>\\z</code>、<code>\\x41</code>——validate 会明确拒绝。",
             "gd.faq.plat.title": "FAQ · 平台覆盖",
-            "gd.faq.plat.p1": "每个 release 的 CLI 三平台都在发，但架构覆盖现状如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：",
+            "gd.faq.plat.p1": "每个 release 提供两类资产：人类安装器（dmg / msi / deb / rpm / AppImage）与便携压缩包（CLI + GUI）。架构覆盖如下（其余架构请从源码构建：<code>raco exe -o regexmate main.rkt</code>，需 Racket 9.x）：",
             "gd.faq.plat.th1": "资产", "gd.faq.plat.th2": "平台", "gd.faq.plat.th3": "内容",
-            "gd.faq.plat.p4": "macOS 14+（仅 Apple Silicon）",
+            "gd.faq.plat.p4": "macOS 14+（Apple Silicon）",
+            "gd.faq.plat.p8": "macOS 14+（Intel）", "gd.faq.plat.p9": "Linux arm64（GUI 需 GTK4）", "gd.faq.plat.p10": "GUI 安装器",
             "gd.faq.plat.p5": "仅 CLI 的单文件",
             "gd.faq.plat.p6": "每个资产都有同名 <code>.sha256</code> 边车和汇总的 <code>SHA256SUMS</code>。macOS 包为 ad-hoc 签名：首次打开 GUI 需右键 → 打开。",
             "gd.faq.mcp.title": "FAQ · MCP 配置",
@@ -454,9 +462,9 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             "gd.faq.mcp.p2": "配置文件位置随客户端而异（Claude Code / Codex / Cursor 各有 <code>mcpServers</code> 段或等价界面）；保存后重启会话，用 <code>tools/list</code> 应能看到八个 <code>regexmate_*</code> 工具。",
             "gd.faq.update.title": "FAQ · 更新",
             "gd.faq.update.p1": "<strong>应用内自更新</strong>（推荐）：先 <code>regexmate update --check</code> 探一眼，再 <code>regexmate update</code>。更新流程会验证 Ed25519 签名的更新清单（内嵌公钥，key id <code>regexmate-2026-10</code>）、核对下载的 SHA-256 与大小，然后把运行中的二进制原地换装——更新完 <code>regexmate --version</code> 确认；GUI 在同一包里，重启即可。",
-            "gd.faq.update.p2": "<strong>手动更新</strong>：从 <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。",
+            "gd.faq.update.p2": "<strong>手动更新</strong>：便携包从 <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a> 下载新包、解压、覆盖旧文件即可——本来就免安装；安装器安装的重新下载新安装器覆盖安装。<code>raco pkg</code> 安装的用 <code>raco pkg update regexmate</code>；源码安装 <code>git pull</code> 后重跑 <code>raco exe</code>。",
             "gd.faq.un.title": "FAQ · 卸载",
-            "gd.faq.un.p1": "RegexMate 免安装：没有安装器、不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。",
+            "gd.faq.un.p1": "便携包免安装：不写用户配置目录，卸载就是删掉你解包出来的文件（CLI 二进制，连同不要的 GUI 应用）。安装器安装的从系统正常途径卸载：macOS 把应用拖进废纸篓，Windows 用「应用和功能」，Linux 用包管理器移除 <code>regexmate-gui</code> 包。更新产生的临时文件只出现在二进制旁边，随删除一起消失。若从 MCP 客户端接入过，顺手删掉配置里的 <code>mcpServers</code> 段。<code>raco pkg</code> 安装用 <code>raco pkg remove regexmate</code>。",
             "ft.note": "面向人与智能体的正则工作台。", "ft.home": "首页", "ft.releases": "发布", "ft.changelog": "更新日志"
         };
         var en = {
@@ -525,9 +533,10 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             "gd.contract.e3": "valid pattern, zero matches / zero replacements / failing cases / lint --strict findings",
             "gd.contract.p3": "The flavor is Racket <code>pregexp</code>: lookarounds, atomic groups, scoped flags, POSIX/Unicode classes and backreferences are supported; named groups <code>(?&lt;name&gt;…)</code>, <code>\\A</code>/<code>\\z</code> and <code>\\x41</code> are not — validate rejects them explicitly.",
             "gd.faq.plat.title": "FAQ · Platforms",
-            "gd.faq.plat.p1": "Every release ships the CLI on all three platforms, with this honest architecture coverage (anything else: build from source with <code>raco exe -o regexmate main.rkt</code>, Racket 9.x):",
+            "gd.faq.plat.p1": "Every release ships two asset families: human installers (dmg / msi / deb / rpm / AppImage) and portable archives (CLI + GUI). Architecture coverage (anything else: build from source with <code>raco exe -o regexmate main.rkt</code>, Racket 9.x):",
             "gd.faq.plat.th1": "Asset", "gd.faq.plat.th2": "Platform", "gd.faq.plat.th3": "Contents",
-            "gd.faq.plat.p4": "macOS 14+ (Apple Silicon only)",
+            "gd.faq.plat.p4": "macOS 14+ (Apple Silicon)",
+            "gd.faq.plat.p8": "macOS 14+ (Intel)", "gd.faq.plat.p9": "Linux arm64 (GUI needs GTK4)", "gd.faq.plat.p10": "GUI installer",
             "gd.faq.plat.p5": "single-file CLI only",
             "gd.faq.plat.p7": "Linux x64 (GUI needs GTK4)",
             "gd.faq.plat.p6": "Every asset has a matching <code>.sha256</code> sidecar plus a combined <code>SHA256SUMS</code>. The macOS app is ad-hoc signed: right-click → Open on first launch.",
@@ -536,9 +545,9 @@ regexmate_graph · regexmate_test · regexmate_lint · regexmate_cookbook</div>
             "gd.faq.mcp.p2": "Where that config lives differs per client (Claude Code / Codex / Cursor each have an <code>mcpServers</code> block or equivalent UI). Restart the session afterwards; <code>tools/list</code> should show the eight <code>regexmate_*</code> tools.",
             "gd.faq.update.title": "FAQ · Updating",
             "gd.faq.update.p1": "<strong>In-app self-update</strong> (recommended): peek with <code>regexmate update --check</code>, then <code>regexmate update</code>. It verifies the Ed25519-signed update manifest against the embedded public key (key id <code>regexmate-2026-10</code>), checks the download's SHA-256 and size, and swaps the running binary in place — confirm with <code>regexmate --version</code>; the GUI ships in the same archive, restart it afterwards.",
-            "gd.faq.update.p2": "<strong>Manual update</strong>: download the new archive from <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a>, unpack, replace — there is nothing installed to begin with. For <code>raco pkg</code> installs use <code>raco pkg update regexmate</code>; from source, <code>git pull</code> and re-run <code>raco exe</code>.",
+            "gd.faq.update.p2": "<strong>Manual update</strong>: for portable archives, download the new archive from <a href='https://github.com/turinglambdaai/regexmate/releases/latest'>Releases</a>, unpack, replace — there is nothing installed to begin with. For installer installs, download the new installer and install over the old one. For <code>raco pkg</code> installs use <code>raco pkg update regexmate</code>; from source, <code>git pull</code> and re-run <code>raco exe</code>.",
             "gd.faq.un.title": "FAQ · Uninstall",
-            "gd.faq.un.p1": "RegexMate installs nothing: no installer, nothing in your user config directories. Uninstalling is deleting the files you unpacked (the CLI binary, plus the GUI app if you do not want it). Update leftovers live only next to the binary and vanish with it. If you wired an MCP client, remove the <code>mcpServers</code> block too. For <code>raco pkg</code> installs: <code>raco pkg remove regexmate</code>.",
+            "gd.faq.un.p1": "The portable archives install nothing: nothing in your user config directories. Uninstalling is deleting the files you unpacked (the CLI binary, plus the GUI app if you do not want it). Installer installs uninstall the normal way: drag the app to the Trash on macOS, \"Apps &amp; features\" on Windows, or remove the <code>regexmate-gui</code> package with your package manager on Linux. Update leftovers live only next to the binary and vanish with it. If you wired an MCP client, remove the <code>mcpServers</code> block too. For <code>raco pkg</code> installs: <code>raco pkg remove regexmate</code>.",
             "ft.note": "The regex workbench for humans and agents.", "ft.home": "Home", "ft.releases": "Releases", "ft.changelog": "Changelog"
         };
         // language dropdown: unified family policy (explicit choice wins; otherwise browser locale)
