@@ -1,0 +1,150 @@
+{
+  "device-rpcs": [],
+  "enums": [],
+  "events": [],
+  "format": "rivet-schema",
+  "format-version": 1,
+  "records": [],
+  "rpcs": [
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "diagram-diag",
+      "result": {
+        "kind": "scalar",
+        "name": "String"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "diagram-png",
+      "result": {
+        "kind": "scalar",
+        "name": "Bytes"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "explain-text",
+      "result": {
+        "kind": "scalar",
+        "name": "String"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "lint-rows",
+      "result": {
+        "element": {
+          "element": {
+            "kind": "scalar",
+            "name": "String"
+          },
+          "kind": "list"
+        },
+        "kind": "list"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        },
+        {
+          "name": "text",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "match-rows",
+      "result": {
+        "element": {
+          "element": {
+            "kind": "scalar",
+            "name": "String"
+          },
+          "kind": "list"
+        },
+        "kind": "list"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        },
+        {
+          "name": "text",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "report-html",
+      "result": {
+        "kind": "scalar",
+        "name": "String"
+      }
+    },
+    {
+      "arguments": [
+        {
+          "name": "pattern",
+          "type": {
+            "kind": "scalar",
+            "name": "String"
+          }
+        }
+      ],
+      "name": "status",
+      "result": {
+        "kind": "scalar",
+        "name": "String"
+      }
+    }
+  ],
+  "rvt-protocol": 1,
+  "states": []
+}
