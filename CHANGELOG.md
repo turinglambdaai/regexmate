@@ -15,6 +15,13 @@ All notable changes to RegexMate are documented here. Format based on
   the self-update payload; the Windows standalone exe is unchanged.
 - **Feedback entrance**: `.github/ISSUE_TEMPLATE` bug/feature templates
   with a docs contact link.
+- **Check for Updates in the GUI** (macOS pilot): a read-only app-menu item
+  (⇧⌘U) backed by the new `update-check` backend RPC, which walks the same
+  verified-manifest path as `regexmate update --check` and reports
+  up-to-date / available <version> / offline <reason>. Applying an update
+  remains the CLI's job — the GUI never mutates its own bundle. The RPC is
+  generated into all three hosts; wiring the Windows/Linux UIs is left for
+  real-machine acceptance passes.
 
 ### Changed
 

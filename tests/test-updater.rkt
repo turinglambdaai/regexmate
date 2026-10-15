@@ -7,6 +7,7 @@
          net/base64
          racket/file
          racket/port
+         racket/string
          (except-in rivet/distribution version<?)
          "../core/updater.rkt"
          "../version.rkt")
@@ -148,6 +149,33 @@
        (check-equal? (update-artifact-installer picked) archive-kind)
        (check-equal? (update-artifact-url picked) "https://example.com/mine"))
      (delete-directory/files tmp))
+
+   ;; the report the GUI's Check-for-Updates surface renders, with the
+   ;; network check injected
+   (test-case "update-check-report maps check outcomes"
+     (define manifest
+       (update-manifest regexmate-identifier "9.9.8" 42 'stable
+                        "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
+                        (list (update-artifact 'macos 'arm64
+                                               "https://example.com/a.tar.gz"
+                                               (make-string 64 #\a) 1 'targz '()))))
+     (check-equal? (update-check-report (lambda () #f))
+                   (list "up-to-date"))
+     (check-equal?
+      (update-check-report
+       (lambda () (update-plan manifest
+                               (car (update-manifest-artifacts manifest)))))
+      (list "available" "9.9.8"))
+     (define failed
+       (update-check-report
+        (lambda () (error 'check-for-update "the feed is unreachable"))))
+     (check-equal? (car failed) "offline")
+     (check-true (string-contains? (cadr failed) "unreachable"))
+     ;; a failure message longer than the report cap is truncated, not dropped
+     (define long
+       (update-check-report
+        (lambda () (error 'check-for-update (make-string 500 #\x)))))
+     (check-equal? (string-length (cadr long)) 202))  ; 200 chars + " …"
 
    (test-case "pick-artifact: standalone installs take the exe"
      (define host-platform (platform-symbol))

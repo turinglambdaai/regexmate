@@ -143,6 +143,17 @@
         "kind": "scalar",
         "name": "String"
       }
+    },
+    {
+      "arguments": [],
+      "name": "update-check",
+      "result": {
+        "element": {
+          "kind": "scalar",
+          "name": "String"
+        },
+        "kind": "list"
+      }
     }
   ],
   "rvt-protocol": 1,

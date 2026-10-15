@@ -37,6 +37,7 @@
          parse-version version<? check-for-update pick-artifact
          download-candidate! verify-downloaded!
          extract-archive staged-pieces install-update! cleanup-stale-updates
+         update-check-report
          rmtree)
 
 ;; rivet/distribution pins the provider set to libcrypto alone (official
@@ -272,6 +273,29 @@
             (if (standalone-install?) "standalone" "archive")
             (platform-symbol)
             (architecture-symbol))]))
+
+;; what the GUI's Check-for-Updates surface reports: ("up-to-date"),
+;; ("available" latest-version) when the selection policy picks a newer
+;; stable build, or ("offline" reason) when the check itself fails — no
+;; network, rejected manifest, no matching artifact. Deliberately read-only:
+;; applying an update stays the CLI's job (`regexmate update` swaps the
+;; shared install and the GUI restarts onto it), the GUI never mutates its
+;; own bundle. `check` is an injection seam for tests; the real check hits
+;; the network, and `serve` handles RPCs serially, so a manual check briefly
+;; parks other backend calls — acceptable for a menu item.
+(define (update-check-report [check check-for-update])
+  (with-handlers ([exn:fail?
+                   (lambda (e)
+                     (define message (exn-message e))
+                     (list "offline"
+                           (if ((string-length message) . <= . 200)
+                               message
+                               (string-append (substring message 0 200) " …"))))])
+    (define plan (check))
+    (if plan
+        (list "available"
+              (update-manifest-version (update-plan-manifest plan)))
+        (list "up-to-date"))))
 
 ;; download the plan's artifact to `destination` through rivet's
 ;; download-update (redirect-following fetch, signed-size cap, .partial

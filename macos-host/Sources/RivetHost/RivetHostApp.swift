@@ -24,6 +24,14 @@ struct RivetHostApp: App {
         }
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1160, height: 690)
+        .commands {
+            CommandGroup(after: .newItem) {
+                Button("Check for Updates…") {
+                    model.checkForUpdates()
+                }
+                .keyboardShortcut("u", modifiers: [.command, .shift])
+            }
+        }
     }
 }
 
@@ -116,6 +124,60 @@ final class AppModel: ObservableObject {
             guard !Task.isCancelled else { return }
             self?.refreshNow()
         }
+    }
+
+    // Read-only check against the same Ed25519-signed manifest the CLI
+    // self-update uses. Applying stays the CLI's job — the GUI never
+    // mutates its own bundle; the dialog points at Releases instead.
+    func checkForUpdates() {
+        guard let backend, isReady else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            let api = RivetAPI(client: backend.client)
+            do {
+                let report = try await api.update_check()
+                await MainActor.run { self.presentUpdateReport(report) }
+            } catch {
+                await MainActor.run {
+                    self.updateAlert(title: "Check failed",
+                                     message: "\(error)")
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func presentUpdateReport(_ report: [String]) {
+        switch report.first {
+        case "up-to-date":
+            updateAlert(title: "You're up to date",
+                        message: "RegexMate \(RivetGeneratedConfig.version) is the latest stable build.")
+        case "available":
+            let version = report.count > 1 ? report[1] : "(unknown)"
+            let alert = NSAlert()
+            alert.messageText = "RegexMate \(version) is available"
+            alert.informativeText = "Download the latest installer, or run `regexmate update` for a portable install — then restart the app."
+            alert.addButton(withTitle: "Open Releases")
+            alert.addButton(withTitle: "OK")
+            if alert.runModal() == .alertFirstButtonReturn,
+               let url = URL(string: "https://github.com/turinglambdaai/regexmate/releases/latest") {
+                NSWorkspace.shared.open(url)
+            }
+        case "offline":
+            updateAlert(title: "Check failed",
+                        message: report.count > 1 ? report[1] : "The update manifest could not be fetched.")
+        default:
+            updateAlert(title: "Check failed",
+                        message: "Unexpected update-check report.")
+        }
+    }
+
+    @MainActor
+    private func updateAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.runModal()
     }
 
     func refreshNow() {

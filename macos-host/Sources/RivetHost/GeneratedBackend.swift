@@ -55,4 +55,8 @@ public struct RivetAPI: Sendable {
         let rivetResult = try await client.call("status", arguments: [encode_String(pattern)])
         return try decode_String(rivetResult)
     }
+    public func update_check() async throws -> [String] {
+        let rivetResult = try await client.call("update-check", arguments: [])
+        return try decode__List_String_(rivetResult)
+    }
 }

@@ -17,6 +17,7 @@
          "../core/regex-engine.rkt"
          "../core/regex-parser.rkt"
          "../core/linter.rkt"
+         "../core/updater.rkt"
          "../output/human-format.rkt"
          "../output/report.rkt"
          "../output/railroad.rkt"
@@ -80,6 +81,12 @@
 (define-rpc (diagram-diag [pattern String] : String)
   (call-with-diagram pattern
                      (lambda (png diag) diag)))
+
+;; read-only update check for the hosts' Check-for-Updates surface;
+;; ("up-to-date" | "available" <version> | "offline" <reason>) — see
+;; core/updater.rkt. Applying an update remains the CLI's job.
+(define-rpc (update-check : (List String))
+  (update-check-report))
 
 (define (call-with-diagram pattern consume)
   (with-handlers ([exn:fail?
