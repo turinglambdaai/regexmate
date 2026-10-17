@@ -13,10 +13,21 @@ struct MainWindow : MainWindowT<MainWindow> {
 
   void Refresh_Click(winrt::Windows::Foundation::IInspectable const& sender,
                      Microsoft::UI::Xaml::RoutedEventArgs const& args);
+  void MenuCheckUpdates_Click(winrt::Windows::Foundation::IInspectable const& sender,
+                              Microsoft::UI::Xaml::RoutedEventArgs const& args);
+  void MenuAbout_Click(winrt::Windows::Foundation::IInspectable const& sender,
+                       Microsoft::UI::Xaml::RoutedEventArgs const& args);
 
  private:
   winrt::fire_and_forget InitializeBackendAsync();
   winrt::fire_and_forget RefreshAsync();
+  winrt::fire_and_forget CheckUpdatesAsync();
+  void PresentUpdateReport(std::vector<std::string> const& report,
+                           std::string const& error);
+  winrt::fire_and_forget ShowHostDialog(std::wstring const& title,
+                                        std::wstring const& body,
+                                        std::wstring const& primary_button,
+                                        std::function<void()> on_primary);
   winrt::fire_and_forget ShowDiagram(rivet::Bytes const& png);
   void QueueRefresh();
   void SetStatus(bool ok, winrt::hstring const& message);

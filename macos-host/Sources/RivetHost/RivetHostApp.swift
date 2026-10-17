@@ -25,7 +25,9 @@ struct RivetHostApp: App {
         .windowToolbarStyle(.unified)
         .defaultSize(width: 1160, height: 690)
         .commands {
-            CommandGroup(after: .newItem) {
+            // Family menu convention: Check for Updates… lives in the App
+            // menu directly below the system About item.
+            CommandGroup(after: .appInfo) {
                 Button("Check for Updates…") {
                     model.checkForUpdates()
                 }

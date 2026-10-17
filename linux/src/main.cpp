@@ -452,6 +452,108 @@ void start_backend() {
   });
 }
 
+// ---- help menu ---------------------------------------------------------
+// Family menu convention: Check for Updates… and About are a pair in the
+// Help menu. The update check is the backend's read-only report; applying
+// an update remains the CLI's job (see app/backend.rkt).
+
+void show_help_message(std::string const& title, std::string const& body) {
+  auto* dialog = gtk_dialog_new_with_buttons(
+      title.c_str(), g_state.window,
+      static_cast<GtkDialogFlags>(GTK_DIALOG_MODAL |
+                                  GTK_DIALOG_DESTROY_WITH_PARENT),
+      "OK", GTK_RESPONSE_CLOSE, nullptr);
+  auto* area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+  auto* text = gtk_label_new(body.c_str());
+  gtk_label_set_wrap(GTK_LABEL(text), TRUE);
+  // Error text must be copyable — a bug report starts from this string.
+  gtk_label_set_selectable(GTK_LABEL(text), TRUE);
+  gtk_label_set_max_width_chars(GTK_LABEL(text), 60);
+  gtk_widget_set_margin_top(text, 12);
+  gtk_widget_set_margin_bottom(text, 6);
+  gtk_widget_set_margin_start(text, 12);
+  gtk_widget_set_margin_end(text, 12);
+  gtk_box_append(GTK_BOX(area), text);
+  g_signal_connect(
+      dialog, "response",
+      G_CALLBACK(+[](GtkDialog* dialog, gint, gpointer) {
+        gtk_window_destroy(GTK_WINDOW(dialog));
+      }),
+      nullptr);
+  gtk_window_present(GTK_WINDOW(dialog));
+}
+
+void show_about_dialog() {
+  auto* dialog = gtk_about_dialog_new();
+  gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), "Regexmate");
+  gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), rivet_app::kVersion);
+  gtk_about_dialog_set_comments(
+      GTK_ABOUT_DIALOG(dialog),
+      "Live regular-expression workbench backed by an embedded Racket "
+      "engine.");
+  gtk_about_dialog_set_license_type(GTK_ABOUT_DIALOG(dialog),
+                                    GTK_LICENSE_MIT_X11);
+  gtk_about_dialog_set_website(
+      GTK_ABOUT_DIALOG(dialog),
+      "https://github.com/turinglambdaai/regexmate");
+  gtk_window_set_transient_for(GTK_WINDOW(dialog), g_state.window);
+  gtk_window_present(GTK_WINDOW(dialog));
+}
+
+struct UpdateReportPack {
+  std::vector<std::string> report;
+  std::string error;
+};
+
+// Runs on the main loop (delivered from the worker thread via g_idle_add).
+gboolean on_update_report_delivered(gpointer user_data) {
+  auto* pack = static_cast<UpdateReportPack*>(user_data);
+  if (!pack->error.empty()) {
+    show_help_message("Check failed", pack->error);
+  } else if (!pack->report.empty() && pack->report.front() == "up-to-date") {
+    show_help_message("You're up to date",
+                      "Regexmate " + std::string(rivet_app::kVersion) +
+                          " is the latest stable build.");
+  } else if (!pack->report.empty() && pack->report.front() == "available") {
+    std::string const version =
+        pack->report.size() > 1 ? pack->report[1] : "(unknown)";
+    show_help_message("Regexmate " + version + " is available",
+                      "Download the latest installer, or run `regexmate "
+                      "update` for a portable install — then restart the "
+                      "app.");
+  } else if (!pack->report.empty() && pack->report.front() == "offline") {
+    show_help_message("Check failed",
+                      pack->report.size() > 1
+                          ? pack->report[1]
+                          : "The update manifest could not be fetched.");
+  } else {
+    show_help_message("Check failed", "Unexpected update-check report.");
+  }
+  delete pack;
+  return G_SOURCE_REMOVE;
+}
+
+void on_check_updates_action(GSimpleAction*, GVariant*, gpointer) {
+  if (g_state.backend == nullptr) return;
+  auto* pack = new UpdateReportPack;
+  std::thread worker([pack]() {
+    try {
+      rivet_app::API api(*g_state.backend);
+      pack->report = api.update_check().get();
+    } catch (std::exception const& error) {
+      pack->error = error.what();
+    } catch (...) {
+      pack->error = "unknown backend failure";
+    }
+    g_idle_add(on_update_report_delivered, pack);
+  });
+  worker.detach();
+}
+
+void on_about_action(GSimpleAction*, GVariant*, gpointer) {
+  show_about_dialog();
+}
+
 // ---- ui construction --------------------------------------------------
 
 GtkWidget* make_caption(char const* text) {
@@ -479,6 +581,19 @@ void on_activate(GtkApplication* app, gpointer) {
   gtk_window_set_title(GTK_WINDOW(window), "RegexMate");
   gtk_window_set_default_size(GTK_WINDOW(window), 1160, 690);
 
+  // Help-menu actions (backed by the header-bar menu button below).
+  auto* check_updates_action = g_simple_action_new("check-updates", nullptr);
+  g_signal_connect(check_updates_action, "activate",
+                   G_CALLBACK(on_check_updates_action), nullptr);
+  g_action_map_add_action(G_ACTION_MAP(window),
+                          G_ACTION(check_updates_action));
+  g_object_unref(check_updates_action);
+  auto* about_action = g_simple_action_new("about", nullptr);
+  g_signal_connect(about_action, "activate", G_CALLBACK(on_about_action),
+                   nullptr);
+  g_action_map_add_action(G_ACTION_MAP(window), G_ACTION(about_action));
+  g_object_unref(about_action);
+
   // Headerbar: the pattern field is the app's command surface.
   auto* header = gtk_header_bar_new();
   auto* title_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 8);
@@ -492,6 +607,18 @@ void on_activate(GtkApplication* app, gpointer) {
   auto* refresh = gtk_button_new_from_icon_name("view-refresh-symbolic");
   gtk_widget_set_tooltip_text(refresh, "Run (Enter also runs)");
   gtk_header_bar_pack_end(GTK_HEADER_BAR(header), refresh);
+  // Family menu convention: Check for Updates… and About are a pair in the
+  // Help menu (low-frequency actions must not take header icon slots).
+  auto* help_menu = g_menu_new();
+  g_menu_append(help_menu, "Check for Updates…", "win.check-updates");
+  g_menu_append(help_menu, "About Regexmate", "win.about");
+  auto* help = gtk_menu_button_new();
+  gtk_menu_button_set_icon_name(GTK_MENU_BUTTON(help), "open-menu-symbolic");
+  gtk_menu_button_set_menu_model(GTK_MENU_BUTTON(help),
+                                 G_MENU_MODEL(help_menu));
+  gtk_widget_set_tooltip_text(help, "Help");
+  g_object_unref(help_menu);
+  gtk_header_bar_pack_end(GTK_HEADER_BAR(header), help);
   gtk_window_set_titlebar(GTK_WINDOW(window), header);
 
   auto* root = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);

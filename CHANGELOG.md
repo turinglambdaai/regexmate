@@ -3,6 +3,18 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- "Check for Updates…" moved into the App menu directly below About on
+  macOS (was the File menu), per the family menu convention.
+
+### Added
+- Windows and Linux hosts gain the missing manual "Check for Updates…"
+  entry as a Help menu (with About Regexmate beside it), wired to the
+  backend's existing read-only update-check RPC; the macOS host already
+  had it.
+
 ## [0.7.0] — 2026-10-15
 
 ### Added

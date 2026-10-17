@@ -14,6 +14,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <TextBox
                 x:Name="PatternBox"
@@ -27,6 +28,26 @@
                 VerticalAlignment="Bottom"
                 MinWidth="110"
                 Click="Refresh_Click" />
+            <!-- Family menu convention: Check for Updates… and About live
+                 together in the Help menu. -->
+            <Button
+                x:Name="HelpButton"
+                Grid.Column="2"
+                Content="Help"
+                VerticalAlignment="Bottom"
+                MinWidth="72">
+                <Button.Flyout>
+                    <MenuFlyout>
+                        <MenuFlyoutItem Text="Check for Updates…" Click="MenuCheckUpdates_Click">
+                            <MenuFlyoutItem.KeyboardAccelerators>
+                                <KeyboardAccelerator Modifiers="Control" Key="U" />
+                            </MenuFlyoutItem.KeyboardAccelerators>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutSeparator />
+                        <MenuFlyoutItem Text="About Regexmate" Click="MenuAbout_Click" />
+                    </MenuFlyout>
+                </Button.Flyout>
+            </Button>
         </Grid>
 
         <InfoBar

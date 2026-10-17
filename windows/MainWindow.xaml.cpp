@@ -7,6 +7,7 @@
 
 #include <DispatcherQueue.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Windows.System.h>
 #include <winrt/base.h>  // resume_foreground lives in winrt (C++/WinRT base)
 
 #include <stdexcept>
@@ -168,6 +169,129 @@ void MainWindow::Refresh_Click(
     winrt::Windows::Foundation::IInspectable const&,
     Microsoft::UI::Xaml::RoutedEventArgs const&) {
   RefreshAsync();
+}
+
+void MainWindow::MenuCheckUpdates_Click(
+    winrt::Windows::Foundation::IInspectable const&,
+    Microsoft::UI::Xaml::RoutedEventArgs const&) {
+  CheckUpdatesAsync();
+}
+
+void MainWindow::MenuAbout_Click(
+    winrt::Windows::Foundation::IInspectable const&,
+    Microsoft::UI::Xaml::RoutedEventArgs const&) {
+  (void)ShowHostDialog(
+      L"About Regexmate",
+      std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion) +
+          L"\n\nLive regular-expression workbench backed by an embedded "
+          L"Racket engine. Released under the MIT License.",
+      L"", nullptr);
+}
+
+winrt::fire_and_forget MainWindow::CheckUpdatesAsync() {
+  auto const dispatcher = DispatcherQueue();
+  auto const weak = get_weak();
+  auto backend = backend_;
+  if (backend == nullptr || !backend->running()) {
+    SetStatus(false, winrt::hstring(L"Racket backend is not running"));
+    co_return;
+  }
+  SetStatus(true, winrt::hstring(L"Checking for updates…"));
+
+  co_await winrt::resume_background();
+  std::string error;
+  std::vector<std::string> report;
+  try {
+    rivet_app::API api(*backend);
+    report = api.update_check().get();
+  } catch (std::exception const& e) {
+    error = e.what();
+  }
+
+  dispatcher.TryEnqueue([weak, report = std::move(report),
+                         error = std::move(error)]() mutable {
+    if (auto window = weak.get()) {
+      window->PresentUpdateReport(report, error);
+    }
+  });
+}
+
+// Mirrors the macOS host's update-report presentation: the backend's
+// read-only update-check report is a small line protocol.
+void MainWindow::PresentUpdateReport(std::vector<std::string> const& report,
+                                     std::string const& error) {
+  auto const open_releases = [] {
+    try {
+      winrt::Windows::System::Launcher::LaunchUriAsync(
+          winrt::Windows::Foundation::Uri{
+              L"https://github.com/turinglambdaai/regexmate/releases/latest"});
+    } catch (...) {
+      // Launcher can be unavailable on stripped-down systems; the URL is
+      // also in the README.
+    }
+  };
+  if (!error.empty()) {
+    (void)ShowHostDialog(L"Check failed", winrt::to_hstring(error), L"",
+                         nullptr);
+    return;
+  }
+  if (!report.empty() && report.front() == "up-to-date") {
+    (void)ShowHostDialog(
+        L"You're up to date",
+        std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion) +
+            L" is the latest stable build.",
+        L"", nullptr);
+    return;
+  }
+  if (!report.empty() && report.front() == "available") {
+    auto const version = report.size() > 1 ? winrt::to_hstring(report[1])
+                                           : winrt::hstring(L"(unknown)");
+    (void)ShowHostDialog(
+        std::wstring(L"RegexMate ") + std::wstring(version) +
+            L" is available",
+        L"Download the latest installer, or run `regexmate update` for a "
+        L"portable install — then restart the app.",
+        L"Open Releases", open_releases);
+    return;
+  }
+  if (!report.empty() && report.front() == "offline") {
+    auto const detail = report.size() > 1 ? winrt::to_hstring(report[1])
+                                          : winrt::hstring(
+                              L"The update manifest could not be fetched.");
+    (void)ShowHostDialog(L"Check failed", detail, L"", nullptr);
+    return;
+  }
+  (void)ShowHostDialog(L"Check failed",
+                       winrt::hstring(L"Unexpected update-check report."), L"",
+                       nullptr);
+}
+
+winrt::fire_and_forget MainWindow::ShowHostDialog(
+    std::wstring const& title, std::wstring const& body,
+    std::wstring const& primary_button, std::function<void()> on_primary) {
+  auto dialog = Microsoft::UI::Xaml::Controls::ContentDialog{};
+  dialog.Title(winrt::box_value(title));
+  dialog.Content(winrt::box_value(body));
+  if (!primary_button.empty()) {
+    dialog.PrimaryButtonText(primary_button);
+    dialog.DefaultButton(
+        Microsoft::UI::Xaml::Controls::ContentDialogButton::Primary);
+  }
+  dialog.CloseButtonText(L"OK");
+  dialog.XamlRoot(Content().XamlRoot());
+
+  auto const weak = get_weak();
+  Microsoft::UI::Xaml::Controls::ContentDialogResult result{};
+  try {
+    result = co_await dialog.ShowAsync();
+  } catch (...) {
+    co_return;  // another dialog is already up; the flow can be retried
+  }
+  if (result ==
+          Microsoft::UI::Xaml::Controls::ContentDialogResult::Primary &&
+      on_primary && weak.get()) {
+    on_primary();
+  }
 }
 
 winrt::fire_and_forget MainWindow::RefreshAsync() {
