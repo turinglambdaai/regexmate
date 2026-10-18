@@ -202,7 +202,7 @@ regexmate/
 ├── macos-host/              # SwiftUI host (SwiftPM)
 ├── windows/                 # WinUI 3 host (C++/WinRT)
 ├── linux/                   # GTK4 host (CMake)
-├── branding/                # app icon (SVG source, .icns, .ico)
+├── branding/                # app icons (per-platform SVG sources, .icns, .ico)
 ├── tests/                   # rackunit suites
 ├── scripts/                 # smoke.sh, check-version.rkt
 ├── docs/                    # product homepage (GitHub Pages)

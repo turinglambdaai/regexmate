@@ -1,0 +1,14 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Windows rendition: full-bleed squircle per family convention
+       (payback/fulcrum/taskly .ico artwork is edge-to-edge; macOS keeps
+       the Apple Big Sur inset card in app-icon.svg / app.icns). -->
+  <!-- Full-bleed rounded square, 22.5% corner radius -->
+  <rect width="1024" height="1024" rx="230" fill="#037A55"/>
+  <!-- .* wildcard motif: dot low-left, six-spoke asterisk high-right -->
+  <circle cx="322" cy="636" r="104" fill="#FFFFFF"/>
+  <g stroke="#FFFFFF" stroke-width="74" stroke-linecap="round" fill="none">
+    <line x1="640" y1="312" x2="640" y2="628"/>
+    <line x1="503.2" y1="391" x2="776.8" y2="549"/>
+    <line x1="776.8" y1="391" x2="503.2" y2="549"/>
+  </g>
+</svg>

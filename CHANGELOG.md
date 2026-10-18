@@ -6,6 +6,12 @@ All notable changes to RegexMate are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
+- Windows icon redrawn full-bleed: a brand-green (#037A55) squircle with a
+  white `.*` glyph (`branding/app-icon-windows.svg` → `app.ico`). The old
+  `.ico` reused the macOS Big Sur inset-card artwork, which rendered as a
+  shrunken near-invisible white tile in the taskbar and Explorer next to
+  the family's full-bleed icons. The macOS `.icns` keeps the Apple-template
+  artwork unchanged.
 - "Check for Updates…" moved into the App menu directly below About on
   macOS (was the File menu), per the family menu convention.
 
