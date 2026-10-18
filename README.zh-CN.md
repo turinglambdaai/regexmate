@@ -202,7 +202,7 @@ regexmate/
 ├── macos-host/              # SwiftUI 宿主（SwiftPM）
 ├── windows/                 # WinUI 3 宿主（C++/WinRT）
 ├── linux/                   # GTK4 宿主（CMake）
-├── branding/                # 应用图标（分平台 SVG 源、.icns、.ico）
+├── branding/                # 应用图标（分平台源、.icns、.ico、.png）
 ├── tests/                   # rackunit 测试套件
 ├── scripts/                 # smoke.sh、check-version.rkt
 ├── docs/                    # 产品主页（GitHub Pages）

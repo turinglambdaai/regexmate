@@ -11,7 +11,9 @@ All notable changes to RegexMate are documented here. Format based on
   `.ico` reused the macOS Big Sur inset-card artwork, which rendered as a
   shrunken near-invisible white tile in the taskbar and Explorer next to
   the family's full-bleed icons. The macOS `.icns` keeps the Apple-template
-  artwork unchanged.
+  artwork unchanged; the Linux desktop icon switches to the same full-bleed
+  artwork (`linux-icon` → `branding/app-icon-linux-512.png`), matching the
+  family's deb/rpm/AppImage convention.
 - "Check for Updates…" moved into the App menu directly below About on
   macOS (was the File menu), per the family menu convention.
 
