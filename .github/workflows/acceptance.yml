@@ -85,6 +85,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev \
             liblz4-dev zlib1g-dev libncurses-dev weston at-spi2-core python3-pyatspi
+          python3 -m pip install --user --disable-pip-version-check cmake==3.31.6
       - name: Install pinned Rivet and dependencies
         run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#${RIVET_PIN}" crypto
       - name: Remember full Racket command path
@@ -92,7 +93,7 @@ jobs:
       - name: Set up embeddable Racket CS
         uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@de1fb8997539d34ba029064f500f6903b955b5a7
       - name: Run executable product acceptance
-        run: PATH="$FULL_RACKET_BIN:$PATH" dbus-run-session -- raco rivet acceptance --json
+        run: PATH="$HOME/.local/bin:$FULL_RACKET_BIN:$PATH" dbus-run-session -- raco rivet acceptance --json
       - uses: actions/upload-artifact@v4
         if: always()
         with:
