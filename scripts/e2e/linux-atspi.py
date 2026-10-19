@@ -34,13 +34,13 @@ def find_application():
         for node in walk(application):
             if role(node) == "frame" and (node.name or "") == "RegexMate": return application
     return None
-def enabled(node):
-    try: return node.getState().contains(pyatspi.STATE_ENABLED)
-    except Exception: return False
 def contains(root, fragment): return any(fragment in (node.name or "") or fragment in text(node) for node in walk(root))
 def press(node):
     actions = node.queryAction()
-    if actions.nActions < 1 or not actions.doAction(0): raise AssertionError(f"AT-SPI action failed for {node.name!r}")
+    if actions.nActions < 1: raise AssertionError(f"AT-SPI exposes no action for {node.name!r}")
+    # GTK's AT-SPI bridge may report False even though the asynchronous
+    # action was queued. The observable UI result below is the success test.
+    actions.doAction(0)
 def snapshot(node, depth=0):
     result = {"name": node.name or "", "role": role(node)}
     value = text(node)
@@ -52,7 +52,8 @@ def main():
     parser = argparse.ArgumentParser(); parser.add_argument("--output", type=Path, required=True); args = parser.parse_args(); args.output.mkdir(parents=True, exist_ok=True)
     application = wait_for("RegexMate application", find_application)
     window = wait_for("RegexMate frame", lambda: next((n for n in walk(application) if role(n) == "frame"), None))
-    refresh = wait_for("enabled Run regex button", lambda: next((node for node in walk(window) if (node.name or "") == "Run regex" and role(node) == "push button" and enabled(node)), None))
+    wait_for("embedded backend ready status", lambda: contains(window, "Embedded Racket CS is ready"))
+    refresh = wait_for("Run regex button", lambda: next((node for node in walk(window) if (node.name or "") == "Run regex" and role(node) == "push button"), None))
     press(refresh)
     wait_for("match count from embedded backend", lambda: contains(window, "5 matches"))
     (args.output / "accessibility.json").write_text(json.dumps(snapshot(application), ensure_ascii=False, indent=2), encoding="utf-8")
