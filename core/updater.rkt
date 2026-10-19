@@ -20,7 +20,7 @@
 (require crypto
          (only-in crypto/libcrypto libcrypto-factory)
          net/base64
-         rivet/distribution
+         (except-in rivet/distribution platform-symbol architecture-symbol)
          racket/file
          racket/list
          racket/path

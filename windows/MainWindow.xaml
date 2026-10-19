@@ -20,11 +20,13 @@
                 x:Name="PatternBox"
                 Header="Pattern (live)"
                 PlaceholderText="\d+"
-                Text="\d+" />
+                Text="\d+"
+                AutomationProperties.AutomationId="PatternField" />
             <Button
                 x:Name="RefreshButton"
                 Grid.Column="1"
                 Content="Refresh"
+                AutomationProperties.AutomationId="RefreshButton"
                 VerticalAlignment="Bottom"
                 MinWidth="110"
                 Click="Refresh_Click" />
@@ -86,6 +88,7 @@
                 <ScrollViewer Grid.Row="3" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
                     <TextBlock
                         x:Name="MatchList"
+                        AutomationProperties.AutomationId="MatchResults"
                         FontFamily="Consolas"
                         FontSize="13"
                         IsTextSelectionEnabled="True"

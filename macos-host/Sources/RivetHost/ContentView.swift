@@ -41,6 +41,8 @@ struct ContentView: View {
             .keyboardShortcut("r", modifiers: .command)
             .disabled(!model.isReady || model.busy)
             .help("Run (⌘R)")
+            .accessibilityIdentifier("RefreshButton")
+            .accessibilityLabel("Run regex")
         }
         ToolbarItem {
             Button {
@@ -269,6 +271,7 @@ struct ContentView: View {
             Text("\(model.matches.count) match\(model.matches.count == 1 ? "" : "es")")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(RM.Color_.ink2)
+                .accessibilityIdentifier("MatchCount")
             Text("·").foregroundStyle(RM.Color_.ink3)
             Text("\(model.findings.count) finding\(model.findings.count == 1 ? "" : "s")")
                 .font(.system(size: 11, design: .monospaced))

@@ -8,7 +8,7 @@
          racket/file
          racket/port
          racket/string
-         (except-in rivet/distribution version<?)
+         (except-in rivet/distribution version<? platform-symbol architecture-symbol)
          "../core/updater.rkt"
          "../version.rkt")
 
@@ -88,7 +88,7 @@
                         "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
                         (list (update-artifact 'macos 'arm64
                                                "https://example.com/a.tar.gz"
-                                               (make-string 64 #\a) 1 'targz '()))))
+                                               (make-string 64 #\a) 1 'targz '() #f))))
      (define signed
        (with-output-to-bytes
          (lambda () (write-signed-manifest manifest private-key
@@ -132,13 +132,13 @@
                         "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
                         (list (update-artifact host-platform host-arch
                                                "https://example.com/other.zip"
-                                               (make-string 64 #\a) 1 'exe '())
+                                               (make-string 64 #\a) 1 'exe '() #f)
                               (update-artifact host-platform host-arch
                                                "https://example.com/mine"
-                                               (make-string 64 #\b) 2 archive-kind '())
+                                               (make-string 64 #\b) 2 archive-kind '() #f)
                               (update-artifact 'linux 'x64
                                                "https://example.com/linux"
-                                               (make-string 64 #\c) 3 'targz '()))))
+                                               (make-string 64 #\c) 3 'targz '() #f))))
      (define tmp (make-temporary-file "rmpick~a" 'directory))
      (make-directory* (build-path tmp "lib"))    ; distributed layout marker
      (parameterize ([current-exe-path (build-path tmp "regexmate.exe")])
@@ -158,7 +158,7 @@
                         "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
                         (list (update-artifact 'macos 'arm64
                                                "https://example.com/a.tar.gz"
-                                               (make-string 64 #\a) 1 'targz '()))))
+                                               (make-string 64 #\a) 1 'targz '() #f))))
      (check-equal? (update-check-report (lambda () #f))
                    (list "up-to-date"))
      (check-equal?
@@ -186,10 +186,10 @@
                         (list (update-artifact host-platform host-arch
                                                "https://example.com/archive"
                                                (make-string 64 #\a) 1
-                                               (archive-installer-kind) '())
+                                               (archive-installer-kind) '() #f)
                               (update-artifact host-platform host-arch
                                                "https://example.com/standalone.exe"
-                                               (make-string 64 #\b) 2 'exe '()))))
+                                               (make-string 64 #\b) 2 'exe '() #f))))
      (define tmp (make-temporary-file "rmpick~a" 'directory))
      ;; no lib/ next to the exe: a standalone single-file install
      (parameterize ([current-exe-path (build-path tmp "regexmate.exe")])
@@ -210,7 +210,7 @@
                         "https://example.com/a.tar.gz"
                         (string-downcase (sha256-file/hex tmp))
                         (file-size tmp)
-                        (archive-installer-kind) '()))
+                        (archive-installer-kind) '() #f))
      (define plan
        (update-plan (update-manifest regexmate-identifier "9.9.8" 42 'stable
                                      "2026-10-09T00:00:00Z" "0.0.0" #f #t 100

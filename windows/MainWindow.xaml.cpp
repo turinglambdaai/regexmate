@@ -182,7 +182,7 @@ void MainWindow::MenuAbout_Click(
     Microsoft::UI::Xaml::RoutedEventArgs const&) {
   (void)ShowHostDialog(
       L"About Regexmate",
-      std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion) +
+      std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion).c_str() +
           L"\n\nLive regular-expression workbench backed by an embedded "
           L"Racket engine. Released under the MIT License.",
       L"", nullptr);
@@ -231,14 +231,14 @@ void MainWindow::PresentUpdateReport(std::vector<std::string> const& report,
     }
   };
   if (!error.empty()) {
-    (void)ShowHostDialog(L"Check failed", winrt::to_hstring(error), L"",
+    (void)ShowHostDialog(L"Check failed", winrt::to_hstring(error).c_str(), L"",
                          nullptr);
     return;
   }
   if (!report.empty() && report.front() == "up-to-date") {
     (void)ShowHostDialog(
         L"You're up to date",
-        std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion) +
+        std::wstring(L"RegexMate ") + winrt::to_hstring(rivet_app::kVersion).c_str() +
             L" is the latest stable build.",
         L"", nullptr);
     return;
@@ -258,11 +258,11 @@ void MainWindow::PresentUpdateReport(std::vector<std::string> const& report,
     auto const detail = report.size() > 1 ? winrt::to_hstring(report[1])
                                           : winrt::hstring(
                               L"The update manifest could not be fetched.");
-    (void)ShowHostDialog(L"Check failed", detail, L"", nullptr);
+    (void)ShowHostDialog(L"Check failed", detail.c_str(), L"", nullptr);
     return;
   }
   (void)ShowHostDialog(L"Check failed",
-                       winrt::hstring(L"Unexpected update-check report."), L"",
+                       L"Unexpected update-check report.", L"",
                        nullptr);
 }
 

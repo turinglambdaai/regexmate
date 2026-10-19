@@ -29,7 +29,7 @@ jobs:
           variant: CS
 
       - name: Install Rivet (pinned) and crypto (updater dependency)
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#v0.11.0' crypto
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#de1fb8997539d34ba029064f500f6903b955b5a7' crypto
 
       - name: Compile
         run: raco make main.rkt run-tests.rkt
@@ -72,7 +72,7 @@ jobs:
           sudo apt-get install -y libgtk-4-dev
 
       - name: Clone rivet (host platform headers, pinned)
-        run: git clone --depth 1 --branch v0.11.0 https://github.com/turinglambdaai/rivet.git "$RUNNER_TEMP/rivet"
+        run: git clone https://github.com/turinglambdaai/rivet.git "$RUNNER_TEMP/rivet" && git -C "$RUNNER_TEMP/rivet" checkout de1fb8997539d34ba029064f500f6903b955b5a7
 
       # Compile gate only: the release workflow does the full embedded-CS
       # build. This catches GTK 4.6 API and C++ mistakes on every push.
