@@ -14,7 +14,7 @@ concurrency:
 # Single source of truth for the rivet pin; every install step below
 # references this so a bump is one edit, not a grep-replace across jobs.
 env:
-  RIVET_PIN: v0.11.0
+  RIVET_PIN: de1fb8997539d34ba029064f500f6903b955b5a7
 
 jobs:
   verify:
@@ -148,7 +148,7 @@ jobs:
         run: echo "FULL_RACKET_RACO=$(command -v raco)" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@v0.11.0
+        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@de1fb8997539d34ba029064f500f6903b955b5a7
 
       # One command builds the native GUI package, every human installer for
       # this platform (dmg / msi / deb + rpm + AppImage), the SBOM and the

@@ -606,6 +606,8 @@ void on_activate(GtkApplication* app, gpointer) {
   gtk_header_bar_set_title_widget(GTK_HEADER_BAR(header), title_box);
   auto* refresh = gtk_button_new_from_icon_name("view-refresh-symbolic");
   gtk_widget_set_tooltip_text(refresh, "Run (Enter also runs)");
+  gtk_accessible_update_property(GTK_ACCESSIBLE(refresh),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL, "Run regex", -1);
   gtk_header_bar_pack_end(GTK_HEADER_BAR(header), refresh);
   // Family menu convention: Check for Updates… and About are a pair in the
   // Help menu (low-frequency actions must not take header icon slots).
