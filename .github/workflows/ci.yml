@@ -29,7 +29,7 @@ jobs:
           variant: CS
 
       - name: Install Rivet (pinned) and crypto (updater dependency)
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#de1fb8997539d34ba029064f500f6903b955b5a7' crypto
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a' crypto
 
       - name: Compile
         run: raco make main.rkt run-tests.rkt
@@ -46,6 +46,13 @@ jobs:
       # were generated against.
       - name: Backend schema baseline check
         run: raco rivet schema check rivet-schema.json --json
+
+      # rivet release gate: regenerated clients must match the tree (the
+      # committed Kotlin client included), the schema baseline must hold,
+      # updater calls may only use keywords the pinned rivet accepts, and
+      # every dependency pin must be non-empty.
+      - name: Release gate (doctor)
+        run: raco rivet doctor --release
 
       - name: CLI smoke test
         shell: bash
@@ -72,7 +79,7 @@ jobs:
           sudo apt-get install -y libgtk-4-dev
 
       - name: Clone rivet (host platform headers, pinned)
-        run: git clone https://github.com/turinglambdaai/rivet.git "$RUNNER_TEMP/rivet" && git -C "$RUNNER_TEMP/rivet" checkout de1fb8997539d34ba029064f500f6903b955b5a7
+        run: git clone https://github.com/turinglambdaai/rivet.git "$RUNNER_TEMP/rivet" && git -C "$RUNNER_TEMP/rivet" checkout 1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a
 
       # Compile gate only: the release workflow does the full embedded-CS
       # build. This catches GTK 4.6 API and C++ mistakes on every push.
