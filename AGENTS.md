@@ -38,6 +38,6 @@ raco rivet acceptance --json            # 当前平台完整产品验收
 
 ## 组合定位（Portfolio placement）
 
-- 轨道与授权：轨道 4 社区引流；授权形态：MIT；商业归属：永久免费（agent 生态分发）。
+- 轨道与授权：轨道 2 消费买断（专业/团队向）；授权形态：MIT，建议趁采用量为零时换 BUSL-1.1（收费前提——MIT 下无法阻止免费竞品分叉，换照待所有者确认后执行）；商业归属：个人使用永久免费，团队/商业场景（CI 规模化、共享规则包、审计）走官方 Pro。
 - 组合归属唯一权威：[PORTFOLIO.md](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)（turinglambdaai.github.io 仓库）。改归属/授权先改权威档，再同步本节。
 - 纪律：价格只进本仓 `PRICING.md`，且收费开始时才发布；README 与产品站不做价格预告。
