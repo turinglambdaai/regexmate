@@ -3,7 +3,7 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [0.8.0] — 2026-10-22
 
 ### Changed
 - Relicensed MIT → BUSL-1.1 (Change Date 2030-10-22). Use remains free for
@@ -22,12 +22,28 @@ All notable changes to RegexMate are documented here. Format based on
   family's deb/rpm/AppImage convention.
 - "Check for Updates…" moved into the App menu directly below About on
   macOS (was the File menu), per the family menu convention.
+- Rivet upgraded from the pinned `de1fb899` commit to v0.12.0
+  (`1ebb3ac`), pinned as a literal commit SHA in every install step. The
+  Windows host now sets its title-bar icon from the embedded exe resource —
+  WinUI showed a generic placeholder there while taskbar and shortcuts
+  carried the real brand icon. Regenerated clients are byte-identical to
+  the previous pin; the v0.12.0 generator additionally emits a Kotlin
+  client (`.rivet/generated/kotlin/…`, committed for the freshness gate).
+- The release gate is enforced in CI: `raco rivet doctor --release` fails
+  on stale generated clients, a broken schema baseline, updater calls with
+  keywords the pinned rivet does not accept, or empty dependency pins.
+  The release workflow runs the same gate at the tagged commit.
 
 ### Added
 - Windows and Linux hosts gain the missing manual "Check for Updates…"
   entry as a Help menu (with About Regexmate beside it), wired to the
   backend's existing read-only update-check RPC; the macOS host already
   had it.
+- Product acceptance now ends in one cross-platform verdict: each platform
+  leg uploads its `acceptance --json` report and a `matrix` job folds the
+  reports with `raco rivet matrix` — a required kind/platform cell is
+  proven only by a passing suite on that platform, and a missing platform
+  is never silently green.
 
 ## [0.7.0] — 2026-10-15
 
@@ -84,9 +100,9 @@ changes.
 ### Changed
 
 - **The signing tools and the engine share one pin**: CI and release
-  workflows install Rivet from `rivet.git#v0.11.0` instead of floating on
-  the package catalog, the release signing leg checks out the same
-  `v0.11.0` ref before linking the manifest signer, and
+  workflows install Rivet from a pinned `v0.11.0` checkout instead of
+  floating on the package catalog, the release signing leg checks out the
+  same ref before linking the manifest signer, and
   `setup-embed-racket` runs at the tagged ref — the tool versions that
   sign and build a release can no longer drift
 - **Host packages consume the Rivet platform as a package target**: the

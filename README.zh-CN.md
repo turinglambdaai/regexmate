@@ -3,7 +3,7 @@
 **为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析。**
 版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.7.0-037A55)
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-037A55)
 
 [English](README.md) · **中文**
 
@@ -90,12 +90,12 @@ SVG 已保存到: diagram.svg
 
 ```console
 $ regexmate update --check
-Latest release: v0.7.0 (installed: 0.6.2)
+Latest release: v0.8.0 (installed: 0.7.0)
 
 $ regexmate update
 Downloading regexmate-0.6.2-macos-arm64.tar.gz (signature and checksum verified) …
 Installing …
-Updated to v0.7.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
+Updated to v0.8.0. Run `regexmate --version` to confirm; restart the RegexMate app if it was running.
 ```
 
 安装版可原地自更新：先用内嵌公钥验证 Ed25519 签名的更新清单（key id `regexmate-2026-10`），再把下载包的字节数与 SHA-256 对照该签名清单核对，最后运行中的二进制安全换装（改名移开、下次启动清理残留）。GUI 与 CLI 同包发布，随同更新——更新后请重启应用。GUI 里另有只读的**检查更新**入口（应用菜单，macOS 上 ⇧⌘U），查询的是同一份签名清单；应用更新仍由 CLI 完成。`--json` 输出标准信封供 agent 与脚本使用。源码与 `raco pkg` 安装会提示改用 `git pull` / `raco pkg update`。
@@ -212,7 +212,6 @@ regexmate/
 ## 路线图
 
 - 签名安装包与公证（macOS GUI 目前为 ad-hoc 签名）
-- 更多包管理器（AUR PKGBUILD 已备好，待注册账号）
 - 命名捕获组 `(?<name>…)`（等引擎支持后跟进）
 
 ## 许可证
