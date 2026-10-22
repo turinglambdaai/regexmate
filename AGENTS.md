@@ -35,3 +35,9 @@ raco rivet acceptance --json            # 当前平台完整产品验收
 - 三宿主腿分属对应平台机器；跨平台交互逻辑保持一致是验收项。
 - Agent 不得以代码量、单元测试或单个平台截图代替完成证据；涉及 GUI 的改动至少要保留原生控件交互和后端返回值的验收证据。
 - 产品不发布到 Racket catalog（家族产品惯例），别把它当库补 pkg 元数据。
+
+## 组合定位（Portfolio placement）
+
+- 轨道与授权：轨道 4 社区引流；授权形态：MIT；商业归属：永久免费（agent 生态分发）。
+- 组合归属唯一权威：[PORTFOLIO.md](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)（turinglambdaai.github.io 仓库）。改归属/授权先改权威档，再同步本节。
+- 纪律：价格只进本仓 `PRICING.md`，且收费开始时才发布；README 与产品站不做价格预告。
