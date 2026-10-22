@@ -70,6 +70,16 @@ MainWindow::MainWindow() {
   InitializeComponent();
   Title(L"RegexMate");
 
+  // WinUI shows a generic placeholder in the title bar unless the window is
+  // handed an icon explicitly. The brand icon is compiled into the exe as
+  // resource ID 1 (rivet.rktd windows-icon); projects without a windows-icon
+  // declaration keep the placeholder.
+  if (HICON const icon =
+          ::LoadIconW(::GetModuleHandleW(nullptr), MAKEINTRESOURCEW(1))) {
+    AppWindow().SetIcon(winrt::Microsoft::UI::IconId{
+        static_cast<std::uint64_t>(reinterpret_cast<UINT_PTR>(icon))});
+  }
+
   // seed the sample text and remember it, so refresh only re-applies match
   // formatting and never clobbers what the user typed
   auto doc = TextBox().Document();
