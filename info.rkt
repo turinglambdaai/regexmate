@@ -12,4 +12,4 @@
 
 (define pkg-authors '(turinglambdaai))
 
-(define license '(MIT))
+(define license '(BUSL-1.1))

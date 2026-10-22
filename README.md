@@ -3,7 +3,7 @@
 **The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
 Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.7.0-037A55)
+[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.7.0-037A55)
 
 **English** · [中文](README.zh-CN.md)
 
@@ -217,4 +217,7 @@ regexmate/
 
 ## License
 
-[MIT](LICENSE)
+[BUSL-1.1](LICENSE) — free to use for any purpose, including internal
+production use, CI pipelines and AI-agent invocation. Each version converts
+to MIT four years after its first public distribution (or 2030-10-22,
+whichever comes first); versions up to and including 0.7.0 remain MIT.

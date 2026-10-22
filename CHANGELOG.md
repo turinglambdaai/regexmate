@@ -6,6 +6,12 @@ All notable changes to RegexMate are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
+- Relicensed MIT → BUSL-1.1 (Change Date 2030-10-22). Use remains free for
+  any purpose, including internal production use, CI pipelines and AI-agent
+  invocation; what is not granted is distribution as a competing regex
+  workbench or offering the Work as a hosted or commercial service. Each
+  version converts to MIT four years after its first public distribution,
+  whichever comes first; all versions up to and including 0.7.0 remain MIT.
 - Windows icon redrawn full-bleed: a brand-green (#037A55) squircle with a
   white `.*` glyph (`branding/app-icon-windows.svg` → `app.ico`). The old
   `.ico` reused the macOS Big Sur inset-card artwork, which rendered as a

@@ -1,3 +1,53 @@
+Business Source License 1.1
+
+Parameters
+
+Licensor:            TuringLambda AI
+Licensed Work:       RegexMate (the "Work")
+                     The Work is a regex workbench — a CLI and MCP server for
+                     humans and coding agents — whose source is made available
+                     for inspection, use, contribution to the project, and
+                     non-production redistribution under this license.
+Additional Use Grant: You may use the Work for any purpose, including internal
+                     production use, use in CI pipelines, and invocation by AI
+                     agents and coding assistants, but you may not distribute
+                     the Work or a Derivative Work as a competing regex
+                     workbench, regex testing or explaining tool, or general
+                     pattern-matching CLI product, and you may not offer the
+                     Work or a Derivative Work as a hosted or commercial
+                     service.
+Change Date:         2030-10-22
+Change License:      MIT License
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited
+production use.
+
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work under this
+License, whichever comes first, the Licensor hereby grants you rights under
+the terms of the Change License, and the rights granted in the above section
+terminate.
+
+If your use of the Licensed Work does not comply with the requirements of
+this License, then the rights granted to you under this License terminate
+automatically.
+
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE WORK OR THE USE OR OTHER DEALINGS IN THE
+WORK.
+
+A copy of the MIT License is reproduced below.
+
+----------------------------------------------------------------------
+
 MIT License
 
 Copyright (c) 2026 TuringLambdaAI
