@@ -1,0 +1,8 @@
+# The rivet release doctor (`raco rivet doctor --release`) compares the
+# generated clients byte-for-byte with a fresh in-memory regeneration.
+# Windows runners check out with core.autocrlf=true, which would turn these
+# LF files into CRLF and fail the gate — pin them to LF on every platform.
+macos-host/Sources/RivetHost/GeneratedBackend.swift text eol=lf
+windows/GeneratedBackend.hpp text eol=lf
+linux/GeneratedBackend.hpp text eol=lf
+.rivet/generated/** text eol=lf
