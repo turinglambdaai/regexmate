@@ -7,6 +7,7 @@
 
 #include <DispatcherQueue.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Microsoft.UI.Windowing.h>  // AppWindow projection for SetIcon
 #include <winrt/Windows.System.h>
 #include <winrt/base.h>  // resume_foreground lives in winrt (C++/WinRT base)
 
@@ -79,7 +80,6 @@ MainWindow::MainWindow() {
     AppWindow().SetIcon(winrt::Microsoft::UI::IconId{
         static_cast<std::uint64_t>(reinterpret_cast<UINT_PTR>(icon))});
   }
-
   // seed the sample text and remember it, so refresh only re-applies match
   // formatting and never clobbers what the user typed
   auto doc = TextBox().Document();
