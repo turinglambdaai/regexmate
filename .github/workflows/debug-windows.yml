@@ -1,0 +1,27 @@
+name: debug-windows-build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Windows native build (console)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.3'
+          architecture: x64
+          distribution: full
+          variant: CS
+      - name: Install pinned Rivet and dependencies
+        shell: pwsh
+        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a" crypto
+      - name: Build the WinUI host with full console output
+        shell: pwsh
+        run: raco rivet build
