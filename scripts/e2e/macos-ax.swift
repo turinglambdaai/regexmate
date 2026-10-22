@@ -13,7 +13,20 @@ func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
 }
 func stringAttribute(_ element: AXUIElement, _ name: String) -> String { attribute(element, name) as? String ?? "" }
 func children(_ element: AXUIElement) -> [AXUIElement] { attribute(element, kAXChildrenAttribute) as? [AXUIElement] ?? [] }
-func walk(_ element: AXUIElement) -> [AXUIElement] { [element] + children(element).flatMap(walk) }
+
+// macOS 26 exposes the application element as its own child — an AX cycle.
+// An unguarded walk either recurses until the stack overflows (SIGSEGV mid
+// AX call) or, depth-capped alone, re-walks the self-chain exponentially and
+// times out. Skip anything already on the walked path; the depth cap stays
+// as belt-and-suspenders for malformed trees.
+func sameAXElement(_ a: AXUIElement, _ b: AXUIElement) -> Bool { CFEqual(a, b) }
+func walk(_ element: AXUIElement, depth: Int = 0, ancestors: [AXUIElement] = []) -> [AXUIElement] {
+    guard depth < 24 else { return [element] }
+    let path = ancestors + [element]
+    return [element] + children(element)
+        .filter { child in !path.contains { sameAXElement($0, child) } }
+        .flatMap { walk($0, depth: depth + 1, ancestors: path) }
+}
 func waitFor<T>(_ description: String, timeout: TimeInterval = 45, probe: () -> T?) throws -> T {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline { if let value = probe() { return value }; Thread.sleep(forTimeInterval: 0.05) }
@@ -33,9 +46,14 @@ func contains(_ root: AXUIElement, fragment: String) -> Bool {
             .contains { stringAttribute(element, $0).contains(fragment) }
     }
 }
-func snapshot(_ element: AXUIElement, depth: Int = 0) -> [String: Any] {
+func snapshot(_ element: AXUIElement, depth: Int = 0, ancestors: [AXUIElement] = []) -> [String: Any] {
     var result: [String: Any] = ["role": stringAttribute(element, kAXRoleAttribute), "identifier": stringAttribute(element, kAXIdentifierAttribute), "title": stringAttribute(element, kAXTitleAttribute), "label": stringAttribute(element, kAXDescriptionAttribute), "value": stringAttribute(element, kAXValueAttribute)]
-    if depth < 8 { result["children"] = children(element).map { snapshot($0, depth: depth + 1) } }
+    if depth < 8 {
+        let path = ancestors + [element]
+        result["children"] = children(element)
+            .filter { child in !path.contains { sameAXElement($0, child) } }
+            .map { snapshot($0, depth: depth + 1, ancestors: path) }
+    }
     return result
 }
 func writeJSON(_ value: Any, to url: URL) throws { try JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted, .sortedKeys]).write(to: url) }
