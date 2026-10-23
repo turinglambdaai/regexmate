@@ -7,6 +7,12 @@
 
 [English](README.md) · **中文**
 
+## 开始使用
+
+按现行 BUSL-1.1 条款提供的免费开发者与 agent 工具，包含仓库许可的内部使用。许可证不是 MIT，免费定位不改变许可条款。 提供 macOS、Windows、Linux 桌面与 CLI 发布附件。引擎使用 Racket pregexp，不能据此认定 JavaScript、PCRE 或其他生产引擎语义相同。
+
+[安装、首次使用、隐私与备份恢复](docs/USER-GUIDE.zh-CN.md) · [English](docs/USER-GUIDE.md)
+
 ## 为什么做这个
 
 现有正则工具要么只在网页里（regex101），要么偏检索（ripgrep），要么沉默寡言（grep）。RegexMate 是一个诚实的小 CLI，把七个动词做好，并且原生说 JSON：
@@ -217,11 +223,3 @@ regexmate/
 ## 许可证
 
 [BUSL-1.1](LICENSE)（source-available）——任何用途均可免费使用，含内部生产使用、CI 管线与 AI agent 调用；每个版本在首次公开发布四年后自动转为 MIT（2030-10-22 以先到者为准）；0.7.0 及之前的已发布版本保持 MIT。
-
-## 反馈与诊断
-
-问题和建议请使用 [GitHub Issues](https://github.com/turinglambdaai/regexmate/issues)，附版本、系统/架构和复现步骤。分享前先检查并脱敏诊断；不要公开 API key、授权凭据、密钥库或私有文档。安全敏感问题优先按 SECURITY.md 联系；未提供私密渠道时，先请求私下联系方式，不在公开 issue 中披露敏感细节。此入口不会自动上传数据。
-
-## 产品与收费
-
-免费开发者与 agent 工具。首发目标、免费边界与开卖门禁见 [PRICING.md](PRICING.zh-CN.md)；当前仍在开发，没有实际用户，不表示已开售，也不因此给开发版即时加收费墙。

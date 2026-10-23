@@ -7,6 +7,12 @@ Versioned JSON contract, a native MCP server, exit codes that never lie, and onl
 
 **English** · [中文](README.zh-CN.md)
 
+## Start here
+
+Free developer and agent tool under the existing BUSL-1.1 terms, including the repository’s allowed internal use. The licence is not MIT and is not changed by the free-product policy. Desktop/CLI release assets for macOS, Windows and Linux. The engine uses Racket pregexp; it is not a proof of matching JavaScript, PCRE or another production engine.
+
+[Installation, first use, privacy, backup and recovery](docs/USER-GUIDE.md) · [简体中文](docs/USER-GUIDE.zh-CN.md)
+
 ## Why
 
 Regex tooling today is either web-only (regex101), search-oriented (ripgrep) or silent (grep). RegexMate is a small, honest CLI that does seven verbs well and speaks JSON natively:
@@ -220,15 +226,3 @@ regexmate/
 production use, CI pipelines and AI-agent invocation. Each version converts
 to MIT four years after its first public distribution (or 2030-10-22,
 whichever comes first); versions up to and including 0.7.0 remain MIT.
-
-## Delivery priorities (2026-10-23)
-
-The current product review issue linked from AGENTS owns the next bounded slice and its acceptance scenarios. Follow the existing product specification and the [family delivery standard](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/docs/PRODUCT-STANDARD.md). Hardware, native-platform and live-payment gates remain explicit; this documentation update does not claim they passed.
-
-## Feedback and diagnostics
-
-Report reproducible bugs and feature requests through [GitHub Issues](https://github.com/turinglambdaai/regexmate/issues). Include the release, OS/architecture and steps; inspect and redact diagnostics before sharing. Do not post API keys, license files, vault contents or private documents. For sensitive security reports, follow SECURITY.md when present; otherwise request a private contact route without disclosing sensitive details. Nothing is uploaded automatically.
-
-## Product & pricing
-
-Free developer and agent tool. Read the complete [English pricing and product policy](PRICING.md) or [简体中文](PRICING.zh-CN.md) for target prices, free/paid boundaries and launch gates. This is a launch design, not a live offer; this documentation does not add payment restrictions to current development builds.

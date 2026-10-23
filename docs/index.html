@@ -35,6 +35,13 @@ var _hmt = _hmt || [];
   #product-support a:focus-visible { outline:2px solid currentColor; outline-offset:4px; }
   html:lang(en) #product-support .support-zh, html:lang(zh) #product-support .support-en { display:none; }
 </style>
+<style id="product-start-style">
+.product-availability{font-size:.95rem;line-height:1.65;max-width:72ch;margin:18px 0;opacity:.85} .hero .product-availability{margin-left:auto;margin-right:auto}
+.product-start{max-width:1120px;margin:64px auto;padding:32px 24px;border-top:1px solid var(--border,#aaa);font:inherit;line-height:1.65}
+.product-start h2{font-size:clamp(1.7rem,3vw,2.4rem);letter-spacing:-.025em;margin:0 0 16px}.product-start h3{font-size:1.05rem;margin:0 0 10px}.product-start p{margin:0 0 16px;max-width:74ch}.product-start-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:28px;margin:28px 0}.product-start a{text-decoration:underline;text-underline-offset:4px;overflow-wrap:anywhere}.product-start a:focus-visible{outline:2px solid currentColor;outline-offset:5px}.product-start .start-links{display:flex;gap:16px 24px;flex-wrap:wrap}.product-start .start-status{font-weight:600}.product-start .start-limits{font-size:.95em}
+html:lang(en) .reader-zh,html:lang(zh) .reader-en{display:none!important}@media(max-width:700px){.product-start{margin:40px auto;padding:24px 20px}.product-start-grid{grid-template-columns:1fr;gap:18px}}
+</style>
+<style>.lang-menu li.lang-choice{padding:0}.lang-menu .lang-choice button{display:block;width:100%;padding:8px 12px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.lang-menu .lang-choice button:focus-visible{outline:2px solid currentColor;outline-offset:-2px;border-radius:4px}</style>
 </head>
 <body>
 
@@ -64,8 +71,8 @@ var _hmt = _hmt || [];
                         <span id="current-lang-label">English</span>
                     </button>
                     <ul class="lang-menu">
-                        <li onclick="setLanguage('en')">English</li>
-                        <li onclick="setLanguage('zh')">简体中文</li>
+                        <li class="lang-choice"><button type="button" onclick="setLanguage('en')">English</button></li>
+                        <li class="lang-choice"><button type="button" onclick="setLanguage('zh')">简体中文</button></li>
                     </ul>
                 </div>
                 <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle theme">◐</button>
@@ -81,6 +88,7 @@ var _hmt = _hmt || [];
                 <span class="pill">MIT</span>
             </div>
             <h1 class="hero-title reveal" data-i18n="hero.title">正则表达式，一眼看懂。</h1>
+<p class="reader-en product-availability" lang="en">Development preview. Free developer and agent tool under the existing BUSL-1.1 terms, including the repository’s allowed internal use. The licence is not MIT and is not changed by the free-product policy.</p><p class="reader-zh product-availability" lang="zh">开发预览。按现行 BUSL-1.1 条款提供的免费开发者与 agent 工具，包含仓库许可的内部使用。许可证不是 MIT，免费定位不改变许可条款。</p>
             <p class="hero-sub reveal" data-i18n="hero.sub">
                 一条安静的 CLI 包办所有正则工作——校验、匹配、解释、替换、绘图、测试、风险分析。对 agent 说 JSON，对你说人话，还会自己更新。
             </p>
@@ -320,7 +328,10 @@ raco exe -o regexmate main.rkt</code>
     </section>
 
     <!-- Footer -->
-    <footer class="footer">
+    <section id="start-here" class="product-start" aria-label="Get started / 开始使用">
+<h2 class="reader-en " lang="en">Start with one useful session.</h2><h2 class="reader-zh " lang="zh">从一次有效使用开始。</h2><p class="reader-en start-status" lang="en">Free developer and agent tool under the existing BUSL-1.1 terms, including the repository’s allowed internal use. The licence is not MIT and is not changed by the free-product policy.</p><p class="reader-zh start-status" lang="zh">按现行 BUSL-1.1 条款提供的免费开发者与 agent 工具，包含仓库许可的内部使用。许可证不是 MIT，免费定位不改变许可条款。</p><p class="reader-en " lang="en">Desktop/CLI release assets for macOS, Windows and Linux. The engine uses Racket pregexp; it is not a proof of matching JavaScript, PCRE or another production engine.</p><p class="reader-zh " lang="zh">提供 macOS、Windows、Linux 桌面与 CLI 发布附件。引擎使用 Racket pregexp，不能据此认定 JavaScript、PCRE 或其他生产引擎语义相同。</p><div class="product-start-grid"><article><h3 class="reader-en " lang="en">01</h3><h3 class="reader-zh " lang="zh">01</h3><p class="reader-en " lang="en">Run regexmate validate on your pattern, then match a synthetic positive sample.</p><p class="reader-zh " lang="zh">先用 regexmate validate 验证模式，再匹配一条合成正例。</p></article><article><h3 class="reader-en " lang="en">02</h3><h3 class="reader-zh " lang="zh">02</h3><p class="reader-en " lang="en">Add negative and boundary cases with regexmate test; inspect lint findings before using the pattern on untrusted input.</p><p class="reader-zh " lang="zh">用 regexmate test 添加反例与边界样例；将模式用于不可信输入前检查 lint 结果。</p></article><article><h3 class="reader-en " lang="en">03</h3><h3 class="reader-zh " lang="zh">03</h3><p class="reader-en " lang="en">For agent use, connect regexmate mcp and allow only the tools needed. Recheck the pattern in the actual destination engine.</p><p class="reader-zh " lang="zh">供 agent 使用时连接 regexmate mcp，仅授予需要的工具权限，并在最终目标引擎复核模式。</p></article></div><p class="reader-en start-limits" lang="en">The GUI has a read-only update check; applying updates is the CLI’s job. Exit and restart the GUI after updating. Source/package installs use their own update path.</p><p class="reader-zh start-limits" lang="zh">GUI 只读检查更新，实际安装由 CLI 执行。更新后退出并重启 GUI；源码或包安装使用对应更新方式。</p><div class="start-links"><a class="reader-en" lang="en" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.md">Installation, privacy &amp; recovery</a><a class="reader-zh" lang="zh" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.zh-CN.md">安装、隐私与恢复</a><a href="https://github.com/turinglambdaai/regexmate/issues"><span class="reader-en " lang="en">Get help</span><span class="reader-zh " lang="zh">反馈与帮助</span></a></div>
+</section>
+<footer class="footer">
         <div class="container footer-inner">
             <div>
                 <div class="brand brand-footer">
@@ -345,7 +356,7 @@ raco exe -o regexmate main.rkt</code>
             <p class="footer-copy">MIT · © 2026 TuringLambdaAI</p>
         </div>
     </footer>
-<nav id="product-support" aria-label="Support / 支持"><a href="https://github.com/turinglambdaai/regexmate/issues"><span class="support-zh">反馈</span><span class="support-en" lang="en">Feedback</span></a> <a href="https://github.com/turinglambdaai/regexmate/releases"><span class="support-zh">发布与更新</span><span class="support-en" lang="en">Releases</span></a> <a href="https://github.com/turinglambdaai/regexmate/blob/main/LICENSE"><span class="support-zh">源码许可</span><span class="support-en" lang="en">Source license</span></a> <a class="support-zh" href="https://github.com/turinglambdaai/regexmate/blob/main/PRICING.zh-CN.md">产品与收费方案</a> <a class="support-en" lang="en" href="https://github.com/turinglambdaai/regexmate/blob/main/PRICING.md">Product & pricing</a></nav>
+<nav id="product-support" aria-label="Support / 支持"><a href="https://github.com/turinglambdaai/regexmate/issues"><span class="support-zh">反馈</span><span class="support-en" lang="en">Feedback</span></a> <a href="https://github.com/turinglambdaai/regexmate/releases"><span class="support-zh">发布与更新</span><span class="support-en" lang="en">Releases</span></a> <a href="https://github.com/turinglambdaai/regexmate/blob/main/LICENSE"><span class="support-zh">源码许可</span><span class="support-en" lang="en">Source license</span></a> <a class="support-zh" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.zh-CN.md">使用与帮助</a> <a class="support-en" lang="en" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.md">Usage & help</a></nav>
 
     <script>
     (function () {

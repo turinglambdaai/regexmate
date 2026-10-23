@@ -30,6 +30,8 @@ var _hmt = _hmt || [];
   s.parentNode.insertBefore(hm, s);
 })();
 </script>
+<style>.lang-menu li.lang-choice{padding:0}.lang-menu .lang-choice button{display:block;width:100%;padding:8px 12px;border:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}.lang-menu .lang-choice button:focus-visible{outline:2px solid currentColor;outline-offset:-2px;border-radius:4px}</style>
+<style>.guide-status{margin:20px 0;padding:16px 20px;border:1px solid currentColor;border-radius:10px;font-size:.95rem;line-height:1.65}.guide-status p{margin:0 0 8px}.guide-status a{text-decoration:underline;text-underline-offset:4px}html:lang(en) .reader-zh,html:lang(zh) .reader-en{display:none!important}</style>
 </head>
 <body>
 
@@ -59,8 +61,8 @@ var _hmt = _hmt || [];
                         <span id="current-lang-label">简体中文</span>
                     </button>
                     <ul class="lang-menu">
-                        <li onclick="setLanguage('en')">English</li>
-                        <li onclick="setLanguage('zh')">简体中文</li>
+                        <li class="lang-choice"><button type="button" onclick="setLanguage('en')">English</button></li>
+                        <li class="lang-choice"><button type="button" onclick="setLanguage('zh')">简体中文</button></li>
                     </ul>
                 </div>
                 <button class="theme-btn" id="theme-btn" type="button" aria-label="Toggle theme">◐</button>
@@ -73,6 +75,7 @@ var _hmt = _hmt || [];
         <div class="container">
             <p class="eyebrow" data-i18n="gd.eyebrow">用户手册</p>
             <h1 data-i18n="gd.title">一条命令一个动词，示例即真相。</h1>
+<aside class="guide-status"><p class="reader-en " lang="en">Free developer and agent tool under the existing BUSL-1.1 terms, including the repository’s allowed internal use. The licence is not MIT and is not changed by the free-product policy.</p><p class="reader-zh " lang="zh">按现行 BUSL-1.1 条款提供的免费开发者与 agent 工具，包含仓库许可的内部使用。许可证不是 MIT，免费定位不改变许可条款。</p><a class="reader-en" lang="en" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.md">Current installation, privacy and recovery</a><a class="reader-zh" lang="zh" href="https://github.com/turinglambdaai/regexmate/blob/main/docs/USER-GUIDE.zh-CN.md">当前安装、隐私与恢复</a></aside>
             <p class="lead" data-i18n="gd.lead">五分钟上手、每个命令的真实输出、MCP 接入与版本化 JSON 契约——面向开发者与 coding agents。本页所有示例都由真实二进制产出。</p>
         </div>
     </header>
