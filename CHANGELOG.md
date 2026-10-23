@@ -6,10 +6,9 @@ All notable changes to RegexMate are documented here. Format based on
 ## [Unreleased]
 
 ### Changed
-- Rivet pin advanced `1ebb3ac` → `6385395` (v0.12 main). The generator now
-  emits the protocol-based Swift client (`RivetGeneratedRPCClient`), so the
-  macOS host client was regenerated in step; schema baseline unchanged and
-  still compatible.
+- Rivet pin advanced `1ebb3ac` → `6385395` (v0.12 main). The Swift, C++, and
+  Kotlin clients were regenerated in step; against this pin the output is
+  byte-identical to the previous files, so only the install pins moved.
 
 ## [0.8.0] — 2026-10-22
 
