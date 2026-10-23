@@ -23,9 +23,39 @@ private func decode_Bytes(_ v: RivetValue) throws -> Data { guard case .bytes(le
 private func decode__List_String_(_ v: RivetValue) throws -> [String] { guard case .list(let xs) = v else { throw RivetGeneratedError.typeMismatch("(List String)") }; return try xs.map(decode_String) }
 private func decode__List_List_String_(_ v: RivetValue) throws -> [[String]] { guard case .list(let xs) = v else { throw RivetGeneratedError.typeMismatch("(List (List String))") }; return try xs.map(decode__List_String_) }
 
+public protocol RivetGeneratedRPCClient: Sendable {
+    func call(_ name: String, arguments: [RivetValue]) async throws -> RivetValue
+}
+
+// Keep generated clients compatible with the last released SwiftPM runtime.
+// Authenticated network clients can use RivetAPI(call: deviceClient.call).
+public extension RivetGeneratedRPCClient {
+    func getState(_ name: String) async throws -> RivetValue {
+        try await call("$state/get", arguments: [.string(name)])
+    }
+
+    @discardableResult
+    func setState(_ name: String, value: RivetValue) async throws -> RivetValue {
+        try await call("$state/set", arguments: [.string(name), value])
+    }
+}
+
+extension RivetClient: RivetGeneratedRPCClient {}
+
+private struct RivetGeneratedClosureClient: RivetGeneratedRPCClient {
+    let invoke: @Sendable (String, [RivetValue]) async throws -> RivetValue
+
+    func call(_ name: String, arguments: [RivetValue]) async throws -> RivetValue {
+        try await invoke(name, arguments)
+    }
+}
+
 public struct RivetAPI: Sendable {
-    public let client: RivetClient
-    public init(client: RivetClient) { self.client = client }
+    public let client: any RivetGeneratedRPCClient
+    public init(client: any RivetGeneratedRPCClient) { self.client = client }
+    public init(call: @escaping @Sendable (String, [RivetValue]) async throws -> RivetValue) {
+        self.client = RivetGeneratedClosureClient(invoke: call)
+    }
 
     public func diagram_diag(pattern: String) async throws -> String {
         let rivetResult = try await client.call("diagram-diag", arguments: [encode_String(pattern)])

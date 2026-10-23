@@ -3,6 +3,14 @@
 All notable changes to RegexMate are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+- Rivet pin advanced `1ebb3ac` → `6385395` (v0.12 main). The generator now
+  emits the protocol-based Swift client (`RivetGeneratedRPCClient`), so the
+  macOS host client was regenerated in step; schema baseline unchanged and
+  still compatible.
+
 ## [0.8.0] — 2026-10-22
 
 ### Changed

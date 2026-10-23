@@ -42,7 +42,7 @@ jobs:
       # The rivet release gate at the tagged commit: generated files fresh,
       # schema baseline intact, update-API keywords accepted, pins non-empty.
       - name: Install Rivet (pinned) and crypto
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a' crypto
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48' crypto
       - name: Release gate (doctor)
         run: raco rivet doctor --release
 
@@ -106,7 +106,7 @@ jobs:
           df -h /
 
       - name: Install Rivet (pinned to the release engine version)
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a'
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48'
 
       - name: Install WiX (v5; rivet's MSI toolchain)
         # WiX 7 aborts with WIX7015 unless the Open Source Maintenance Fee
@@ -153,7 +153,7 @@ jobs:
         run: echo "FULL_RACKET_RACO=$(command -v raco)" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a
+        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@638539577d489765c0ed454eb48777421413ad48
 
       # One command builds the native GUI package, every human installer for
       # this platform (dmg / msi / deb + rpm + AppImage), the SBOM and the
@@ -375,7 +375,7 @@ jobs:
         # the dependency closure (keel, crypto-lib, ...), which the previous
         # checkout + --link install could not — the linked packages declare
         # no deps, so raco setup died compiling rivet/keel.rkt.
-        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#1ebb3ac09ed2e23eeb0a91cbec6e689aac01ab1a'
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48'
 
       - name: Flatten artifact dirs
         run: |
