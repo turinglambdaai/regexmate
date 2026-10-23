@@ -40,9 +40,9 @@ raco rivet acceptance --json            # 当前平台完整产品验收
 
 ## 组合定位（Portfolio placement）
 
-- 轨道与授权：轨道 2 消费买断（专业/团队向）；授权形态：BUSL-1.1 → MIT（2030-10-22 或各版首发四周年，先到者；≤0.7.0 的已发布版本保持 MIT）；商业归属：现行 LICENSE 已允许个人及内部生产、CI、agent 使用；未来官方 Pro 仅为新增团队共享规则包、协作审计和支持便利收费，不按企业身份追收既有使用权。
-- 组合归属唯一权威：[PORTFOLIO.md](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)（turinglambdaai.github.io 仓库）。改归属/授权先改权威档，再同步本节。
-- 纪律：价格只进本仓 `PRICING.md`，且收费开始时才发布；README 与产品站不做价格预告。
+- 当前决策（2026-10-v2）：免费开发者与 agent 工具。具体价格、免费/付费边界和开卖门禁以本仓 [PRICING.md](PRICING.md) 为唯一权威；旧版收费候选与早鸟方案已被替代。
+- 组合归属：[PORTFOLIO](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)。当前全部产品开发中、没有实际用户；目标定价不表示已经开卖，不因此立即给开发版加收费墙。
+- 免费产品不接商业激活；付费层先实现可验证价值，再接 Commerce/Permit。优先完成本仓既有产品审查 issue；不修改现行源码 LICENSE。
 
 ## 产品交付与下一步（2026-10-23）
 
