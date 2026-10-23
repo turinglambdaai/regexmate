@@ -40,6 +40,13 @@ raco rivet acceptance --json            # 当前平台完整产品验收
 
 ## 组合定位（Portfolio placement）
 
-- 轨道与授权：轨道 2 消费买断（专业/团队向）；授权形态：BUSL-1.1 → MIT（2030-10-22 或各版首发四周年，先到者；≤0.7.0 的已发布版本保持 MIT）；商业归属：个人使用永久免费，团队/商业场景（CI 规模化、共享规则包、审计）走官方 Pro。
+- 轨道与授权：轨道 2 消费买断（专业/团队向）；授权形态：BUSL-1.1 → MIT（2030-10-22 或各版首发四周年，先到者；≤0.7.0 的已发布版本保持 MIT）；商业归属：现行 LICENSE 已允许个人及内部生产、CI、agent 使用；未来官方 Pro 仅为新增团队共享规则包、协作审计和支持便利收费，不按企业身份追收既有使用权。
 - 组合归属唯一权威：[PORTFOLIO.md](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)（turinglambdaai.github.io 仓库）。改归属/授权先改权威档，再同步本节。
 - 纪律：价格只进本仓 `PRICING.md`，且收费开始时才发布；README 与产品站不做价格预告。
+
+## 产品交付与下一步（2026-10-23）
+
+- 家族[交付标准](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/docs/PRODUCT-STANDARD.md)与[组合策略](https://github.com/turinglambdaai/turinglambdaai.github.io/blob/master/PORTFOLIO.md)是共用政策；本仓具体行为以 `README.md` 为准，不复制五库依赖图。
+- 当前执行入口：[产品审查 issue](https://github.com/turinglambdaai/regexmate/issues/4)。保留现行 internal production/CI/agent 使用许可。下一步验证 CLI 更新与 GUI 重启交接；Pro 仅规划新增协作/规则包/审计/支持便利。
+- 开工先检查干净工作树与远端，以 fast-forward-only 更新并记录 SHA；共享文件一次一个写入者，保留其他 checkout 的未提交工作。
+- 每次只完成一个可验收切片，记录 owned files、依赖 pin、命令/平台/产物证据和回滚。已实现、已发布、实机验收分别陈述；不修改 requirements 或复用旧证据来制造通过。
