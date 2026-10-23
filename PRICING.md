@@ -22,6 +22,12 @@ Free / evaluation: CLI, GUI, MCP and internal production/CI/agent use remain fre
 
 Paid: No paid tier is planned. Do not integrate Commerce or add Permit product gates.
 
+## Authorization decision for implementation
+
+Decision revision: `2026-10-auth-1` (2026-10-23). **No commercial Permit integration:** do not issue entitlement/trial/activation credentials, add Commerce checkout, impose device/seat limits or require a licensing account. Necessary third-party authentication, permissions and BYOK are separate from product licensing. Preserve update-signature verification and OS publisher trust; neither is a paid entitlement. Existing source licenses remain unchanged.
+
+Before claiming an unrestricted release, remove any conflicting legacy product gate through the linked implementation issue and prove existing data still opens, restores and exports. Record the policy/source SHA read at the next slice boundary. This decision is a development constraint, not proof that old runtime gates have already been removed.
+
 ## Next gate before sales
 
 Complete delivery/maintenance gates in #4 first. Free pricing does not reduce signed-update, recovery or privacy requirements.
