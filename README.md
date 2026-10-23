@@ -216,7 +216,7 @@ regexmate/
 
 ## License
 
-[BUSL-1.1](LICENSE) — free to use for any purpose, including internal
+[BUSL-1.1](LICENSE) (source-available) — free to use for any purpose, including internal
 production use, CI pipelines and AI-agent invocation. Each version converts
 to MIT four years after its first public distribution (or 2030-10-22,
 whichever comes first); versions up to and including 0.7.0 remain MIT.
