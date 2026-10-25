@@ -17,6 +17,10 @@ struct MainWindow : MainWindowT<MainWindow> {
                               Microsoft::UI::Xaml::RoutedEventArgs const& args);
   void MenuAbout_Click(winrt::Windows::Foundation::IInspectable const& sender,
                        Microsoft::UI::Xaml::RoutedEventArgs const& args);
+  // The generated CRTP base wires XAML events, so handlers stay public.
+  void MatchList_SelectionChanged(
+      winrt::Windows::Foundation::IInspectable const& sender,
+      winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
 
  private:
   winrt::fire_and_forget InitializeBackendAsync();
@@ -37,9 +41,6 @@ struct MainWindow : MainWindowT<MainWindow> {
                     rivet::Bytes const& png,
                     std::vector<std::vector<std::string>> lint,
                     std::wstring const& text);
-  void MatchList_SelectionChanged(
-      winrt::Windows::Foundation::IInspectable const& sender,
-      winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
   void RepaintMatchRanges(winrt::Microsoft::UI::Text::ITextDocument const& doc,
                           std::wstring const& text, int inspected);
 
