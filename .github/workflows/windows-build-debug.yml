@@ -25,4 +25,4 @@ jobs:
         run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48" crypto
       - name: Build with error-only output
         shell: pwsh
-        run: raco rivet build 2>&1 | Select-String -Pattern "error C[0-9]|error MSB|fatal error|: error|XamlCompiler|LINK :|WVE:|MIDL" | Select-Object -Last 50
+        run: raco rivet build 2>&1 | Select-String -Pattern 'error C[0-9]|error MSB|fatal error|: error|LINK|WVE:|MIDL' | Select-Object -Last 50
