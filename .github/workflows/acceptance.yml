@@ -33,7 +33,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regexmate-acceptance-windows
+          name: regexmate-acceptance-windows-${{ github.run_attempt }}
           path: |
             .rivet/acceptance/
             acceptance-report.json
@@ -66,7 +66,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regexmate-acceptance-macos-${{ matrix.arch }}
+          name: regexmate-acceptance-macos-${{ matrix.arch }}-${{ github.run_attempt }}
           path: |
             .rivet/acceptance/
             acceptance-report.json
@@ -100,7 +100,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: regexmate-acceptance-linux
+          name: regexmate-acceptance-linux-${{ github.run_attempt }}
           path: |
             .rivet/acceptance/
             acceptance-report.json
@@ -119,7 +119,9 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: reports
-          pattern: regexmate-acceptance-*
+          # Pin the run attempt: a cancelled attempt's stale, possibly empty
+          # artifact must never shadow the fresh one on a re-run.
+          pattern: regexmate-acceptance-*-${{ github.run_attempt }}
       - uses: Bogdanp/setup-racket@v1.15
         with:
           version: '9.3'
@@ -133,12 +135,15 @@ jobs:
         # captured stdout before the report; keep only the JSON document.
         run: |
           python3 - <<'PY'
-          import glob
+          import glob, sys
           for path in glob.glob('reports/*/acceptance-report.json'):
               raw = open(path, errors='ignore').read()
               start, end = raw.find('{'), raw.rfind('}') + 1
-              if start > 0 or end < len(raw.rstrip('\n')):
-                  open(path, 'w').write(raw[start:end])
+              if start == -1 or end == 0:
+                  sys.exit(f"empty or non-JSON acceptance report: {path}")
+              stripped = raw[start:end]
+              if stripped != raw:
+                  open(path, 'w').write(stripped)
           PY
       - name: Aggregate per-platform acceptance reports
         run: raco rivet matrix reports/*/acceptance-report.json
