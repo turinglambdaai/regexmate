@@ -67,7 +67,9 @@ def main():
     # -- Match inspection: rows are single-select and activation selects the
     #    same span in the sample editor --
     listbox = wait_for("match list", lambda: next((n for n in walk(window) if role(n) == "list" and any(role(c) == "list item" for c in children(n))), None))
-    items = wait_for("five match rows", lambda: (lambda found: found if len(found) >= 5 else None)([n for n in children(listbox) if role(n) == "list item"]))
+    # Row nodes can appear before their accessible names are populated; wait
+    # for the name, not just the count.
+    items = wait_for("five named match rows", lambda: (lambda found: found if len(found) >= 5 and "Match 2 of 5" in (found[1].name or "") and "2026" in (found[1].name or "") else None)([n for n in children(listbox) if role(n) == "list item"]))
     row2_name = items[1].name or ""
     if "Match 2 of 5" not in row2_name or "2026" not in row2_name:
         raise AssertionError(f"match row 2 does not expose index/text/span to AT-SPI: {row2_name}")
