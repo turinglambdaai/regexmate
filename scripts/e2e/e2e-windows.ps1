@@ -52,6 +52,18 @@ function Get-MatchListDiagnostics {
     }
 }
 
+function Find-SampleEditor {
+    param($Root)
+    # The RichEditBox's UIA peer may not surface the AutomationId; fall back
+    # to the Document control type (the pattern field is ControlType.Edit).
+    $byId = Find-ById $Root 'SampleEditor'
+    if ($byId) { return $byId }
+    return $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Document))
+}
+
 function Find-ById {
     param($Root, [string]$AutomationId)
     $condition = [System.Windows.Automation.PropertyCondition]::new(
@@ -113,7 +125,7 @@ try {
     $selectPattern = $items[1].GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
     ([System.Windows.Automation.SelectionItemPattern]$selectPattern).Select()
     $editorSelection = Wait-Until 'editor selection of 2026' {
-        $editor = Find-ById $window 'SampleEditor'
+        $editor = Find-SampleEditor $window
         if (-not $editor) { return $null }
         $text = Get-EditorSelectionText $editor
         if ($text -eq '2026') { return $text }
@@ -135,7 +147,7 @@ try {
     $zeroSelect = $zeroItem.GetCurrentPattern([System.Windows.Automation.SelectionItemPattern]::Pattern)
     ([System.Windows.Automation.SelectionItemPattern]$zeroSelect).Select()
     Wait-Until 'empty editor selection from zero-width inspection' {
-        $editor = Find-ById $window 'SampleEditor'
+        $editor = Find-SampleEditor $window
         if (-not $editor) { return $null }
         $text = Get-EditorSelectionText $editor
         if ($text -eq '') { return 'caret' }
@@ -173,11 +185,11 @@ try {
         if ($found.Count -ge 1) { return $true }
         return $false
     }
-    $editorBox = Find-ById $window 'SampleEditor'
+    $editorBox = Find-SampleEditor $window
     $editorSet = $editorBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
     ([System.Windows.Automation.ValuePattern]$editorSet).SetValue('Order 99 shipped.')
     Wait-Until 'selection cleared after live edit' {
-        $editor = Find-ById $window 'SampleEditor'
+        $editor = Find-SampleEditor $window
         if (-not $editor) { return $null }
         $text = Get-EditorSelectionText $editor
         if ($text -eq '') { return 'cleared' }
