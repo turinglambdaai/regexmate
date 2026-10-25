@@ -4,7 +4,6 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @FocusState private var patternFocused: Bool
-    @State private var selectedMatch: Int?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,7 +29,11 @@ struct ContentView: View {
             ) {
                 model.refreshNow()
             }
-            .frame(width: 620)
+            // Flex below the ideal width so the pattern stays editable at
+            // the window's compact width and under enlarged system text;
+            // the principal toolbar item must compress, not clip.
+            .frame(minWidth: 280, idealWidth: 620, maxWidth: 620)
+            .accessibilityIdentifier("PatternField")
         }
         ToolbarItem {
             Button {
@@ -113,46 +116,14 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(model.matches.enumerated()), id: \.offset) { index, match in
-                        matchRow(index: index, match: match)
-                        Divider().overlay(RM.Color_.hairline.opacity(0.6))
-                    }
-                }
-            }
+            // The host's result-selection model: one selection means
+            // "inspect this match" — the sample editor selects the same span.
+            // The native table gives the interaction to the keyboard (the
+            // list is a first responder: Tab reaches it, arrows walk it) and
+            // to assistive activation, not just the pointer.
+            MatchTableView(matches: model.matches, selectedMatch: $model.selectedMatch)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-    }
-
-    private func matchRow(index: Int, match: MatchSpan) -> some View {
-        HStack(spacing: 10) {
-            Text("\(index + 1)")
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink3)
-                .frame(width: 18, alignment: .trailing)
-            Text(match.text.isEmpty ? "∅" : match.text)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 8)
-            Text("[\(match.start), \(match.end))")
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink3)
-            if match.groups > 0 {
-                Text(match.groups == 1 ? "1 group" : "\(match.groups) groups")
-                    .font(.system(size: 10))
-                    .foregroundStyle(RM.Color_.accent)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(RM.Color_.accentTint))
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-        .background(selectedMatch == index ? RM.Color_.accentTint.opacity(0.6) : Color.clear)
-        .contentShape(Rectangle())
-        .onTapGesture { selectedMatch = (selectedMatch == index) ? nil : index }
     }
 
     private var rightColumn: some View {
@@ -268,7 +239,11 @@ struct ContentView: View {
                 }
             }
             Spacer()
-            Text("\(model.matches.count) match\(model.matches.count == 1 ? "" : "es")")
+            // An invalid pattern is an error state, not a zero-match result:
+            // the count yields to the error message on the left.
+            Text(model.patternError == nil
+                  ? "\(model.matches.count) match\(model.matches.count == 1 ? "" : "es")"
+                  : "—")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(RM.Color_.ink2)
                 .accessibilityIdentifier("MatchCount")
@@ -296,13 +271,28 @@ struct ContentView: View {
         let range: NSRange
     }
 
+    // The engine reports code-point offsets; NSTextView ranges are UTF-16
+    // units. Convert each boundary so highlights and selection land on the
+    // same characters (astral-plane scalars occupy two UTF-16 units). An
+    // offset past the end clamps to the text length.
+    private func utf16Location(ofCodePointOffset offset: Int, in text: String) -> Int {
+        var location = 0
+        var remaining = offset
+        for scalar in text.unicodeScalars {
+            if remaining <= 0 { break }
+            remaining -= 1
+            location += scalar.value >= 0x10000 ? 2 : 1
+        }
+        return location
+    }
+
     private var spanRanges: [SpanRange] {
         let ns = model.sample as NSString
         let limit = ns.length
         return model.matches.enumerated().compactMap { index, match in
-            let start = min(match.start, limit)
-            let end = min(match.end, limit)
-            guard end > start else { return nil }
+            let start = min(utf16Location(ofCodePointOffset: match.start, in: model.sample), limit)
+            let end = min(utf16Location(ofCodePointOffset: match.end, in: model.sample), limit)
+            guard end >= start else { return nil }
             return SpanRange(matchIndex: index, range: NSRange(location: start, length: end - start))
         }
     }
@@ -310,7 +300,7 @@ struct ContentView: View {
     private var sampleRanges: [NSRange] { spanRanges.map(\.range) }
 
     private var selectedRange: NSRange? {
-        guard let selectedMatch else { return nil }
+        guard let selectedMatch = model.selectedMatch else { return nil }
         return spanRanges.first(where: { $0.matchIndex == selectedMatch })?.range
     }
 }
@@ -322,6 +312,74 @@ extension Array {
 }
 
 // MARK: - Pattern field (toolbar command surface)
+//
+// A real NSTextField, not a SwiftUI TextField: the embedded-runtime hosts and
+// the acceptance driver change the pattern through Accessibility value writes,
+// which update a control value directly but bypass a SwiftUI binding. KVO on
+// the control value and the editor delegate both funnel into the model, so
+// programmatic writes, typing and ⌘R all observe the same pattern.
+
+// The field and its coordinator funnel every write path into the model.
+// Typing goes through the editor delegate. Accessibility value writes land
+// in the cell and never reach the control, so the submit paths (the field's
+// action and the delegate's end-editing) sync the cell value into the
+// binding before treating the write as a submit.
+final class PatternTextField: NSTextField {}
+
+final class PatternFieldCoordinator: NSObject, NSTextFieldDelegate {
+    var onUpdate: (() -> Void)?
+    var onSubmit: (() -> Void)?
+    var onFocus: ((Bool) -> Void)?
+    weak var field: NSTextField?
+
+    func controlTextDidChange(_: Notification) { onUpdate?() }
+    func controlTextDidBeginEditing(_: Notification) { onFocus?(true) }
+    func controlTextDidEndEditing(_: Notification) {
+        onUpdate?()
+        onFocus?(false)
+    }
+
+    @objc func submitted() {
+        onUpdate?()
+        onSubmit?()
+    }
+}
+
+private struct PatternTextFieldView: NSViewRepresentable {
+    @Binding var pattern: String
+    var focused: FocusState<Bool>.Binding
+    var onSubmit: () -> Void
+
+    func makeCoordinator() -> PatternFieldCoordinator { PatternFieldCoordinator() }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = PatternTextField()
+        field.stringValue = pattern
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.font = NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular)
+        field.textColor = NSColor.textColor
+        field.placeholderString = "/\\d+/"
+        field.lineBreakMode = .byTruncatingTail
+        context.coordinator.onUpdate = { [weak field] in
+            pattern = field?.stringValue ?? ""
+        }
+        context.coordinator.onSubmit = onSubmit
+        context.coordinator.onFocus = { focused.wrappedValue = $0 }
+        context.coordinator.field = field
+        field.delegate = context.coordinator
+        field.target = context.coordinator
+        field.action = #selector(PatternFieldCoordinator.submitted)
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        if field.stringValue != pattern {
+            field.stringValue = pattern
+        }
+    }
+}
 
 struct PatternField: View {
     @Binding var pattern: String
@@ -334,12 +392,7 @@ struct PatternField: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                 .foregroundStyle(error == nil ? RM.Color_.accent : RM.Color_.danger)
-            TextField("/\\d+/", text: $pattern)
-                .textFieldStyle(.plain)
-                .font(.system(size: 13.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink)
-                .focused(focused)
-                .onSubmit(onSubmit)
+            PatternTextFieldView(pattern: $pattern, focused: focused, onSubmit: onSubmit)
             if error != nil {
                 Image(systemName: "exclamationmark.circle.fill")
                     .font(.system(size: 12))

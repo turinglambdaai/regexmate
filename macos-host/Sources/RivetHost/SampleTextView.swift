@@ -138,7 +138,20 @@ struct SampleTextView: NSViewRepresentable {
             context.coordinator.applied = highlights
         }
         if context.coordinator.appliedSelection != selection {
+            // Setting a selection on an NSTextView makes it first responder,
+            // which would steal keyboard focus away from the match list the
+            // user is walking with the arrows. Apply the selection, then
+            // restore whatever element held focus.
+            let previousResponder = view.window?.firstResponder
             view.setSelectedRange(selection ?? NSRange(location: 0, length: 0))
+            // Inspecting a match must surface the span: scroll it into view
+            // even when the match list selection changed it from off-screen.
+            if let selection {
+                view.scrollRangeToVisible(selection)
+            }
+            if let previousResponder, previousResponder !== view {
+                view.window?.makeFirstResponder(previousResponder)
+            }
             context.coordinator.appliedSelection = selection
         }
     }

@@ -55,6 +55,7 @@
         <InfoBar
             x:Name="Status"
             Grid.Row="1"
+            AutomationProperties.AutomationId="StatusBar"
             IsOpen="True"
             IsClosable="False"
             Severity="Informational"
@@ -79,21 +80,41 @@
                 <RichEditBox
                     x:Name="TextBox"
                     Grid.Row="1"
+                    AutomationProperties.AutomationId="SampleEditor"
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
                     ScrollViewer.VerticalScrollMode="Auto"
                     ScrollViewer.VerticalScrollBarVisibility="Auto"
                     PlaceholderText="paste sample text…" />
                 <TextBlock Text="Matches" Grid.Row="2" FontWeight="SemiBold" />
-                <ScrollViewer Grid.Row="3" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
-                    <TextBlock
-                        x:Name="MatchList"
-                        AutomationProperties.AutomationId="MatchResults"
-                        FontFamily="Consolas"
-                        FontSize="13"
-                        IsTextSelectionEnabled="True"
-                        Text="(no matches)" />
-                </ScrollViewer>
+                <!-- Single-selection list: activating a match inspects it,
+                     i.e. selects the same span in the sample editor. Rows
+                     carry their index/span/groups in AutomationProperties
+                     for assistive technology. -->
+                <ListView
+                    x:Name="MatchList"
+                    Grid.Row="3"
+                    SelectionMode="Single"
+                    AutomationProperties.AutomationId="MatchResults"
+                    FontFamily="Consolas"
+                    FontSize="13"
+                    SelectionChanged="MatchList_SelectionChanged">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="MinHeight" Value="30" />
+                            <Setter Property="Padding" Value="8,2" />
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                </ListView>
+                <TextBlock
+                    x:Name="MatchEmpty"
+                    Grid.Row="3"
+                    AutomationProperties.AutomationId="MatchEmpty"
+                    FontFamily="Consolas"
+                    FontSize="13"
+                    Opacity="0.6"
+                    Text="(no matches)" />
                 <TextBlock Text="Lint findings" Grid.Row="4" FontWeight="SemiBold" />
                 <ScrollViewer Grid.Row="5" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
                     <TextBlock

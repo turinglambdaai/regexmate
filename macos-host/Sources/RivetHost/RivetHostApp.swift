@@ -33,6 +33,21 @@ struct RivetHostApp: App {
                 }
                 .keyboardShortcut("u", modifiers: [.command, .shift])
             }
+            CommandMenu("Match") {
+                // ⌘G / ⌘⇧G, the platform's find-next convention, keeps match
+                // inspection reachable without a pointer and without focus
+                // games: activating the menu item is also an assistive path.
+                Button("Inspect Next Match") {
+                    model.inspectNext()
+                }
+                .keyboardShortcut("g", modifiers: .command)
+                .disabled(!model.hasMatches)
+                Button("Inspect Previous Match") {
+                    model.inspectPrevious()
+                }
+                .keyboardShortcut("g", modifiers: [.command, .shift])
+                .disabled(!model.hasMatches)
+            }
         }
     }
 }
@@ -68,15 +83,32 @@ final class AppModel: ObservableObject {
     @Published var pattern = "\\d+"
     @Published var sample = "Order 12345 shipped on 2026-09-28 to zip 10115."
     @Published var matches: [MatchSpan] = []
+    // The inspected match: selecting (pointer, keyboard, shortcut or assistive
+    // activation) means "select this match's span in the sample editor".
+    @Published var selectedMatch: Int?
     @Published var explanation = ""
     @Published var findings: [LintFinding] = []
     @Published var diagram: NSImage?
     @Published var patternError: String?
 
+    // Inspect the next/previous match, wrapping at the ends (the ⌘G / ⌘⇧G
+    // find-next convention, reachable from the Match menu without a pointer).
+    func inspectNext() {
+        guard !matches.isEmpty else { return }
+        selectedMatch = ((selectedMatch ?? -1) + 1) % matches.count
+    }
+
+    func inspectPrevious() {
+        guard !matches.isEmpty else { return }
+        selectedMatch = ((selectedMatch ?? matches.count) - 1 + matches.count) % matches.count
+    }
+
     var isReady: Bool {
         if case .ready = phase { return true }
         return false
     }
+
+    var hasMatches: Bool { !matches.isEmpty }
 
     private var backend: EmbeddedRacketBackend?
     // Discards results of superseded refreshes (live typing enqueues many).
@@ -210,6 +242,7 @@ final class AppModel: ObservableObject {
                 if validity != "ok" {
                     self.patternError = validity
                     self.matches = []
+                    self.selectedMatch = nil
                     self.findings = []
                     self.diagram = nil
                     self.busy = false
@@ -224,7 +257,16 @@ final class AppModel: ObservableObject {
                 let (r, e, l, g) = try await (rows, explanation, lint, png)
                 guard gen == self.generation else { return }
 
-                self.matches = r.compactMap(Self.matchSpan(from:))
+                let newMatches = r.compactMap(Self.matchSpan(from:))
+                // Selection invalidation contract: the inspection selection
+                // belongs to one result set. A different result list clears
+                // it, so a live edit can never leave the selection pointing
+                // at a removed or shifted match; an identical result list
+                // (same spans) keeps the selection stable.
+                if newMatches != self.matches {
+                    self.selectedMatch = nil
+                }
+                self.matches = newMatches
                 self.explanation = e
                 self.findings = l.compactMap(Self.finding(from:))
                 self.diagram = g.isEmpty ? nil : NSImage(data: g)

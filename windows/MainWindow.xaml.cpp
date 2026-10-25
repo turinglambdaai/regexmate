@@ -368,8 +368,16 @@ void MainWindow::ApplyResults(std::string const& error,
                               std::vector<std::vector<std::string>> lint,
                               std::wstring const& text) {
   if (!error.empty()) {
+    // An invalid pattern is an error state, not a zero-match result.
     SetStatus(false, winrt::to_hstring(error));
-    MatchList().Text(L"(invalid pattern)");
+    match_rows_.clear();
+    match_spans_utf16_.clear();
+    updating_match_list_ = true;
+    MatchList().Items().Clear();
+    updating_match_list_ = false;
+    MatchList().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+    MatchEmpty().Text(L"Fix the pattern to match");
+    MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
     return;
   }
 
@@ -390,54 +398,185 @@ void MainWindow::ApplyResults(std::string const& error,
     LintList().Text(lintText);
   }
 
-  // highlight matches inside the test text: reset all formatting first,
-  // then tint each [start, end) span
+  // Highlight matches inside the test text, then rebuild the match list.
+  // The inspection selection tracks one result set: an unchanged result list
+  // keeps the selected row, a changed one resets it, so a live edit can
+  // never leave the selection pointing at a removed or shifted match.
   {
+    bool const same = rows == match_rows_;
+    match_rows_ = rows;
+    match_spans_utf16_.clear();
+    for (auto const& row : rows) {
+      if (row.size() < 4) {
+        match_spans_utf16_.emplace_back(-1, -1);  // keep list alignment
+        continue;
+      }
+      auto const start = std::stoi(row[1]);
+      auto const end = std::stoi(row[2]);
+      auto const u16_start = Utf16FromCodePoint(text, start);
+      auto const u16_end = Utf16FromCodePoint(text, end);
+      auto const length = static_cast<int>(text.size());
+      if (u16_start < 0 || u16_end > length || u16_end < u16_start) {
+        match_spans_utf16_.emplace_back(-1, -1);
+        continue;
+      }
+      match_spans_utf16_.emplace_back(u16_start, u16_end);
+    }
+
     auto doc = TextBox().Document();
-    auto const length = static_cast<int32_t>(text.size());
-    if (length > 0) {
-      auto all = doc.GetRange(0, length);
-      auto format = all.CharacterFormat();
-      format.Bold(winrt::Microsoft::UI::Text::FormatEffect::Off);
-      format.BackgroundColor(winrt::Windows::UI::Colors::Transparent());
-      all.CharacterFormat(format);
+    updating_match_list_ = true;
+    auto list = MatchList();
+    int const keep = same ? list.SelectedIndex() : -1;
+    list.Items().Clear();
+    if (rows.empty()) {
+      list.Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+      MatchEmpty().Text(L"(no matches)");
+      MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+    } else {
+      MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+      list.Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+      int index = 1;
       for (auto const& row : rows) {
-        if (row.size() < 3) {
-          continue;
+        if (row.size() < 4) continue;
+        // Keep the hstrings alive: their c_str() feeds the strings below.
+        winrt::hstring const matched = winrt::to_hstring(row[0]);
+        winrt::hstring const start = winrt::to_hstring(row[1]);
+        winrt::hstring const end = winrt::to_hstring(row[2]);
+        auto item = winrt::Microsoft::UI::Xaml::Controls::TextBlock();
+        item.Text(std::to_wstring(index) + L". " +
+                  std::wstring(row[0].empty() ? L"∅" : matched) + L"   [" +
+                  std::wstring(start) + L", " + std::wstring(end) + L")" +
+                  L"   " + std::wstring(winrt::to_hstring(row[3])) + L" group(s)");
+        // One assistive name spelling out the inspection contract: which
+        // match of how many, the matched text or zero-width position, the
+        // span and the capture-group count.
+        std::wstring name = L"Match " + std::to_wstring(index) + L" of " +
+                            std::to_wstring(rows.size()) + L": ";
+        if (row[0].empty()) {
+          name += L"zero-width match at character " + std::wstring(start);
+        } else {
+          name += L"'" + std::wstring(matched) + L"', characters " +
+                  std::wstring(start) + L" to " + std::wstring(end);
         }
-        auto const start = std::stoi(row[1]);
-        auto const end = std::stoi(row[2]);
-        if (start < 0 || end <= start || end > length) {
-          continue;
+        auto const groups = std::stoi(row[3]);
+        if (groups > 0) {
+          name += L", " + std::to_wstring(groups) +
+                  (groups == 1 ? L" capture group" : L" capture groups");
         }
-        auto range = doc.GetRange(start, end);
-        auto matchFormat = range.CharacterFormat();
-        matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
-        matchFormat.BackgroundColor(winrt::Windows::UI::Color{144, 238, 174});
-        range.CharacterFormat(matchFormat);
+        winrt::Microsoft::UI::Xaml::Automation::AutomationProperties::SetName(
+            item, winrt::hstring(name));
+        list.Items().Append(item);
+        ++index;
+      }
+      if (keep >= 0 && keep < static_cast<int>(rows.size())) {
+        list.SelectedIndex(keep);
       }
     }
+    updating_match_list_ = false;
+    RepaintMatchRanges(doc, text, list.SelectedIndex());
   }
-
-  std::wstring table;
-  if (rows.empty()) {
-    table = L"(no matches)";
-  } else {
-    for (std::size_t i = 0; i < rows.size(); ++i) {
-      auto const& row = rows[i];
-      table += std::to_wstring(i + 1) + L". " + winrt::to_hstring(row[0]) +
-               L"   [" + winrt::to_hstring(row[1]) + L"-" +
-               winrt::to_hstring(row[2]) + L"]   " +
-               winrt::to_hstring(row[3]) + L" group(s)\n";
-    }
-  }
-  MatchList().Text(table);
 
   ExplainText().Text(winrt::to_hstring(explain));
 
   if (!png.empty()) {
     ShowDiagram(png);
   }
+}
+
+// The engine reports code-point offsets; RichEdit ranges count UTF-16 units.
+// Convert each boundary so highlights and inspection land on the same
+// characters (a surrogate pair is one code point but two units).
+int MainWindow::Utf16FromCodePoint(std::wstring const& text, int code_point) {
+  int units = 0;
+  while (code_point > 0 && units < static_cast<int>(text.size())) {
+    wchar_t const c = text[static_cast<std::size_t>(units)];
+    bool const surrogatePair =
+        c >= 0xD800 && c <= 0xDBFF &&
+        units + 1 < static_cast<int>(text.size()) &&
+        text[static_cast<std::size_t>(units + 1)] >= 0xDC00 &&
+        text[static_cast<std::size_t>(units + 1)] <= 0xDFFF;
+    units += surrogatePair ? 2 : 1;
+    --code_point;
+  }
+  return units;
+}
+
+// Repaint the sample formatting: every match gets the base tint, the
+// inspected match gets the accent treatment so the selection stays visible
+// without stealing keyboard focus from the list.
+void MainWindow::RepaintMatchRanges(
+    winrt::Microsoft::UI::Text::ITextDocument const& doc,
+    std::wstring const& text, int inspected) {
+  auto const length = static_cast<int32_t>(text.size());
+  if (length <= 0) {
+    return;
+  }
+  auto all = doc.GetRange(0, length);
+  auto format = all.CharacterFormat();
+  format.Bold(winrt::Microsoft::UI::Text::FormatEffect::Off);
+  format.BackgroundColor(winrt::Windows::UI::Colors::Transparent());
+  format.ForegroundColor(winrt::Windows::UI::Colors::Black());
+  all.CharacterFormat(format);
+  for (int i = 0; i < static_cast<int>(match_spans_utf16_.size()); ++i) {
+    auto const [start, end] = match_spans_utf16_[static_cast<std::size_t>(i)];
+    if (start < 0 || end <= start) {
+      continue;
+    }
+    auto range = doc.GetRange(start, end - start);
+    auto matchFormat = range.CharacterFormat();
+    matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
+    if (i == inspected) {
+      matchFormat.BackgroundColor(
+          winrt::Windows::UI::Color{0xFF, 0x03, 0x7A, 0x55});
+      matchFormat.ForegroundColor(winrt::Windows::UI::Colors::White());
+    } else {
+      matchFormat.BackgroundColor(
+          winrt::Windows::UI::Color{0xFF, 0x90, 0xEE, 0xAE});
+    }
+    range.CharacterFormat(matchFormat);
+  }
+}
+
+// Activating a row inspects the match: the editor selection moves to the
+// same span (a zero-width match collapses the caret at that offset).
+void MainWindow::MatchList_SelectionChanged(
+    winrt::Windows::Foundation::IInspectable const& sender,
+    winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const&) {
+  if (updating_match_list_) {
+    return;
+  }
+  auto list = sender.as<winrt::Microsoft::UI::Xaml::Controls::ListView>();
+  int const selected = list.SelectedIndex();
+  auto doc = TextBox().Document();
+  winrt::hstring text_h;
+  doc.GetText(winrt::Microsoft::UI::Text::TextGetOptions::None, text_h);
+  std::wstring const text{text_h};
+  RepaintMatchRanges(doc, text, selected);
+  if (selected >= 0 && selected < static_cast<int>(match_spans_utf16_.size())) {
+    auto const [start, end] =
+        match_spans_utf16_[static_cast<std::size_t>(selected)];
+    if (start >= 0) {
+      doc.Selection().SetRange(start, end);
+    }
+  }
+  // Surface the inspection next to the match count: the same summary a
+  // screen-reader user hears from the row name.
+  std::wstring status = L"Found " + std::to_wstring(match_rows_.size()) +
+                        L" match(es)";
+  if (selected >= 0 && selected < static_cast<int>(match_rows_.size()) &&
+      match_rows_[static_cast<std::size_t>(selected)].size() >= 4) {
+    auto const& row = match_rows_[static_cast<std::size_t>(selected)];
+    status += L" \u00b7 inspecting match " + std::to_wstring(selected + 1) +
+              L" of " + std::to_wstring(match_rows_.size()) + L": ";
+    if (row[0].empty()) {
+      status += L"zero-width at character " + std::wstring(winrt::to_hstring(row[1]));
+    } else {
+      status += L"'" + std::wstring(winrt::to_hstring(row[0])) + L"' [" +
+                std::wstring(winrt::to_hstring(row[1])) + L", " +
+                std::wstring(winrt::to_hstring(row[2])) + L")";
+    }
+  }
+  SetStatus(true, winrt::hstring(status));
 }
 
 void MainWindow::SetStatus(bool ok, winrt::hstring const& message) {

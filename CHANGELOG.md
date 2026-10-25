@@ -5,6 +5,17 @@ All notable changes to RegexMate are documented here. Format based on
 
 ## [Unreleased]
 
+### Added
+- Match inspection got one keyboard-accessible meaning on every host:
+  activating a match (pointer, keyboard, ⌘G/⌘⇧G on macOS, arrow keys on a
+  focused list, or assistive activation) selects the same span in the
+  sample editor. Match rows expose index, span and capture-group count to
+  assistive technology; zero-width matches are named distinctly and
+  inspect by caret placement. A live edit that changes the result list
+  clears the selection, so it can never point at a removed match. Invalid
+  patterns report the error instead of a zero-match result, and the
+  pattern entry stays usable at compact window widths.
+
 ### Changed
 - Rivet pin advanced `1ebb3ac` → `6385395` (v0.12 main). The Swift, C++, and
   Kotlin clients were regenerated in step; against this pin the output is

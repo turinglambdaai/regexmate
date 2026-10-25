@@ -128,5 +128,17 @@ jobs:
           variant: CS
       - name: Install pinned Rivet
         run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48" crypto
+      - name: Strip non-JSON prefixes from the reports
+        # The Linux suite's AT-SPI daemon occasionally logs one line onto the
+        # captured stdout before the report; keep only the JSON document.
+        run: |
+          python3 - <<'PY'
+          import glob
+          for path in glob.glob('reports/*/acceptance-report.json'):
+              raw = open(path, errors='ignore').read()
+              start, end = raw.find('{'), raw.rfind('}') + 1
+              if start > 0 or end < len(raw.rstrip('\n')):
+                  open(path, 'w').write(raw[start:end])
+          PY
       - name: Aggregate per-platform acceptance reports
         run: raco rivet matrix reports/*/acceptance-report.json
