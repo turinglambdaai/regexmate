@@ -37,8 +37,20 @@ function Get-EditorSelectionText {
 
 function Get-StatusMessage {
     param($Window)
+    # The InfoBar's own Name may not carry the message; read the message text
+    # from its descendants.
     $status = Find-ById $Window 'StatusBar'
-    if ($status) { return $status.Current.Name }
+    if ($status) {
+        $texts = $status.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::Text))
+        $combined = ''
+        foreach ($t in $texts) { $combined += $t.Current.Name + ' ' }
+        $combined = $combined.Trim()
+        if ($combined) { return $combined }
+        return $status.Current.Name
+    }
     return '<StatusBar missing>'
 }
 
@@ -46,14 +58,15 @@ function Get-MatchListDiagnostics {
     param($Window)
     try {
         $list = Find-ById $Window 'MatchResults'
+        $statusNow = Get-StatusMessage $Window
         $selected = '<none>'
         try {
             $selPattern = $list.GetCurrentPattern([System.Windows.Automation.SelectionPattern]::Pattern)
             $selection = ([System.Windows.Automation.SelectionPattern]$selPattern).Current.GetSelection()
             if ($selection.Count -gt 0) { $selected = $selection[0].Current.Name }
         } catch { $selected = "<no SelectionPattern: $($_.Exception.Message)>" }
-        $editor = Find-ById $Window 'SampleEditor'
-        return "selected-item=$selected editor-selection=$(Get-EditorSelectionText $editor)"
+        $editor = Find-SampleEditor $Window
+        return "status='$statusNow' selected-item=$selected editor-selection=$(Get-EditorSelectionText $editor)"
     } catch {
         return "diag error: $($_.Exception.Message)"
     }
