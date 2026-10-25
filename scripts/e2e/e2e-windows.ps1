@@ -55,13 +55,19 @@ function Get-MatchListDiagnostics {
 function Find-SampleEditor {
     param($Root)
     # The RichEditBox's UIA peer may not surface the AutomationId; fall back
-    # to the Document control type (the pattern field is ControlType.Edit).
+    # to the Text-pattern element that actually holds the sample text.
     $byId = Find-ById $Root 'SampleEditor'
     if ($byId) { return $byId }
-    return $Root.FindFirst([System.Windows.Automation.TreeScope]::Descendants,
-        [System.Windows.Automation.PropertyCondition]::new(
-            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
-            [System.Windows.Automation.ControlType]::Document))
+    $nodes = $Root.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+        [System.Windows.Automation.Condition]::TrueCondition)
+    foreach ($node in $nodes) {
+        try {
+            $tp = $node.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
+            $text = ([System.Windows.Automation.TextPattern]$tp).DocumentRange.GetText(-1)
+            if ($text -match 'Order 12345' -or $text -match 'Order 99') { return $node }
+        } catch { }
+    }
+    return $null
 }
 
 function Find-ById {

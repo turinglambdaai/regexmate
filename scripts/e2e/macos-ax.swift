@@ -103,8 +103,14 @@ func selectedEditorText(_ root: AXUIElement) throws -> String {
     return stringAttribute(editor, kAXSelectedTextAttribute)
 }
 func setSelectedText(_ element: AXUIElement, _ value: String, _ what: String) throws {
-    guard AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, value as CFString) == .success else {
-        throw DriverError.failure("AX value write failed for \(what)")
+    // A value write can fail transiently while the host is mid-refresh.
+    for attempt in 0..<4 {
+        let result = AXUIElementSetAttributeValue(element, kAXValueAttribute as CFString, value as CFString)
+        if result == .success { return }
+        if attempt == 3 {
+            throw DriverError.failure("AX value write failed for \(what) (\(result))")
+        }
+        Thread.sleep(forTimeInterval: 0.5 * Double(attempt + 1))
     }
 }
 func pressMenuItem(_ application: AXUIElement, _ title: String) throws {
