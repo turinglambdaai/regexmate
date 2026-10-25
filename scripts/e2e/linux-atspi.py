@@ -218,7 +218,7 @@ def main():
         skipped_fixtures.append("live-edit fixture: could not set the sample text over AT-SPI")
 
     if skipped_fixtures:
-        trace["skipped"] = skipped_fixtures
+        actions.append("skip:" + "; ".join(skipped_fixtures))
 
     # -- the pattern entry stays usable at the compact window width --
     # (Wayland resize from AT-SPI is not portable; the pattern entry uses a
