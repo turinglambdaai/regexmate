@@ -70,6 +70,15 @@ struct AppState {
   guint debounce_id{0};
   std::atomic<int> generation{0};
 
+  // Inspection selection: the code-point spans of the current match list,
+  // the previous result set (selection tracks one result set), the inspected
+  // index, and the second (accent) text tag for the inspected span.
+  std::vector<std::pair<int, int>> match_spans;
+  std::vector<std::vector<std::string>> match_rows;
+  int inspected{-1};
+  bool updating_list{false};
+  GtkTextTag* inspected_tag{nullptr};
+
   void set_status(char const* dot_color, std::string const& text) {
     std::string markup = std::string("<span foreground=\"") + dot_color +
                          "\">●</span>";
@@ -123,25 +132,7 @@ void clear_highlights() {
   GtkTextIter start, end;
   gtk_text_buffer_get_bounds(buffer, &start, &end);
   gtk_text_buffer_remove_tag(buffer, g_state.match_tag, &start, &end);
-}
-
-void apply_highlights(std::vector<std::vector<std::string>> const& rows) {
-  GtkTextBuffer* buffer = gtk_text_view_get_buffer(g_state.sample);
-  GtkTextIter start, end;
-  gtk_text_buffer_get_bounds(buffer, &start, &end);
-  int const length = gtk_text_iter_get_offset(&end);
-  for (auto const& row : rows) {
-    if (row.size() < 4) continue;
-    int begin = 0;
-    int stop = 0;
-    std::from_chars(row[1].data(), row[1].data() + row[1].size(), begin);
-    std::from_chars(row[2].data(), row[2].data() + row[2].size(), stop);
-    if (begin < 0 || stop > length || stop <= begin) continue;
-    GtkTextIter a, b;
-    gtk_text_buffer_get_iter_at_offset(buffer, &a, begin);
-    gtk_text_buffer_get_iter_at_offset(buffer, &b, stop);
-    gtk_text_buffer_apply_tag(buffer, g_state.match_tag, &a, &b);
-  }
+  gtk_text_buffer_remove_tag(buffer, g_state.inspected_tag, &start, &end);
 }
 
 // ---- results delivered back on the main loop -------------------------
@@ -156,7 +147,7 @@ struct RefreshResult {
   rivet::Bytes png;
 };
 
-GtkWidget* make_match_row(int index, std::string const& text,
+GtkWidget* make_match_row(int index, int total, std::string const& text,
                           std::string const& start, std::string const& end,
                           std::string const& groups) {
   auto* row = gtk_list_box_row_new();
@@ -173,7 +164,9 @@ GtkWidget* make_match_row(int index, std::string const& text,
   gtk_widget_set_hexpand(value, TRUE);
   gtk_widget_set_halign(value, GTK_ALIGN_START);
 
-  auto* span = gtk_label_new(("[" + start + ", " + end + ")").c_str());
+  auto* span = gtk_label_new(("[" + start + ", " + end + ")" +
+                              (text.empty() ? "  zero-width" : ""))
+                                 .c_str());
   gtk_widget_add_css_class(span, "match-span");
 
   gtk_box_append(GTK_BOX(box), ordinal);
@@ -188,7 +181,79 @@ GtkWidget* make_match_row(int index, std::string const& text,
     gtk_box_append(GTK_BOX(box), badge);
   }
   gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(row), box);
+
+  // Carry the span (code-point offsets, matching GTK text iterators) so
+  // activating the row selects the same span in the sample editor.
+  int begin = 0;
+  int stop = 0;
+  std::from_chars(start.data(), start.data() + start.size(), begin);
+  std::from_chars(end.data(), end.data() + end.size(), stop);
+  g_object_set_data(G_OBJECT(row), "rm-start", GINT_TO_POINTER(begin));
+  g_object_set_data(G_OBJECT(row), "rm-end", GINT_TO_POINTER(stop));
+  g_object_set_data(G_OBJECT(row), "rm-index", GINT_TO_POINTER(index - 1));
+
+  // One assistive name per row spelling out the inspection contract: which
+  // match of how many, the matched text or zero-width position, the span,
+  // and the capture-group count.
+  std::string label = "Match " + std::to_string(index) + " of " +
+                      std::to_string(total) + ": ";
+  if (text.empty()) {
+    label += "zero-width match at character " + start;
+  } else {
+    label += "'" + text + "', characters " + start + " to " + end;
+  }
+  if (group_count > 0) {
+    label += ", " + std::to_string(group_count) +
+             (group_count == 1 ? " capture group" : " capture groups");
+  }
+  gtk_accessible_update_property(GTK_ACCESSIBLE(row),
+                                 GTK_ACCESSIBLE_PROPERTY_LABEL, label.c_str(),
+                                 -1);
   return row;
+}
+
+// ---- inspection selection ---------------------------------------------
+//
+// One meaning: activating a match inspects it — the sample editor selects
+// the same span (a zero-width match collapses the caret at that offset).
+// GTK text iterator offsets are code points, the same unit the engine
+// reports, so no offset mapping is needed on this host.
+
+void repaint_match_ranges() {
+  GtkTextBuffer* buffer = gtk_text_view_get_buffer(g_state.sample);
+  GtkTextIter start, end;
+  gtk_text_buffer_get_bounds(buffer, &start, &end);
+  gtk_text_buffer_remove_tag(buffer, g_state.match_tag, &start, &end);
+  gtk_text_buffer_remove_tag(buffer, g_state.inspected_tag, &start, &end);
+  for (int i = 0; i < static_cast<int>(g_state.match_spans.size()); ++i) {
+    auto const [begin, stop] = g_state.match_spans[static_cast<std::size_t>(i)];
+    if (begin < 0 || stop <= begin) continue;
+    GtkTextIter a, b;
+    gtk_text_buffer_get_iter_at_offset(buffer, &a, begin);
+    gtk_text_buffer_get_iter_at_offset(buffer, &b, stop);
+    if (i == g_state.inspected) {
+      gtk_text_buffer_apply_tag(buffer, g_state.inspected_tag, &a, &b);
+    } else {
+      gtk_text_buffer_apply_tag(buffer, g_state.match_tag, &a, &b);
+    }
+  }
+}
+
+void on_match_row_selected(GtkListBox*, GtkListBoxRow* row, gpointer) {
+  if (g_state.updating_list || row == nullptr) return;
+  int const index =
+      GPOINTER_TO_INT(g_object_get_data(G_OBJECT(row), "rm-index"));
+  if (index < 0 ||
+      index >= static_cast<int>(g_state.match_spans.size())) return;
+  g_state.inspected = index;
+  auto const [begin, stop] = g_state.match_spans[static_cast<std::size_t>(index)];
+  GtkTextBuffer* buffer = gtk_text_view_get_buffer(g_state.sample);
+  GtkTextIter a, b;
+  gtk_text_buffer_get_iter_at_offset(buffer, &a, begin);
+  gtk_text_buffer_get_iter_at_offset(buffer, &b, stop);
+  gtk_text_buffer_select_range(buffer, &a, &b);
+  gtk_text_view_scroll_to_iter(g_state.sample, &a, 0.0, FALSE, 0.0, 0.3);
+  repaint_match_ranges();
 }
 
 void clear_match_list() {
@@ -218,6 +283,11 @@ int on_refresh_delivered(gpointer user_data) {
 
   if (!result->ok) {
     g_state.set_status(kDanger, result->error);
+    // An invalid pattern is an error state, not a zero-match result: the
+    // list yields to the fix hint and the inspection selection is dropped.
+    g_state.match_rows.clear();
+    g_state.match_spans.clear();
+    g_state.inspected = -1;
     clear_highlights();
     clear_match_list();
     auto* empty = gtk_list_box_row_new();
@@ -237,8 +307,35 @@ int on_refresh_delivered(gpointer user_data) {
 
   g_state.set_status(kAccent, "Embedded Racket CS is ready");
 
+  // Selection invalidation contract: the inspection selection belongs to one
+  // result set. An identical result list keeps it, a changed one resets it,
+  // so a live edit can never leave it pointing at a removed or shifted match.
+  bool const same = result->rows == g_state.match_rows;
+  g_state.match_rows = result->rows;
+  g_state.match_spans.clear();
+  for (auto const& row : result->rows) {
+    if (row.size() < 4) {
+      g_state.match_spans.emplace_back(-1, -1);  // keep row alignment
+      continue;
+    }
+    int begin = 0;
+    int stop = 0;
+    std::from_chars(row[1].data(), row[1].data() + row[1].size(), begin);
+    std::from_chars(row[2].data(), row[2].data() + row[2].size(), stop);
+    GtkTextBuffer* buffer = gtk_text_view_get_buffer(g_state.sample);
+    GtkTextIter bound;
+    gtk_text_buffer_get_bounds(buffer, &bound, &bound);
+    int const length = gtk_text_iter_get_offset(&bound);
+    if (begin < 0 || stop > length || stop < begin) {
+      g_state.match_spans.emplace_back(-1, -1);
+      continue;
+    }
+    g_state.match_spans.emplace_back(begin, stop);
+  }
+
   clear_match_list();
   if (result->rows.empty()) {
+    g_state.inspected = -1;
     auto* empty = gtk_list_box_row_new();
     gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(empty), FALSE);
     gtk_list_box_row_set_activatable(GTK_LIST_BOX_ROW(empty), FALSE);
@@ -253,11 +350,29 @@ int on_refresh_delivered(gpointer user_data) {
       if (row.size() < 4) continue;
       gtk_list_box_append(
           g_state.matches_list,
-          make_match_row(index++, row[0], row[1], row[2], row[3]));
+          make_match_row(index++, static_cast<int>(result->rows.size()),
+                         row[0], row[1], row[2], row[3]));
+    }
+    g_state.inspected = same ? g_state.inspected : -1;
+    if (g_state.inspected >= 0) {
+      // Restore the kept selection; the row-selected handler then re-applies
+      // the editor selection (updating_list is off by now).
+      int wanted = g_state.inspected;
+      int position = 0;
+      for (GtkWidget* child = gtk_widget_get_first_child(GTK_WIDGET(g_state.matches_list));
+           child != nullptr;
+           child = gtk_widget_get_next_sibling(child)) {
+        if (!GTK_IS_LIST_BOX_ROW(child)) continue;
+        if (position == wanted) {
+          gtk_list_box_select_row(g_state.matches_list, GTK_LIST_BOX_ROW(child));
+          break;
+        }
+        ++position;
+      }
     }
   }
 
-  apply_highlights(result->rows);
+  repaint_match_ranges();
   gtk_label_set_text(g_state.explanation,
                      result->explain.empty() ? "—" : result->explain.c_str());
 
@@ -361,6 +476,7 @@ void schedule_refresh() {
 
 void on_sample_changed(GtkTextBuffer*, gpointer) {
   clear_highlights();
+  g_state.inspected = -1;  // results are stale until the refresh returns
   schedule_refresh();
 }
 
@@ -737,10 +853,16 @@ void on_activate(GtkApplication* app, gpointer) {
   g_state.status_counts = GTK_LABEL(status_counts);
 
   // Accent-tinted highlight tag; alpha keeps it legible in light and dark.
+  // The inspected match gets the stronger accent treatment so the selection
+  // stays visible without stealing keyboard focus from the list.
   GdkRGBA tint = {0.01, 0.48, 0.33, 0.18};
   g_state.match_tag = gtk_text_buffer_create_tag(
       gtk_text_view_get_buffer(g_state.sample), "rm-match", nullptr);
   g_object_set(g_state.match_tag, "background-rgba", &tint, nullptr);
+  GdkRGBA strong = {0.01, 0.48, 0.33, 0.42};
+  g_state.inspected_tag = gtk_text_buffer_create_tag(
+      gtk_text_view_get_buffer(g_state.sample), "rm-inspected", nullptr);
+  g_object_set(g_state.inspected_tag, "background-rgba", &strong, nullptr);
 
   g_signal_connect(refresh, "clicked", G_CALLBACK(on_refresh_clicked), nullptr);
   g_signal_connect(pattern, "activate", G_CALLBACK(on_pattern_activate),
@@ -749,6 +871,8 @@ void on_activate(GtkApplication* app, gpointer) {
                    G_CALLBACK(on_pattern_changed), nullptr);
   g_signal_connect(gtk_text_view_get_buffer(g_state.sample), "changed",
                    G_CALLBACK(on_sample_changed), nullptr);
+  g_signal_connect(g_state.matches_list, "row-selected",
+                   G_CALLBACK(on_match_row_selected), nullptr);
 
   gtk_window_present(GTK_WINDOW(window));
   start_backend();
