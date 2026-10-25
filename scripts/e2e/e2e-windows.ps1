@@ -90,19 +90,30 @@ function Find-SampleEditor {
     return $null
 }
 
-function Find-SampleEditBox {
-    param($Root)
-    # Value writes need the Value pattern, which the outer edit box carries;
-    # walk up from the text element until it appears.
-    $node = Find-SampleEditor $Root
-    while ($node) {
-        try {
-            [void]($node.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern))
-            return $node
-        } catch { }
-        try { $node = [System.Windows.Automation.TreeWalker]::ControlViewWalker.GetParent($node) } catch { break }
+function Set-SampleText {
+    param($Window, [string]$Value)
+    # The RichEditBox peer exposes a Text pattern but no writable Value
+    # pattern on this WindowsAppSDK; focus the editor and type through the
+    # interactive session (the runner owns the desktop).
+    $editor = Find-SampleEditor $Window
+    if (-not $editor) { return $false }
+    try {
+        $vp = $editor.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+        ([System.Windows.Automation.ValuePattern]$vp).SetValue($Value)
+        return $true
+    } catch { }
+    try {
+        Add-Type -AssemblyName System.Windows.Forms
+        [void]($editor.SetFocus())
+        Start-Sleep -Milliseconds 300
+        [System.Windows.Forms.SendKeys]::SendWait('^a{DELETE}')
+        Start-Sleep -Milliseconds 200
+        [System.Windows.Forms.SendKeys]::SendWait($Value)
+        Start-Sleep -Milliseconds 400
+        return $true
+    } catch {
+        return $false
     }
-    return $null
 }
 
 function Find-ById {
@@ -232,9 +243,9 @@ try {
         if ($found.Count -ge 1) { return $true }
         return $false
     }
-    $editorBox = Find-SampleEditBox $window
-    $editorSet = $editorBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
-    ([System.Windows.Automation.ValuePattern]$editorSet).SetValue('Order 99 shipped.')
+    if (-not (Set-SampleText $window 'Order 99 shipped.')) {
+        throw 'could not set the sample text for the live-edit fixture'
+    }
     Wait-Until 'selection cleared after live edit' {
         $status = Get-StatusMessage $window
         if ($status -match 'Found 1 match\(es\)' -and $status -notmatch 'inspecting') { return $status }
