@@ -463,7 +463,7 @@ void MainWindow::ApplyResults(std::string const& error,
           name += L", " + std::to_wstring(groups) +
                   (groups == 1 ? L" capture group" : L" capture groups");
         }
-        winrt::Microsoft::UI::Xaml::Automation::AutomationProperties::Name(
+        winrt::Microsoft::UI::Xaml::Automation::AutomationProperties::SetName(
             item, winrt::hstring(name));
         list.Items().Append(item);
         ++index;
@@ -541,7 +541,7 @@ void MainWindow::RepaintMatchRanges(
 // same span (a zero-width match collapses the caret at that offset).
 void MainWindow::MatchList_SelectionChanged(
     winrt::Windows::Foundation::IInspectable const& sender,
-    winrt::Microsoft::UI::Xaml::Controls::SelectionChangedChangedEventArgs const&) {
+    winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const&) {
   if (updating_match_list_) {
     return;
   }

@@ -39,7 +39,7 @@ struct MainWindow : MainWindowT<MainWindow> {
                     std::wstring const& text);
   void MatchList_SelectionChanged(
       winrt::Windows::Foundation::IInspectable const& sender,
-      winrt::Microsoft::UI::Xaml::Controls::SelectionChangedChangedEventArgs const& args);
+      winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& args);
   void RepaintMatchRanges(winrt::Microsoft::UI::Text::ITextDocument const& doc,
                           std::wstring const& text, int inspected);
 
