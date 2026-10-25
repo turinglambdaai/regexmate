@@ -139,6 +139,11 @@ struct SampleTextView: NSViewRepresentable {
         }
         if context.coordinator.appliedSelection != selection {
             view.setSelectedRange(selection ?? NSRange(location: 0, length: 0))
+            // Inspecting a match must surface the span: scroll it into view
+            // even when the match list selection changed it from off-screen.
+            if let selection {
+                view.scrollRangeToVisible(selection)
+            }
             context.coordinator.appliedSelection = selection
         }
     }
