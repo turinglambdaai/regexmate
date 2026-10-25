@@ -4,7 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [leg/match-inspection]
-    paths: ['windows/**']
 
 permissions:
   contents: read
