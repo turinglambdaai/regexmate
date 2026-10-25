@@ -90,6 +90,21 @@ function Find-SampleEditor {
     return $null
 }
 
+function Find-SampleEditBox {
+    param($Root)
+    # Value writes need the Value pattern, which the outer edit box carries;
+    # walk up from the text element until it appears.
+    $node = Find-SampleEditor $Root
+    while ($node) {
+        try {
+            [void]($node.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern))
+            return $node
+        } catch { }
+        try { $node = [System.Windows.Automation.TreeWalker]::ControlViewWalker.GetParent($node) } catch { break }
+    }
+    return $null
+}
+
 function Find-ById {
     param($Root, [string]$AutomationId)
     $condition = [System.Windows.Automation.PropertyCondition]::new(
@@ -217,7 +232,7 @@ try {
         if ($found.Count -ge 1) { return $true }
         return $false
     }
-    $editorBox = Find-SampleEditor $window
+    $editorBox = Find-SampleEditBox $window
     $editorSet = $editorBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
     ([System.Windows.Automation.ValuePattern]$editorSet).SetValue('Order 99 shipped.')
     Wait-Until 'selection cleared after live edit' {

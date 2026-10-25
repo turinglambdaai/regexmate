@@ -160,9 +160,7 @@ def main():
             print(f"grabFocus failed: {last}", flush=True)
         return False
 
-    def type_into_entry(node, value):
-        if not focus(node):
-            return False
+    def send_text(value):
         for _ in range(12):
             pyatspi.Registry.generateKeyboardEvent(0, "BackSpace", pyatspi.KEY_SYM)
         time.sleep(0.15)
@@ -172,7 +170,20 @@ def main():
             pyatspi.Registry.generateKeyboardEvent(0, keysym.get(character, character),
                                                    pyatspi.KEY_SYM)
         time.sleep(0.3)
-        return True
+
+    def type_into_entry(node, value):
+        # The entry may already hold focus (GTK focuses the first widget);
+        # otherwise grab it explicitly. Either way, verify what landed.
+        before = text(node)
+        send_text(value)
+        if text(node) != before:
+            return True
+        if focus(node):
+            send_text(value)
+            if text(node) != before:
+                return True
+        print(f"typing into the pattern entry did not land; entry still reads {text(node)!r}", flush=True)
+        return False
 
     pattern = wait_for("pattern entry", lambda: next((n for n in walk(window) if role(n) == "text" and "\\d+" in text(n)), None))
     typed = type_into_entry(pattern, "x*")
@@ -217,6 +228,7 @@ def main():
     else:
         skipped_fixtures.append("live-edit fixture: could not set the sample text over AT-SPI")
 
+    actions = ["press:Run regex", "selection:match row 2", "settext:pattern=x* -> selection:zero-width row", "settext:pattern=[", "settext:sample=live edit"]
     if skipped_fixtures:
         actions.append("skip:" + "; ".join(skipped_fixtures))
 
@@ -224,7 +236,7 @@ def main():
     # (Wayland resize from AT-SPI is not portable; the pattern entry uses a
     # fluid width here, so this is validated on the packaged runners per-host.)
     (args.output / "accessibility.json").write_text(json.dumps(snapshot(application), ensure_ascii=False, indent=2), encoding="utf-8")
-    trace = {"platform": "linux", "actions": ["press:Run regex", "selection:match row 2", "settext:pattern=x* -> selection:zero-width row", "settext:pattern=[", "settext:sample=live edit"], "assertions": assertions, "skipped": skipped_fixtures}
+    trace = {"platform": "linux", "actions": actions, "assertions": assertions, "skipped": skipped_fixtures}
     (args.output / "interaction-trace.json").write_text(json.dumps(trace, ensure_ascii=False, indent=2), encoding="utf-8")
 
 if __name__ == "__main__": main()
