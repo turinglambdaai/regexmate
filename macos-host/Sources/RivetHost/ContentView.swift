@@ -319,27 +319,30 @@ extension Array {
 // the control value and the editor delegate both funnel into the model, so
 // programmatic writes, typing and ⌘R all observe the same pattern.
 
-// The field subclass routes the two write paths to the model: Accessibility
-// / programmatic value writes land in `objectValue`, typing lands in the
-// editor delegate.
-final class PatternTextField: NSTextField {
-    var onExternalChange: (() -> Void)?
-
-    override var objectValue: Any? {
-        didSet { onExternalChange?() }
-    }
-}
+// The field and its coordinator funnel every write path into the model.
+// Typing goes through the editor delegate. Accessibility value writes land
+// in the cell and never reach the control, so the submit paths (the field's
+// action and the delegate's end-editing) sync the cell value into the
+// binding before treating the write as a submit.
+final class PatternTextField: NSTextField {}
 
 final class PatternFieldCoordinator: NSObject, NSTextFieldDelegate {
     var onUpdate: (() -> Void)?
     var onSubmit: (() -> Void)?
     var onFocus: ((Bool) -> Void)?
+    weak var field: NSTextField?
 
     func controlTextDidChange(_: Notification) { onUpdate?() }
     func controlTextDidBeginEditing(_: Notification) { onFocus?(true) }
-    func controlTextDidEndEditing(_: Notification) { onFocus?(false) }
+    func controlTextDidEndEditing(_: Notification) {
+        onUpdate?()
+        onFocus?(false)
+    }
 
-    @objc func submitted() { onSubmit?() }
+    @objc func submitted() {
+        onUpdate?()
+        onSubmit?()
+    }
 }
 
 private struct PatternTextFieldView: NSViewRepresentable {
@@ -359,14 +362,12 @@ private struct PatternTextFieldView: NSViewRepresentable {
         field.textColor = NSColor.textColor
         field.placeholderString = "/\\d+/"
         field.lineBreakMode = .byTruncatingTail
-        context.coordinator.onSubmit = onSubmit
-        context.coordinator.onFocus = { focused.wrappedValue = $0 }
         context.coordinator.onUpdate = { [weak field] in
             pattern = field?.stringValue ?? ""
         }
-        field.onExternalChange = { [weak field] in
-            pattern = field?.stringValue ?? ""
-        }
+        context.coordinator.onSubmit = onSubmit
+        context.coordinator.onFocus = { focused.wrappedValue = $0 }
+        context.coordinator.field = field
         field.delegate = context.coordinator
         field.target = context.coordinator
         field.action = #selector(PatternFieldCoordinator.submitted)

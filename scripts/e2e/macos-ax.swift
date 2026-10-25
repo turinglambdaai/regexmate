@@ -66,6 +66,15 @@ func rowName(_ row: AXUIElement) -> String {
     }
     return stringAttribute(row, kAXDescriptionAttribute)
 }
+// The pattern field's AX value write lands in the cell; AXConfirm carries
+// it into the model (the field syncs the cell value on confirm).
+func confirmPattern(_ field: AXUIElement, _ value: String, _ what: String) throws {
+    try setSelectedText(field, value, what)
+    guard AXUIElementPerformAction(field, "AXConfirm" as CFString) == .success else {
+        throw DriverError.failure("AXConfirm failed for \(what)")
+    }
+}
+
 func selectTableRow(_ table: AXUIElement, _ row: AXUIElement, _ what: String) throws {
     guard AXUIElementSetAttributeValue(table, kAXSelectedRowsAttribute as CFString, [row] as CFArray) == .success else {
         throw DriverError.failure("AX selected-rows write failed for \(what)")
@@ -337,8 +346,8 @@ do {
     guard let patternField = findTextField(window) else { throw DriverError.failure("pattern field not found") }
 
     // Zero-width matches are named distinctly and inspect by caret.
-    try setSelectedText(patternField, "x*", "pattern field")
-    actions.append("value:pattern=x*")
+    try confirmPattern(patternField, "x*", "pattern field")
+    actions.append("value+confirm:pattern=x*")
     _ = try waitFor("zero-width match row") { () -> Bool? in
         let found = tableRows(table)
         guard found.count >= 1 else { return nil }
@@ -352,16 +361,16 @@ do {
     assertions.append("zero-width matches are named distinctly and inspect by caret placement")
 
     // Invalid patterns are an error state, not a zero-match result.
-    try setSelectedText(patternField, "[", "pattern field")
-    actions.append("value:pattern=[ (invalid)")
+    try confirmPattern(patternField, "[", "pattern field (invalid)")
+    actions.append("value+confirm:pattern=[")
     _ = try waitFor("invalid-pattern error state") { () -> Bool? in
         guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }) else { return nil }
         return (count == "—" && tableRows(table).isEmpty) ? true : nil
     }
     assertions.append("invalid pattern reports the error, not a valid zero-match result")
 
-    try setSelectedText(patternField, "\\d+", "pattern field")
-    actions.append("value:pattern=\\d+ (restored)")
+    try confirmPattern(patternField, "\\d+", "pattern field (restored)")
+    actions.append("value+confirm:pattern=\\d+")
 
     // -- The pattern entry stays reachable at the compact window width --
     var size = CGSize(width: 980, height: 600)
