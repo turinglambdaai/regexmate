@@ -11,14 +11,45 @@ if (-not $executable) { throw 'packaged RegexMate executable was not found' }
 New-Item -ItemType Directory -Force -Path $output | Out-Null
 
 function Wait-Until {
-    param([string]$Description, [scriptblock]$Probe, [int]$TimeoutSeconds = 45)
+    param([string]$Description, [scriptblock]$Probe, [int]$TimeoutSeconds = 45, [scriptblock]$Diagnostics)
     $deadline = [DateTime]::UtcNow.AddSeconds($TimeoutSeconds)
     while ([DateTime]::UtcNow -lt $deadline) {
         $value = & $Probe
         if ($null -ne $value -and $value -ne $false) { return $value }
         Start-Sleep -Milliseconds 100
     }
-    throw "timed out waiting for $Description"
+    $message = "timed out waiting for $Description"
+    if ($Diagnostics) {
+        try { $message += " ($(& $Diagnostics))" } catch { $message += " (diagnostics failed: $($_.Exception.Message))" }
+    }
+    throw $message
+}
+
+function Get-EditorSelectionText {
+    param($Editor)
+    try {
+        $tp = $Editor.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
+        return ([System.Windows.Automation.TextPattern]$tp).DocumentSelection.GetText(-1)
+    } catch {
+        return "<no TextPattern: $($_.Exception.Message)>"
+    }
+}
+
+function Get-MatchListDiagnostics {
+    param($Window)
+    try {
+        $list = Find-ById $Window 'MatchResults'
+        $selected = '<none>'
+        try {
+            $selPattern = $list.GetCurrentPattern([System.Windows.Automation.SelectionPattern]::Pattern)
+            $selection = ([System.Windows.Automation.SelectionPattern]$selPattern).Current.GetSelection()
+            if ($selection.Count -gt 0) { $selected = $selection[0].Current.Name }
+        } catch { $selected = "<no SelectionPattern: $($_.Exception.Message)>" }
+        $editor = Find-ById $Window 'SampleEditor'
+        return "selected-item=$selected editor-selection=$(Get-EditorSelectionText $editor)"
+    } catch {
+        return "diag error: $($_.Exception.Message)"
+    }
 }
 
 function Find-ById {
@@ -84,13 +115,10 @@ try {
     $editorSelection = Wait-Until 'editor selection of 2026' {
         $editor = Find-ById $window 'SampleEditor'
         if (-not $editor) { return $null }
-        try {
-            $tp = $editor.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
-            $text = ([System.Windows.Automation.TextPattern]$tp).DocumentSelection.GetText(-1)
-            if ($text -eq '2026') { return $text }
-        } catch { }
+        $text = Get-EditorSelectionText $editor
+        if ($text -eq '2026') { return $text }
         return $null
-    }
+    } -Diagnostics { Get-MatchListDiagnostics $window }
 
     # -- zero-width matches are named distinctly and inspect by caret --
     $patternBox = Find-ById $window 'PatternField'
@@ -109,13 +137,10 @@ try {
     Wait-Until 'empty editor selection from zero-width inspection' {
         $editor = Find-ById $window 'SampleEditor'
         if (-not $editor) { return $null }
-        try {
-            $tp = $editor.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
-            $text = ([System.Windows.Automation.TextPattern]$tp).DocumentSelection.GetText(-1)
-            if ($text -eq '') { return 'caret' }
-        } catch { }
+        $text = Get-EditorSelectionText $editor
+        if ($text -eq '') { return 'caret' }
         return $null
-    }
+    } -Diagnostics { Get-MatchListDiagnostics $window }
 
     # -- invalid patterns are an error state, not a zero-match result --
     ([System.Windows.Automation.ValuePattern]$setValue).SetValue('[')
@@ -127,6 +152,15 @@ try {
                 [System.Windows.Automation.ControlType]::ListItem))
         if ($empty -and $empty.Current.Name -match 'Fix the pattern' -and $items2.Count -eq 0) { return $true }
         return $false
+    } -Diagnostics {
+        $empty = Find-ById $window 'MatchEmpty'
+        $patternBox = Find-ById $window 'PatternField'
+        $patternValue = '<none>'
+        try {
+            $vp = $patternBox.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+            $patternValue = ([System.Windows.Automation.ValuePattern]$vp).Current.Value
+        } catch { $patternValue = "<no ValuePattern: $($_.Exception.Message)>" }
+        return "empty-text=$(if ($empty) { $empty.Current.Name } else { '<missing>' }) pattern-value=$patternValue"
     }
 
     # -- a live edit that changes the result list clears the inspection --
@@ -145,13 +179,10 @@ try {
     Wait-Until 'selection cleared after live edit' {
         $editor = Find-ById $window 'SampleEditor'
         if (-not $editor) { return $null }
-        try {
-            $tp = $editor.GetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern)
-            $text = ([System.Windows.Automation.TextPattern]$tp).DocumentSelection.GetText(-1)
-            if ($text -eq '') { return 'cleared' }
-        } catch { }
+        $text = Get-EditorSelectionText $editor
+        if ($text -eq '') { return 'cleared' }
         return $null
-    }
+    } -Diagnostics { Get-MatchListDiagnostics $window }
 
     # -- the pattern entry stays usable at the compact window width --
     $windowTransform = $window.GetCurrentPattern([System.Windows.Automation.TransformPattern]::Pattern)

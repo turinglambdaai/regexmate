@@ -130,8 +130,29 @@ def main():
              diagnostics=selection_diagnostic)
 
     # -- zero-width matches are named distinctly and inspect by caret --
+    # The pattern entry's EditableText SetContents does not notify GTK, so
+    # drive it like a keyboard user: grab focus, clear, type the replacement
+    # through the AT-SPI keyboard synthesis, then verify what landed.
+    def entry_text(node):
+        return text(node)
+
+    def type_into_entry(node, value):
+        node.queryComponent().grabFocus()
+        time.sleep(0.2)
+        for _ in range(12):
+            pyatspi.Registry.generateKeyboardEvent(0, "BackSpace", pyatspi.KEY_SYM)
+        time.sleep(0.15)
+        keysym = {"*": "asterisk", "[": "bracketleft", "\\": "backslash",
+                  "+": "plus", ".": "period", "/": "slash", "-": "minus"}
+        for character in value:
+            pyatspi.Registry.generateKeyboardEvent(0, keysym.get(character, character),
+                                                   pyatspi.KEY_SYM)
+        time.sleep(0.3)
+
     pattern = wait_for("pattern entry", lambda: next((n for n in walk(window) if role(n) == "text" and "\\d+" in text(n)), None))
-    pattern.queryEditableText().setTextContents("x*")
+    type_into_entry(pattern, "x*")
+    if "\\d+" in entry_text(pattern):
+        raise AssertionError(f"pattern typing did not land; entry still reads {entry_text(pattern)!r}")
     wait_for("zero-width match row", lambda: next((n for n in list_items() if "zero-width" in (n.name or "")), None))
     select_row(0)
     wait_for("caret placement from zero-width inspection",
@@ -139,12 +160,14 @@ def main():
              diagnostics=selection_diagnostic)
 
     # -- invalid patterns are an error state, not a zero-match result --
-    pattern.queryEditableText().setTextContents("[")
+    type_into_entry(pattern, "[")
+    if entry_text(pattern) != "[":
+        raise AssertionError(f"pattern typing did not land; entry reads {entry_text(pattern)!r}")
     wait_for("invalid-pattern hint", lambda: contains(window, "Fix the pattern to match"))
     wait_for("match list emptied by the invalid pattern", lambda: len(list_items()) == 0)
 
     # -- a live edit that changes the result list clears the inspection --
-    pattern.queryEditableText().setTextContents("\\d+")
+    type_into_entry(pattern, "\\d+")
     wait_for("digit matches restored", lambda: len(list_items()) >= 5)
     editor.queryEditableText().setTextContents("Order 99 shipped.")
     wait_for("selection cleared after live edit",
