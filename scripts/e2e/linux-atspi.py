@@ -89,7 +89,7 @@ def main():
                     return value[2]
                 start, end = value[0], value[1]
                 if end > start:
-                    return t.getText(start, end - start)
+                    return t.getText(start, end)
                 return ""
         return None
 

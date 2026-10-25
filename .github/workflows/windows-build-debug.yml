@@ -1,0 +1,29 @@
+name: Windows build diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [leg/match-inspection]
+    paths: ['windows/**']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.3'
+          architecture: x64
+          distribution: full
+          variant: CS
+      - name: Install pinned Rivet and dependencies
+        shell: pwsh
+        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48" crypto
+      - name: Build with error-only output
+        shell: pwsh
+        run: raco rivet build 2>&1 | Select-String -Pattern "error" -Context 3,6 | Select-Object -Last 60
