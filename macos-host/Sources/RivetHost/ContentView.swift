@@ -312,6 +312,73 @@ extension Array {
 }
 
 // MARK: - Pattern field (toolbar command surface)
+//
+// A real NSTextField, not a SwiftUI TextField: the embedded-runtime hosts and
+// the acceptance driver change the pattern through Accessibility value writes,
+// which update a control value directly but bypass a SwiftUI binding. KVO on
+// the control value and the editor delegate both funnel into the model, so
+// programmatic writes, typing and ⌘R all observe the same pattern.
+
+// The field subclass routes the two write paths to the model: Accessibility
+// / programmatic value writes land in `objectValue`, typing lands in the
+// editor delegate.
+final class PatternTextField: NSTextField {
+    var onExternalChange: (() -> Void)?
+
+    override var objectValue: Any? {
+        didSet { onExternalChange?() }
+    }
+}
+
+final class PatternFieldCoordinator: NSObject, NSTextFieldDelegate {
+    var onUpdate: (() -> Void)?
+    var onSubmit: (() -> Void)?
+    var onFocus: ((Bool) -> Void)?
+
+    func controlTextDidChange(_: Notification) { onUpdate?() }
+    func controlTextDidBeginEditing(_: Notification) { onFocus?(true) }
+    func controlTextDidEndEditing(_: Notification) { onFocus?(false) }
+
+    @objc func submitted() { onSubmit?() }
+}
+
+private struct PatternTextFieldView: NSViewRepresentable {
+    @Binding var pattern: String
+    var focused: FocusState<Bool>.Binding
+    var onSubmit: () -> Void
+
+    func makeCoordinator() -> PatternFieldCoordinator { PatternFieldCoordinator() }
+
+    func makeNSView(context: Context) -> NSTextField {
+        let field = PatternTextField()
+        field.stringValue = pattern
+        field.isBordered = false
+        field.drawsBackground = false
+        field.focusRingType = .none
+        field.font = NSFont.monospacedSystemFont(ofSize: 13.5, weight: .regular)
+        field.textColor = NSColor.textColor
+        field.placeholderString = "/\\d+/"
+        field.lineBreakMode = .byTruncatingTail
+        context.coordinator.onSubmit = onSubmit
+        context.coordinator.onFocus = { focused.wrappedValue = $0 }
+        context.coordinator.onUpdate = { [weak field] in
+            pattern = field?.stringValue ?? ""
+        }
+        field.onExternalChange = { [weak field] in
+            pattern = field?.stringValue ?? ""
+        }
+        field.delegate = context.coordinator
+        field.target = context.coordinator
+        field.action = #selector(PatternFieldCoordinator.submitted)
+        return field
+    }
+
+    func updateNSView(_ field: NSTextField, context: Context) {
+        if field.stringValue != pattern {
+            field.stringValue = pattern
+        }
+    }
+}
 
 struct PatternField: View {
     @Binding var pattern: String
@@ -324,12 +391,7 @@ struct PatternField: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 11, weight: .bold, design: .monospaced))
                 .foregroundStyle(error == nil ? RM.Color_.accent : RM.Color_.danger)
-            TextField("/\\d+/", text: $pattern)
-                .textFieldStyle(.plain)
-                .font(.system(size: 13.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink)
-                .focused(focused)
-                .onSubmit(onSubmit)
+            PatternTextFieldView(pattern: $pattern, focused: focused, onSubmit: onSubmit)
             if error != nil {
                 Image(systemName: "exclamationmark.circle.fill")
                     .font(.system(size: 12))

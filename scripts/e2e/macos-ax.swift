@@ -165,6 +165,31 @@ func typeText(_ text: String) {
         up.post(tap: .cghidEventTap); usleep(40_000)
     }
 }
+func frameOf(_ element: AXUIElement) -> CGRect? {
+    var pointVal: CFTypeRef?
+    var sizeVal: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &pointVal) == .success,
+          AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &sizeVal) == .success,
+          let point = pointVal, let size = sizeVal else { return nil }
+    var p = CGPoint.zero, s = CGSize.zero
+    AXValueGetValue(point as! AXValue, .cgPoint, &p)
+    AXValueGetValue(size as! AXValue, .cgSize, &s)
+    return CGRect(origin: p, size: s)
+}
+
+func clickElementCenter(_ element: AXUIElement, _ what: String) throws {
+    guard let rect = frameOf(element) else {
+        throw DriverError.failure("no frame for \(what)")
+    }
+    let point = CGPoint(x: rect.midX, y: rect.midY)
+    let move = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left)!
+    move.post(tap: .cghidEventTap); usleep(80_000)
+    let down = CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown, mouseCursorPosition: point, mouseButton: .left)!
+    let up = CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp, mouseCursorPosition: point, mouseButton: .left)!
+    down.post(tap: .cghidEventTap); usleep(60_000); up.post(tap: .cghidEventTap)
+    usleep(250_000)
+}
+
 func selectAllAndType(_ text: String) {
     // ⌘A, then type the replacement over the selection.
     let down = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: true)!
@@ -307,47 +332,36 @@ do {
     }
     assertions.append("a live edit that changes the result list clears the inspection selection")
 
-    // -- Pattern-driven fixtures (zero-width, invalid pattern) need real
-    //    typing into the pattern field; run only when the app owns the key
-    //    window, e.g. on an unattended runner --
-    _ = AXUIElementSetAttributeValue(application, kAXFrontmostAttribute as CFString, kCFBooleanTrue)
-    usleep(300_000)
-    let typedFrontPid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1
-    if typedFrontPid == pid {
-        guard let patternField = findTextField(window) else { throw DriverError.failure("pattern field not found") }
-        _ = AXUIElementSetAttributeValue(patternField, kAXFocusedAttribute as CFString, kCFBooleanTrue)
-        usleep(200_000)
+    // -- Pattern-driven fixtures: the pattern field is a real control, so
+    //    Accessibility value writes flow into the model --
+    guard let patternField = findTextField(window) else { throw DriverError.failure("pattern field not found") }
 
-        // Zero-width matches are named distinctly and inspect by caret.
-        selectAllAndType("x*")
-        actions.append("type:pattern=x*")
-        _ = try waitFor("zero-width match row") { () -> Bool? in
-            let found = tableRows(table)
-            guard found.count >= 1 else { return nil }
-            return rowName(found[0]).contains("zero-width") ? true : nil
-        }
-        try selectTableRow(table, tableRows(table)[0], "zero-width match row")
-        actions.append("select:zero-width match row")
-        usleep(300_000)
-        let zeroSelection = try selectedEditorText(window)
-        guard zeroSelection == "" else { throw DriverError.failure("zero-width inspection did not place the caret: '\(zeroSelection)'") }
-        assertions.append("zero-width matches are named distinctly and inspect by caret placement")
-
-        // Invalid patterns are an error state, not a zero-match result.
-        selectAllAndType("[")
-        actions.append("type:pattern=[ (invalid)")
-        _ = try waitFor("invalid-pattern error state") { () -> Bool? in
-            guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }) else { return nil }
-            return (count == "—" && tableRows(table).isEmpty) ? true : nil
-        }
-        assertions.append("invalid pattern reports the error, not a valid zero-match result")
-
-        selectAllAndType("\\d+")
-        usleep(500_000)
-    } else {
-        actions.append("skip:pattern-driven fixtures (front window held by pid \(typedFrontPid))")
-        skipped.append("pattern-driven fixtures (zero-width naming, invalid pattern reporting): the key window was held by another process during this run")
+    // Zero-width matches are named distinctly and inspect by caret.
+    try setSelectedText(patternField, "x*", "pattern field")
+    actions.append("value:pattern=x*")
+    _ = try waitFor("zero-width match row") { () -> Bool? in
+        let found = tableRows(table)
+        guard found.count >= 1 else { return nil }
+        return rowName(found[0]).contains("zero-width") ? true : nil
     }
+    try selectTableRow(table, tableRows(table)[0], "zero-width match row")
+    actions.append("select:zero-width match row")
+    usleep(300_000)
+    let zeroSelection = try selectedEditorText(window)
+    guard zeroSelection == "" else { throw DriverError.failure("zero-width inspection did not place the caret: '\(zeroSelection)'") }
+    assertions.append("zero-width matches are named distinctly and inspect by caret placement")
+
+    // Invalid patterns are an error state, not a zero-match result.
+    try setSelectedText(patternField, "[", "pattern field")
+    actions.append("value:pattern=[ (invalid)")
+    _ = try waitFor("invalid-pattern error state") { () -> Bool? in
+        guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }) else { return nil }
+        return (count == "—" && tableRows(table).isEmpty) ? true : nil
+    }
+    assertions.append("invalid pattern reports the error, not a valid zero-match result")
+
+    try setSelectedText(patternField, "\\d+", "pattern field")
+    actions.append("value:pattern=\\d+ (restored)")
 
     // -- The pattern entry stays reachable at the compact window width --
     var size = CGSize(width: 980, height: 600)
