@@ -50,7 +50,14 @@ try {
     ([System.Windows.Automation.InvokePattern]$invoke).Invoke()
     [void](Wait-Until 'match result from embedded backend' {
         $result = Find-ById $window 'MatchResults'
-        if ($result -and $result.Current.Name -match '12345') { return $true }
+        if (-not $result) { return $false }
+        $items = $result.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+                [System.Windows.Automation.ControlType]::ListItem))
+        foreach ($item in $items) {
+            if ($item.Current.Name -match '12345') { return $true }
+        }
         return $false
     })
 

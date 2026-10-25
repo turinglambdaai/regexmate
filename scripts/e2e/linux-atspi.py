@@ -7,9 +7,12 @@ from pathlib import Path
 import pyatspi
 
 def children(node):
+    if node is None: return
     for index in range(node.childCount):
-        try: yield node.getChildAtIndex(index)
+        try:
+            child = node.getChildAtIndex(index)
         except Exception: continue
+        if child is not None: yield child
 def walk(node):
     yield node
     for child in children(node): yield from walk(child)
