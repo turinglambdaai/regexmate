@@ -438,9 +438,10 @@ void MainWindow::ApplyResults(std::string const& error,
       int index = 1;
       for (auto const& row : rows) {
         if (row.size() < 4) continue;
-        auto const matched = winrt::to_hstring(row[0]).c_str();
-        auto const start = winrt::to_hstring(row[1]).c_str();
-        auto const end = winrt::to_hstring(row[2]).c_str();
+        // Keep the hstrings alive: their c_str() feeds the strings below.
+        winrt::hstring const matched = winrt::to_hstring(row[0]);
+        winrt::hstring const start = winrt::to_hstring(row[1]);
+        winrt::hstring const end = winrt::to_hstring(row[2]);
         auto item = winrt::Microsoft::UI::Xaml::Controls::TextBlock();
         item.Text(std::to_wstring(index) + L". " +
                   std::wstring(row[0].empty() ? L"∅" : matched) + L"   [" +

@@ -21,13 +21,16 @@ def text(node):
         value = node.queryText()
         return value.getText(0, value.characterCount)
     except Exception: return ""
-def wait_for(description, probe, timeout=45.0):
+def wait_for(description, probe, timeout=45.0, diagnostics=None):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         value = probe()
         if value: return value
         time.sleep(0.05)
-    raise AssertionError(f"timed out waiting for {description}")
+    message = f"timed out waiting for {description}"
+    if diagnostics:
+        message += f" ({diagnostics()})"
+    raise AssertionError(message)
 def find_application():
     desktop = pyatspi.Registry.getDesktop(0)
     for application in children(desktop):
@@ -66,34 +69,71 @@ def main():
         raise AssertionError(f"match row 2 does not expose index/text/span to AT-SPI: {row2_name}")
     editor = wait_for("sample editor", lambda: next((n for n in walk(window) if role(n) == "text" and "Order 12345" in text(n)), None))
 
-    def editor_selection(node):
+    def editor_selected_text(node):
+        # pyatspi Text.getSelection returns (start, end, content); be liberal
+        # about the shapes different bridge versions expose.
         t = node.queryText()
-        if hasattr(t, "getSelections"):
+        try:
+            n = t.getNSelections()
+        except Exception:
+            n = 1
+        for i in range(max(n, 1)):
             try:
-                value = t.getSelections()
-                if value:
-                    first = value[0]
-                    return first if isinstance(first, tuple) else (first.startOffset, first.endOffset)
+                value = t.getSelection(i)
             except Exception:
-                pass
-        value = t.getSelection(0)
-        return value if isinstance(value, tuple) else (value.startOffset, value.endOffset)
-
-    def select_child(index):
-        listbox.querySelection().selectChild(index)
+                continue
+            if not value:
+                continue
+            if isinstance(value, tuple):
+                if len(value) >= 3 and isinstance(value[2], str):
+                    return value[2]
+                start, end = value[0], value[1]
+                if end > start:
+                    return t.getText(start, end - start)
+                return ""
+        return None
 
     def list_items():
         return [n for n in children(listbox) if role(n) == "list item"]
 
-    select_child(1)
-    wait_for("editor selection of 2026", lambda: (lambda bounds: "2026" == editor.queryText().getText(bounds[0], bounds[1] - bounds[0]) if bounds and bounds[1] > bounds[0] else None)(editor_selection(editor)))
+    def select_row(index):
+        # GTK 4.14 exposes Selection on the list box; fall back to row actions
+        # for bridges that only expose them per row.
+        try:
+            listbox.querySelection().selectChild(index)
+            return
+        except Exception:
+            pass
+        items = list_items()
+        if index < len(items):
+            actions = items[index].queryAction()
+            for i in range(actions.nActions):
+                actions.doAction(i)
+
+    def selection_probe(expected):
+        return lambda: editor_selected_text(editor) == expected or None
+
+    def selection_diagnostic():
+        try:
+            t = editor.queryText()
+            raw = t.getSelection(0)
+        except Exception as error:
+            raw = f"getSelection error: {error}"
+        return (f"items={len(list_items())} raw-selection={raw!r} "
+                f"editor-text-len={len(text(editor))}")
+
+    select_row(1)
+    wait_for("editor selection of 2026", selection_probe("2026"),
+             diagnostics=selection_diagnostic)
 
     # -- zero-width matches are named distinctly and inspect by caret --
     pattern = wait_for("pattern entry", lambda: next((n for n in walk(window) if role(n) == "text" and "\\d+" in text(n)), None))
     pattern.queryEditableText().setTextContents("x*")
     wait_for("zero-width match row", lambda: next((n for n in list_items() if "zero-width" in (n.name or "")), None))
-    select_child(0)
-    wait_for("caret placement from zero-width inspection", lambda: (lambda bounds: bounds[0] == bounds[1] if bounds else None)(editor_selection(editor)))
+    select_row(0)
+    wait_for("caret placement from zero-width inspection",
+             lambda: editor_selected_text(editor) == "" or None,
+             diagnostics=selection_diagnostic)
 
     # -- invalid patterns are an error state, not a zero-match result --
     pattern.queryEditableText().setTextContents("[")
@@ -104,7 +144,9 @@ def main():
     pattern.queryEditableText().setTextContents("\\d+")
     wait_for("digit matches restored", lambda: len(list_items()) >= 5)
     editor.queryEditableText().setTextContents("Order 99 shipped.")
-    wait_for("selection cleared after live edit", lambda: (lambda bounds: bounds[0] == bounds[1] if bounds else None)(editor_selection(editor)))
+    wait_for("selection cleared after live edit",
+             lambda: editor_selected_text(editor) == "" or None,
+             diagnostics=selection_diagnostic)
 
     # -- the pattern entry stays usable at the compact window width --
     # (Wayland resize from AT-SPI is not portable; the pattern entry uses a

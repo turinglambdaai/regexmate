@@ -11,9 +11,12 @@ import AppKit
 // One row: exposes the inspection action to assistive technology (AXPress)
 // and carries the structured row name.
 final class MatchTableRowView: NSTableRowView {
-    var onPress: (() -> Void)?
-    private var rowLabel = ""
-    private var rowIdentifier = ""
+    // The Accessibility overrides below are nonisolated on some SDKs; the
+    // row state is only ever touched from the main thread (AppKit AX
+    // callbacks included), so the storage is marked unsafe-nonisolated.
+    nonisolated(unsafe) var onPress: (() -> Void)?
+    nonisolated(unsafe) private var rowLabel = ""
+    nonisolated(unsafe) private var rowIdentifier = ""
 
     // Keep the selected-row tint at its normal strength even when the table
     // is not the key view (the editor is often first responder instead).
