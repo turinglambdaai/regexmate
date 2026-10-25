@@ -81,7 +81,9 @@ def main():
             n = t.getNSelections()
         except Exception:
             n = 1
-        for i in range(max(n, 1)):
+        if n == 0:
+            return ""
+        for i in range(n):
             try:
                 value = t.getSelection(i)
             except Exception:

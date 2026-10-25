@@ -559,6 +559,24 @@ void MainWindow::MatchList_SelectionChanged(
       doc.Selection().SetRange(start, end);
     }
   }
+  // Surface the inspection next to the match count: the same summary a
+  // screen-reader user hears from the row name.
+  std::wstring status = L"Found " + std::to_wstring(match_rows_.size()) +
+                        L" match(es)";
+  if (selected >= 0 && selected < static_cast<int>(match_rows_.size()) &&
+      match_rows_[static_cast<std::size_t>(selected)].size() >= 4) {
+    auto const& row = match_rows_[static_cast<std::size_t>(selected)];
+    status += L" \u00b7 inspecting match " + std::to_wstring(selected + 1) +
+              L" of " + std::to_wstring(match_rows_.size()) + L": ";
+    if (row[0].empty()) {
+      status += L"zero-width at character " + std::wstring(winrt::to_hstring(row[1]));
+    } else {
+      status += L"'" + std::wstring(winrt::to_hstring(row[0])) + L"' [" +
+                std::wstring(winrt::to_hstring(row[1])) + L", " +
+                std::wstring(winrt::to_hstring(row[2])) + L")";
+    }
+  }
+  SetStatus(true, winrt::hstring(status));
 }
 
 void MainWindow::SetStatus(bool ok, winrt::hstring const& message) {

@@ -55,6 +55,7 @@
         <InfoBar
             x:Name="Status"
             Grid.Row="1"
+            AutomationProperties.AutomationId="StatusBar"
             IsOpen="True"
             IsClosable="False"
             Severity="Informational"
