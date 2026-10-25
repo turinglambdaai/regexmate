@@ -4,9 +4,6 @@ import AppKit
 struct ContentView: View {
     @EnvironmentObject private var model: AppModel
     @FocusState private var patternFocused: Bool
-    // Keyboard focus within the match list: one row at a time, moved with
-    // the arrow keys, so the list is reachable without the pointer.
-    @FocusState private var focusedMatch: Int?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -119,105 +116,14 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(model.matches.enumerated()), id: \.offset) { index, match in
-                        matchRowButton(index: index, match: match)
-                        if index < model.matches.count - 1 {
-                            Divider().overlay(RM.Color_.hairline.opacity(0.6))
-                        }
-                    }
-                }
-            }
-            .accessibilityIdentifier("MatchList")
+            // The host's result-selection model: one selection means
+            // "inspect this match" — the sample editor selects the same span.
+            // The native table gives the interaction to the keyboard (the
+            // list is a first responder: Tab reaches it, arrows walk it) and
+            // to assistive activation, not just the pointer.
+            MatchTableView(matches: model.matches, selectedMatch: $model.selectedMatch)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-    }
-
-    // The host's result-selection model: one activation means "inspect this
-    // match" — the sample editor selects the same span. Each row is a native
-    // button, so the interaction reaches the keyboard (Tab/arrows, Space to
-    // activate) and assistive activation (AXPress), not just the pointer;
-    // Up/Down move both focus and inspection along the list, and ⌘G / ⌘⇧G
-    // (Match menu) work from anywhere in the window.
-    private func matchRowButton(index: Int, match: MatchSpan) -> some View {
-        Button {
-            model.selectedMatch = index
-            focusedMatch = index
-        } label: {
-            matchRow(index: index, match: match)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(model.selectedMatch == index ? RM.Color_.accentTint.opacity(0.6) : Color.clear)
-                )
-        }
-        .buttonStyle(.plain)
-        .focused($focusedMatch, equals: index)
-        .onKeyPress(.upArrow) { moveInspection(from: index, by: -1) }
-        .onKeyPress(.downArrow) { moveInspection(from: index, by: +1) }
-        .accessibilityLabel(matchAccessibilityLabel(index: index, match: match))
-        .accessibilityAddTraits(model.selectedMatch == index ? [.isSelected] : [])
-        .accessibilityIdentifier("MatchRow-\(index + 1)")
-    }
-
-    private func moveInspection(from index: Int, by delta: Int) -> KeyPress.Result {
-        let next = index + delta
-        guard model.matches.indices.contains(next) else { return .ignored }
-        model.selectedMatch = next
-        focusedMatch = next
-        return .handled
-    }
-
-    private func matchRow(index: Int, match: MatchSpan) -> some View {
-        HStack(spacing: 10) {
-            Text("\(index + 1)")
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink3)
-                .frame(width: 18, alignment: .trailing)
-            Text(match.text.isEmpty ? "∅" : match.text)
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink)
-                .lineLimit(1)
-                .truncationMode(.tail)
-            Spacer(minLength: 8)
-            Text("[\(match.start), \(match.end))")
-                .font(.system(size: 10.5, design: .monospaced))
-                .foregroundStyle(RM.Color_.ink3)
-            if match.text.isEmpty {
-                Text("zero-width")
-                    .font(.system(size: 10))
-                    .foregroundStyle(RM.Color_.ink3)
-            }
-            if match.groups > 0 {
-                Text(match.groups == 1 ? "1 group" : "\(match.groups) groups")
-                    .font(.system(size: 10))
-                    .foregroundStyle(RM.Color_.accent)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(RM.Color_.accentTint))
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 7)
-    }
-
-    // One assistive name per row spelling out the inspection contract:
-    // which match of how many, the matched text or zero-width position,
-    // the span, and the capture-group count.
-    private func matchAccessibilityLabel(index: Int, match: MatchSpan) -> String {
-        let ordinal = "Match \(index + 1) of \(model.matches.count)"
-        let spanDescription: String
-        if match.text.isEmpty {
-            spanDescription = "zero-width match at character \(match.start)"
-        } else {
-            spanDescription = "'\(match.text)', characters \(match.start)–\(match.end)"
-        }
-        let groupDescription: String
-        switch match.groups {
-        case 0: groupDescription = ""
-        case 1: groupDescription = ", 1 capture group"
-        default: groupDescription = ", \(match.groups) capture groups"
-        }
-        return "\(ordinal): \(spanDescription)\(groupDescription)"
     }
 
     private var rightColumn: some View {

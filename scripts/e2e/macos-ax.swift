@@ -49,6 +49,28 @@ func findByIdentifier(_ root: AXUIElement, _ identifier: String) -> AXUIElement?
     walk(root).first { stringAttribute($0, kAXIdentifierAttribute) == identifier }
 }
 func enabled(_ element: AXUIElement) -> Bool { attribute(element, kAXEnabledAttribute) as? Bool ?? false }
+func findMatchTable(_ root: AXUIElement) -> AXUIElement? {
+    walk(root).first {
+        stringAttribute($0, kAXRoleAttribute) == "AXTable" &&
+            stringAttribute($0, kAXIdentifierAttribute) == "MatchList"
+    }
+}
+func tableRows(_ table: AXUIElement) -> [AXUIElement] {
+    (attribute(table, kAXRowsAttribute) as? [AXUIElement]) ?? []
+}
+// The structured row name lives on the row's content cell.
+func rowName(_ row: AXUIElement) -> String {
+    for child in children(row) {
+        let description = stringAttribute(child, kAXDescriptionAttribute)
+        if !description.isEmpty { return description }
+    }
+    return stringAttribute(row, kAXDescriptionAttribute)
+}
+func selectTableRow(_ table: AXUIElement, _ row: AXUIElement, _ what: String) throws {
+    guard AXUIElementSetAttributeValue(table, kAXSelectedRowsAttribute as CFString, [row] as CFArray) == .success else {
+        throw DriverError.failure("AX selected-rows write failed for \(what)")
+    }
+}
 func contains(_ root: AXUIElement, fragment: String) -> Bool {
     walk(root).contains { element in
         [kAXTitleAttribute, kAXValueAttribute, kAXDescriptionAttribute]
@@ -101,6 +123,30 @@ func pressMenuItem(_ application: AXUIElement, _ title: String) throws {
     }
     try press(item, title)
     usleep(200_000)
+}
+
+// Menu presses race the system's menu tracking; retry open→press until the
+// observable effect lands.
+func activateMenuItem(_ application: AXUIElement, _ title: String, timeout: TimeInterval = 5, until probe: () -> Bool) throws {
+    let deadline = Date().addingTimeInterval(timeout)
+    var pressFailed = false
+    while Date() < deadline {
+        if probe() { return }
+        do {
+            try pressMenuItem(application, title)
+        } catch {
+            pressFailed = true
+        }
+        let step = Date().addingTimeInterval(2)
+        while Date() < step {
+            if probe() { return }
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+    }
+    if pressFailed {
+        throw DriverError.failure("menu action \(title) could not be pressed")
+    }
+    throw DriverError.failure("menu action \(title) did not take effect")
 }
 func pressArrowKey(_ keyCode: CGKeyCode) {
     let down = CGEvent(keyboardEventSource: nil, virtualKey: keyCode, keyDown: true)!
@@ -183,31 +229,30 @@ do {
     assertions.append("native UI reports 5 matches")
 
     // -- Match rows expose the inspection contract to assistive technology --
+    let table: AXUIElement = try waitFor("match table") { findMatchTable(window) }
     let rows: [AXUIElement] = try waitFor("five match rows") {
-        let found = (0...5).compactMap { index in findByIdentifier(window, "MatchRow-\(index)") }
+        let found = tableRows(table)
         return found.count == 5 ? found : nil
     }
-    let row2Label = stringAttribute(rows[1], kAXDescriptionAttribute)
+    let row2Label = rowName(rows[1])
     guard row2Label.contains("Match 2 of 5"), row2Label.contains("'2026'"), row2Label.contains("characters 23–27") else {
         throw DriverError.failure("match row label incomplete: \(row2Label)")
     }
     assertions.append("match row names index, matched text, span and order to Accessibility")
 
     // -- Row activation inspects the same span in the editor --
-    try press(rows[1], "MatchRow-2")
-    actions.append("press:MatchRow-2")
+    try selectTableRow(table, rows[1], "match row 2")
+    actions.append("select:match row 2")
     _ = try waitFor("editor selection '2026'") { (try? selectedEditorText(window)) == "2026" ? true : nil }
     assertions.append("activating a match row selects the same span in the sample editor")
 
     // -- ⌘G / ⌘⇧G via the Match menu: keyboard reachability without a pointer --
-    try pressMenuItem(application, "Inspect Next Match")
+    try activateMenuItem(application, "Inspect Next Match") { (try? selectedEditorText(window)) == "09" }
     actions.append("menu:Inspect Next Match")
-    _ = try waitFor("editor selection '09'") { (try? selectedEditorText(window)) == "09" ? true : nil }
-    try pressMenuItem(application, "Inspect Previous Match")
-    try pressMenuItem(application, "Inspect Previous Match")
-    actions.append("menu:Inspect Previous Match ×2")
-    _ = try waitFor("editor selection '12345'") { (try? selectedEditorText(window)) == "12345" ? true : nil }
     assertions.append("Match menu next/previous walks matches with the same meaning")
+    try activateMenuItem(application, "Inspect Previous Match") { (try? selectedEditorText(window)) == "2026" }
+    try activateMenuItem(application, "Inspect Previous Match") { (try? selectedEditorText(window)) == "12345" }
+    actions.append("menu:Inspect Previous Match ×2")
 
     // -- Arrow keys on the focused list (needs the key window; runs only when
     //    the app owns it, e.g. on an unattended runner) --
@@ -215,7 +260,8 @@ do {
     usleep(300_000)
     let frontPid = NSWorkspace.shared.frontmostApplication?.processIdentifier ?? -1
     if frontPid == pid {
-        try press(rows[0], "MatchRow-1")
+        try selectTableRow(table, rows[0], "match row 1")
+        _ = AXUIElementSetAttributeValue(table, kAXFocusedAttribute as CFString, kCFBooleanTrue)
         usleep(300_000)
         pressArrowKey(125)  // down
         _ = try waitFor("editor selection '2026' after Down") { (try? selectedEditorText(window)) == "2026" ? true : nil }
@@ -240,14 +286,15 @@ do {
     try setSelectedText(editor, "咖啡42 🌟10115 zip.", "sample editor")
     actions.append("value:sample=unicode")
     _ = try waitFor("unicode fixture rows") { () -> Bool? in
-        guard let row = findByIdentifier(window, "MatchRow-1") else { return nil }
-        return stringAttribute(row, kAXDescriptionAttribute).contains("'42'") ? true : nil
+        let found = tableRows(table)
+        guard found.count >= 1 else { return nil }
+        return rowName(found[0]).contains("'42'") ? true : nil
     }
-    try press(findByIdentifier(window, "MatchRow-1")!, "BMP match row")
-    actions.append("press:BMP match row")
+    try selectTableRow(table, tableRows(table)[0], "BMP match row")
+    actions.append("select:BMP match row")
     _ = try waitFor("editor selection '42'") { (try? selectedEditorText(window)) == "42" ? true : nil }
-    try press(findByIdentifier(window, "MatchRow-2")!, "astral-adjacent match row")
-    actions.append("press:astral-adjacent match row")
+    try selectTableRow(table, tableRows(table)[1], "astral-adjacent match row")
+    actions.append("select:astral-adjacent match row")
     _ = try waitFor("editor selection '10115'") { (try? selectedEditorText(window)) == "10115" ? true : nil }
     assertions.append("Unicode (BMP and astral) matches inspect the exact span in the editor")
 
@@ -255,7 +302,7 @@ do {
     try setSelectedText(editor, "Order 99 shipped.", "sample editor")
     actions.append("value:sample=live edit")
     _ = try waitFor("selection cleared after the result list changed") { () -> Bool? in
-        guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }), count == "1 match" else { return nil }
+        guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }), count == "1 match", tableRows(table).count == 1 else { return nil }
         return (try? selectedEditorText(window)) == "" ? true : nil
     }
     assertions.append("a live edit that changes the result list clears the inspection selection")
@@ -275,11 +322,12 @@ do {
         selectAllAndType("x*")
         actions.append("type:pattern=x*")
         _ = try waitFor("zero-width match row") { () -> Bool? in
-            guard let row = findByIdentifier(window, "MatchRow-1") else { return nil }
-            return stringAttribute(row, kAXDescriptionAttribute).contains("zero-width") ? true : nil
+            let found = tableRows(table)
+            guard found.count >= 1 else { return nil }
+            return rowName(found[0]).contains("zero-width") ? true : nil
         }
-        try press(findByIdentifier(window, "MatchRow-1")!, "zero-width match row")
-        actions.append("press:zero-width match row")
+        try selectTableRow(table, tableRows(table)[0], "zero-width match row")
+        actions.append("select:zero-width match row")
         usleep(300_000)
         let zeroSelection = try selectedEditorText(window)
         guard zeroSelection == "" else { throw DriverError.failure("zero-width inspection did not place the caret: '\(zeroSelection)'") }
@@ -290,8 +338,7 @@ do {
         actions.append("type:pattern=[ (invalid)")
         _ = try waitFor("invalid-pattern error state") { () -> Bool? in
             guard let count = findByIdentifier(window, "MatchCount").flatMap({ stringAttribute($0, kAXValueAttribute) }) else { return nil }
-            let hasRows = findByIdentifier(window, "MatchRow-1") != nil
-            return (count == "—" && !hasRows) ? true : nil
+            return (count == "—" && tableRows(table).isEmpty) ? true : nil
         }
         assertions.append("invalid pattern reports the error, not a valid zero-match result")
 
