@@ -17,7 +17,7 @@ RegexMate——agent 时代的正则工作台（validate/match/explain/replace/g
 
 ```bash
 # 引擎测试（CI 同款）
-raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#638539577d489765c0ed454eb48777421413ad48' crypto
+raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c' crypto
 raco make main.rkt run-tests.rkt
 racket run-tests.rkt
 racket scripts/check-version.rkt        # 版本对齐门禁
@@ -37,7 +37,7 @@ raco rivet acceptance --json            # 当前平台完整产品验收
 
 ## 仓库特定规矩
 
-- rivet 以不可变提交 pin（当前 `638539577d489765c0ed454eb48777421413ad48`，即 v0.12 main）消费，三个工作流与本文档同步换 pin；升级 pin 须连动 schema check、生成客户端（重生成后 Kotlin 客户端在 `.rivet/` 下被 ignore，须 `git add -f`）、产品验收与发版工作流。rivet 安装步骤一律字面写 pin，不经 env 间接（doctor 只扫字面文本）。
+- rivet 以不可变提交 pin（当前 `9d766b4acab672844093204cb4845ef4ef933d2c`，即 v0.13 main）消费，三个工作流与本文档同步换 pin；升级 pin 须连动 schema check、生成客户端（重生成后 Kotlin 客户端在 `.rivet/` 下被 ignore，须 `git add -f`）、产品验收与发版工作流。rivet 安装步骤一律字面写 pin，不经 env 间接（doctor 只扫字面文本）。
 - 三宿主腿分属对应平台机器；跨平台交互逻辑保持一致是验收项。
 - Agent 不得以代码量、单元测试或单个平台截图代替完成证据；涉及 GUI 的改动至少要保留原生控件交互和后端返回值的验收证据。
 - 产品不发布到 Racket catalog（家族产品惯例），别把它当库补 pkg 元数据。
