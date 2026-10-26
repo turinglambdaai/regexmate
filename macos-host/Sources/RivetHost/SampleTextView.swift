@@ -53,6 +53,22 @@ final class RegexSampleTextView: NSTextView {
     var onEdit: (() -> Void)?
     var highlightRanges: [NSRange] = []
 
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil { RegexKeyLoop.register(editor: self) }
+    }
+
+    // Tab is focus navigation, not input: the sample editor participates in
+    // the window's key-view loop like every other surface (a literal tab
+    // character is not a useful sample edit).
+    override func insertTab(_ sender: Any?) {
+        window?.selectKeyView(following: self)
+    }
+
+    override func insertBacktab(_ sender: Any?) {
+        window?.selectKeyView(preceding: self)
+    }
+
     override func didChangeText() {
         super.didChangeText()
         clearHighlights()
