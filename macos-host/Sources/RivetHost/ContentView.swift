@@ -324,7 +324,12 @@ extension Array {
 // in the cell and never reach the control, so the submit paths (the field's
 // action and the delegate's end-editing) sync the cell value into the
 // binding before treating the write as a submit.
-final class PatternTextField: NSTextField {}
+final class PatternTextField: NSTextField {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil { RegexKeyLoop.register(field: self) }
+    }
+}
 
 final class PatternFieldCoordinator: NSObject, NSTextFieldDelegate {
     var onUpdate: (() -> Void)?

@@ -8,6 +8,56 @@ import AppKit
 // it, the arrow keys walk it, and assistive technology both selects its rows
 // and presses them — on every machine, with or without full keyboard access.
 
+// MARK: - The keyboard focus loop
+//
+// The pattern field (toolbar), the match table and the sample editor are the
+// window's three first-responder surfaces. SwiftUI builds no automatic
+// key-view loop across NSViewRepresentable content and toolbar items, so
+// without explicit links Tab never leaves the sample editor — it even
+// inserts a literal tab character into the text. The loop is
+//     pattern field → match list → sample editor → pattern field
+// and it is re-linked whenever a surface registers, because SwiftUI
+// recycles the representable views (the match table is rebuilt whenever the
+// result list appears or disappears).
+
+@MainActor
+enum RegexKeyLoop {
+    private static weak var field: PatternTextField?
+    private static weak var editor: RegexSampleTextView?
+    private static weak var table: MatchTable?
+
+    static func register(field: PatternTextField) { self.field = field; relink() }
+    static func register(editor: RegexSampleTextView) { self.editor = editor; relink() }
+    static func register(table: MatchTable) { self.table = table; relink() }
+
+    private static func relink() {
+        guard let field, let editor, let table else { return }
+        field.nextKeyView = table
+        table.nextKeyView = editor
+        editor.nextKeyView = field
+    }
+}
+
+// The native result list's table: a real first responder. Tab walks out of
+// it along the focus loop and the arrow keys walk the rows.
+final class MatchTable: NSTableView {
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if window != nil { RegexKeyLoop.register(table: self) }
+    }
+
+    override func keyDown(with event: NSEvent) {
+        switch event.charactersIgnoringModifiers ?? "" {
+        case "\t":
+            window?.selectKeyView(following: self)
+        case "\u{19}": // Shift-Tab walks the loop backwards
+            window?.selectKeyView(preceding: self)
+        default:
+            super.keyDown(with: event)
+        }
+    }
+}
+
 // One row: exposes the inspection action to assistive technology (AXPress)
 // and carries the structured row name.
 final class MatchTableRowView: NSTableRowView {
@@ -194,7 +244,7 @@ struct MatchTableView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> NSScrollView {
-        let table = NSTableView()
+        let table = MatchTable()
         table.headerView = nil
         table.addTableColumn(NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match")))
         table.delegate = context.coordinator
