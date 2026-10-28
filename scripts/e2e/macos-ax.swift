@@ -451,6 +451,15 @@ do {
     assertions.append("Run regex exposed through Accessibility")
     assertions.append("request crossed RVT1 into the embedded backend")
     assertions.append("native UI reports 5 matches")
+    // The editor must be laid out wide enough to paint. A zero-width
+    // document view paints nothing while its AX tree stays correct — the
+    // blank-editor regression shipped green because only AX values were
+    // asserted; the frame is the pixel-level guard.
+    let editorFrame: CGRect = try waitFor("laid-out sample editor frame") {
+        guard let editor = findTextArea(window), let frame = frameOf(editor), frame.width > 200 else { return nil }
+        return frame
+    }
+    assertions.append("sample editor laid out \(Int(editorFrame.width))pt wide, not a zero-width document view")
 
     // -- Initial state: sample loaded, default pattern, nothing inspected --
     observations.append("initial keyboard focus: \(describeFocused(application))")
