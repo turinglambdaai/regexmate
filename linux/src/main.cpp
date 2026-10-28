@@ -298,10 +298,15 @@ int on_refresh_delivered(gpointer user_data) {
     gtk_widget_add_css_class(hint, "dim");
     gtk_list_box_row_set_child(GTK_LIST_BOX_ROW(empty), hint);
     gtk_list_box_append(g_state.matches_list, empty);
-    gtk_label_set_text(g_state.explanation, "—");
+    // The explanation panel keeps the previous pattern's explanation until
+    // the pattern is fixed — only the dead result set clears (interaction
+    // contract). The status count yields to "—" and the section captions
+    // drop their counts while the result set is dead, as on macOS.
     gtk_label_set_text(g_state.lint, "");
     gtk_picture_set_paintable(g_state.diagram, nullptr);
-    set_counts(0, 0);
+    gtk_label_set_text(g_state.status_counts, "—");
+    gtk_label_set_text(g_state.matches_caption, "MATCHES");
+    gtk_label_set_text(g_state.lint_caption, "LINT FINDINGS");
     return G_SOURCE_REMOVE;
   }
 
