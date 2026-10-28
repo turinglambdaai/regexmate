@@ -369,6 +369,10 @@ void MainWindow::ApplyResults(std::string const& error,
                               std::wstring const& text) {
   if (!error.empty()) {
     // An invalid pattern is an error state, not a zero-match result.
+    // Everything the dead result set painted — sample highlights, lint
+    // findings, the previous pattern's diagram, the inspection selection —
+    // clears with it (interaction contract, shared state rules 2 and 4);
+    // only the explanation panel keeps the previous pattern's content.
     SetStatus(false, winrt::to_hstring(error));
     match_rows_.clear();
     match_spans_utf16_.clear();
@@ -378,6 +382,9 @@ void MainWindow::ApplyResults(std::string const& error,
     MatchList().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
     MatchEmpty().Text(L"Fix the pattern to match");
     MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+    RepaintMatchRanges(TextBox().Document(), text, -1);
+    LintList().Text(L"(no findings)");
+    Diagram().Source(nullptr);
     return;
   }
 

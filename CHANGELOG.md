@@ -211,6 +211,11 @@ The learning release: regex is a skill, and the workbench now teaches it.
 - **Shell completions and `schema` list the new command.**
 
 ### Fixed
+- The Windows error state now clears everything the dead result set
+  painted: sample highlights, lint findings and the previous pattern's
+  railroad diagram stayed on screen while the pattern was invalid,
+  contradicting the shared state rules the hosts must agree on. Only the
+  explanation panel keeps the previous pattern's content, as on macOS.
 - The Windows sample editor painted one contiguous highlight band instead
   of one pill per match: `ITextDocument.GetRange` takes (start, end)
   positions, the code passed a length, and RichEdit normalized every
