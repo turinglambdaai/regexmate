@@ -302,7 +302,10 @@ int on_refresh_delivered(gpointer user_data) {
     // the pattern is fixed — only the dead result set clears (interaction
     // contract). The status count yields to "—" and the section captions
     // drop their counts while the result set is dead, as on macOS.
-    gtk_label_set_text(g_state.lint, "");
+    // The lint card shows the shared empty-state copy so "checked, nothing
+    // found" reads the same on every host.
+    gtk_label_set_markup(g_state.lint,
+                         "<span alpha=\"5000\">No lint findings</span>");
     gtk_picture_set_paintable(g_state.diagram, nullptr);
     gtk_label_set_text(g_state.status_counts, "—");
     gtk_label_set_text(g_state.matches_caption, "MATCHES");
@@ -382,7 +385,8 @@ int on_refresh_delivered(gpointer user_data) {
                      result->explain.empty() ? "—" : result->explain.c_str());
 
   if (result->lint.empty()) {
-    gtk_label_set_text(g_state.lint, "");
+    gtk_label_set_markup(g_state.lint,
+                         "<span alpha=\"5000\">No lint findings</span>");
   } else {
     std::string lint_text;
     for (auto const& row : result->lint) {

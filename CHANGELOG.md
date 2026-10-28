@@ -5,6 +5,15 @@ All notable changes to RegexMate are documented here. Format based on
 
 ## [Unreleased]
 
+### Changed
+- Zero states speak with one voice on every host: "No matches" and
+  "No lint findings" replace the Windows parenthesized monospace strings
+  and the Linux empty lint card, so "checked, nothing found" reads the
+  same everywhere (issue #11). Windows match rows also adopt the
+  macOS/Linux scan pattern — value left, span right-aligned and dimmed —
+  with the capture-group count carried by the assistive name, as on the
+  other hosts.
+
 ### Fixed
 - The Linux error state now matches the shared interaction contract: the
   explanation panel keeps the previous pattern's explanation until the

@@ -383,7 +383,7 @@ void MainWindow::ApplyResults(std::string const& error,
     MatchEmpty().Text(L"Fix the pattern to match");
     MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
     RepaintMatchRanges(TextBox().Document(), text, -1);
-    LintList().Text(L"(no findings)");
+    LintList().Text(L"No lint findings");
     Diagram().Source(nullptr);
     return;
   }
@@ -391,7 +391,7 @@ void MainWindow::ApplyResults(std::string const& error,
   SetStatus(true, winrt::hstring(L"Found " + std::to_wstring(rows.size()) + L" match(es)"));
 
   if (lint.empty()) {
-    LintList().Text(L"(no findings)");
+    LintList().Text(L"No lint findings");
   } else {
     std::wstring lintText;
     for (auto const& row : lint) {
@@ -437,7 +437,7 @@ void MainWindow::ApplyResults(std::string const& error,
     list.Items().Clear();
     if (rows.empty()) {
       list.Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
-      MatchEmpty().Text(L"(no matches)");
+      MatchEmpty().Text(L"No matches");
       MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
     } else {
       MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
@@ -449,11 +449,33 @@ void MainWindow::ApplyResults(std::string const& error,
         winrt::hstring const matched = winrt::to_hstring(row[0]);
         winrt::hstring const start = winrt::to_hstring(row[1]);
         winrt::hstring const end = winrt::to_hstring(row[2]);
-        auto item = winrt::Microsoft::UI::Xaml::Controls::TextBlock();
-        item.Text(std::to_wstring(index) + L". " +
-                  std::wstring(row[0].empty() ? L"∅" : matched) + L"   [" +
-                  std::wstring(start) + L", " + std::wstring(end) + L")" +
-                  L"   " + std::wstring(winrt::to_hstring(row[3])) + L" group(s)");
+        // One row = value left, span right-aligned and dimmed, matching the
+        // scan pattern of the macOS and Linux hosts; the capture-group count
+        // lives in the assistive name, as there. WinUI 3's GridLengthHelper
+        // exposes neither Star() nor FromValueAndUnits, so the star column
+        // is built by assigning the projected struct's fields directly.
+        auto rowGrid = winrt::Microsoft::UI::Xaml::Controls::Grid();
+        winrt::Microsoft::UI::Xaml::Controls::ColumnDefinition valueCol,
+            spanCol;
+        valueCol.Width(winrt::Microsoft::UI::Xaml::GridLengthHelper::Auto());
+        winrt::Microsoft::UI::Xaml::GridLength star{};
+        star.Value = 1.0;
+        star.GridUnitType = winrt::Microsoft::UI::Xaml::GridUnitType::Star;
+        spanCol.Width(star);
+        rowGrid.ColumnDefinitions().Append(valueCol);
+        rowGrid.ColumnDefinitions().Append(spanCol);
+        auto valueText = winrt::Microsoft::UI::Xaml::Controls::TextBlock();
+        valueText.Text(std::to_wstring(index) + L". " +
+                       std::wstring(row[0].empty() ? L"∅" : matched));
+        auto spanText = winrt::Microsoft::UI::Xaml::Controls::TextBlock();
+        spanText.Text(L"[" + std::wstring(start) + L", " +
+                      std::wstring(end) + L")");
+        spanText.Opacity(0.55);
+        spanText.HorizontalAlignment(
+            winrt::Microsoft::UI::Xaml::HorizontalAlignment::Right);
+        winrt::Microsoft::UI::Xaml::Controls::Grid::SetColumn(spanText, 1);
+        rowGrid.Children().Append(valueText);
+        rowGrid.Children().Append(spanText);
         // One assistive name spelling out the inspection contract: which
         // match of how many, the matched text or zero-width position, the
         // span and the capture-group count.
@@ -471,8 +493,8 @@ void MainWindow::ApplyResults(std::string const& error,
                   (groups == 1 ? L" capture group" : L" capture groups");
         }
         winrt::Microsoft::UI::Xaml::Automation::AutomationProperties::SetName(
-            item, winrt::hstring(name));
-        list.Items().Append(item);
+            rowGrid, winrt::hstring(name));
+        list.Items().Append(rowGrid);
         ++index;
       }
       if (keep >= 0 && keep < static_cast<int>(rows.size())) {
