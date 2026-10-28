@@ -6,6 +6,13 @@ All notable changes to RegexMate are documented here. Format based on
 ## [Unreleased]
 
 ### Fixed
+- The Linux error state now matches the shared interaction contract: the
+  explanation panel keeps the previous pattern's explanation until the
+  pattern is fixed (it collapsed to "—" and lost the retention the macOS
+  and Windows hosts provide), the status count yields to "—" instead of
+  reading "0 matches", and the section captions drop their counts while
+  the result set is dead. Verified against the host built on an
+  Ubuntu 26.04 VM.
 - The macOS sample editor painted nothing on any macOS: its text view was
   created with a zero frame the clip view never grew, so glyphs, highlight
   pills and the inspection selection never reached the screen while the
