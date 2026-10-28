@@ -369,6 +369,10 @@ void MainWindow::ApplyResults(std::string const& error,
                               std::wstring const& text) {
   if (!error.empty()) {
     // An invalid pattern is an error state, not a zero-match result.
+    // Everything the dead result set painted — sample highlights, lint
+    // findings, the previous pattern's diagram, the inspection selection —
+    // clears with it (interaction contract, shared state rules 2 and 4);
+    // only the explanation panel keeps the previous pattern's content.
     SetStatus(false, winrt::to_hstring(error));
     match_rows_.clear();
     match_spans_utf16_.clear();
@@ -378,6 +382,9 @@ void MainWindow::ApplyResults(std::string const& error,
     MatchList().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
     MatchEmpty().Text(L"Fix the pattern to match");
     MatchEmpty().Visibility(winrt::Microsoft::UI::Xaml::Visibility::Visible);
+    RepaintMatchRanges(TextBox().Document(), text, -1);
+    LintList().Text(L"(no findings)");
+    Diagram().Source(nullptr);
     return;
   }
 
@@ -522,7 +529,13 @@ void MainWindow::RepaintMatchRanges(
     if (start < 0 || end <= start) {
       continue;
     }
-    auto range = doc.GetRange(start, end - start);
+    // ITextDocument.GetRange takes (start, end) positions, not a length.
+    // Passing a length made RichEdit normalize every reversed range by
+    // swapping its bounds, so the five per-match highlights merged into one
+    // contiguous band across the middle of the sample (verified on
+    // Windows 11 25H2: `Order 12345 shipped on 2026-09-28 to zip` painted,
+    // `Or` and ` 10115.` did not — exactly the union of the swapped spans).
+    auto range = doc.GetRange(start, end);
     auto matchFormat = range.CharacterFormat();
     matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
     if (i == inspected) {
