@@ -5,6 +5,17 @@ All notable changes to RegexMate are documented here. Format based on
 
 ## [Unreleased]
 
+### Fixed
+- The macOS sample editor painted nothing on any macOS: its text view was
+  created with a zero frame the clip view never grew, so glyphs, highlight
+  pills and the inspection selection never reached the screen while the
+  accessibility tree kept serving the correct text (the native-ui suite
+  asserted values only; its own screenshots showed the blank editor). The
+  scroll view now pins the document frame and visible origin on every
+  layout pass, the TextKit 1 stack is wired explicitly so the
+  highlight-pill layout manager actually installs, and the acceptance
+  driver asserts the editor is laid out wide enough to paint.
+
 ### Added
 - Match inspection got one keyboard-accessible meaning on every host:
   activating a match (pointer, keyboard, ⌘G/⌘⇧G on macOS, arrow keys on a
