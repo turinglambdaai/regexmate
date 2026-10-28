@@ -211,6 +211,14 @@ The learning release: regex is a skill, and the workbench now teaches it.
 - **Shell completions and `schema` list the new command.**
 
 ### Fixed
+- The Windows sample editor painted one contiguous highlight band instead
+  of one pill per match: `ITextDocument.GetRange` takes (start, end)
+  positions, the code passed a length, and RichEdit normalized every
+  reversed range by swapping its bounds, merging all five matches into a
+  single accent band across the middle of the sample. The inspected match
+  also never showed its dark-green accent for the same reason. Ranges are
+  now passed as positions; verified against the packaged app on
+  Windows 11 25H2.
 
 - **Lint findings are fully localized**: under `--lang zh` the finding
   sentences themselves were still English; every rule now renders from

@@ -522,7 +522,13 @@ void MainWindow::RepaintMatchRanges(
     if (start < 0 || end <= start) {
       continue;
     }
-    auto range = doc.GetRange(start, end - start);
+    // ITextDocument.GetRange takes (start, end) positions, not a length.
+    // Passing a length made RichEdit normalize every reversed range by
+    // swapping its bounds, so the five per-match highlights merged into one
+    // contiguous band across the middle of the sample (verified on
+    // Windows 11 25H2: `Order 12345 shipped on 2026-09-28 to zip` painted,
+    // `Or` and ` 10115.` did not — exactly the union of the swapped spans).
+    auto range = doc.GetRange(start, end);
     auto matchFormat = range.CharacterFormat();
     matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
     if (i == inspected) {
