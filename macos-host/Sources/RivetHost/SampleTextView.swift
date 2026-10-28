@@ -95,6 +95,34 @@ final class RegexSampleTextView: NSTextView {
 
 // MARK: - SwiftUI bridge
 
+/// Hosts the sample editor. SwiftUI sizes the scroll view after
+/// `makeNSView` returns, and the clip view's autoresizing pass does not
+/// grow a freshly created zero-width document view — a zero-width text
+/// view wraps every character onto its own line, pushes the caret ~850pt
+/// down the document, and paints nothing once the width finally arrives
+/// because the stale scroll position never comes back. Keep the document
+/// frame and the visible origin pinned on every layout pass instead.
+final class SampleEditorScrollView: NSScrollView {
+    override func layout() {
+        super.layout()
+        guard let text = documentView as? NSTextView else { return }
+        let target = max(contentView.bounds.width, 1)
+        let minHeight = contentView.bounds.height
+        var frame = text.frame
+        var changed = false
+        if abs(frame.width - target) > 0.5 { frame.size.width = target; changed = true }
+        if frame.height < minHeight { frame.size.height = minHeight; changed = true }
+        if frame.origin != .zero { frame.origin = .zero; changed = true }
+        if changed {
+            text.frame = frame
+            var bounds = contentView.bounds
+            bounds.origin = .zero
+            contentView.bounds = bounds
+            text.needsDisplay = true
+        }
+    }
+}
+
 struct SampleTextView: NSViewRepresentable {
     @Binding var text: String
     var highlightColor: NSColor
@@ -105,7 +133,36 @@ struct SampleTextView: NSViewRepresentable {
     typealias NSViewType = NSScrollView
 
     func makeNSView(context: Context) -> NSScrollView {
-        let view = RegexSampleTextView()
+        let scroll = SampleEditorScrollView()
+        scroll.hasVerticalScroller = true
+        scroll.autohidesScrollers = true
+        scroll.drawsBackground = false
+        scroll.borderType = .noBorder
+
+        // Wire the TextKit 1 stack explicitly. A text view built without a
+        // container runs TextKit 2, where the `.layoutManager` accessor only
+        // hands back a shadow object: `replaceLayoutManager` then silently
+        // does nothing and the highlight pills never paint. An explicit
+        // storage → layout manager → container chain pins the view to
+        // TextKit 1 from birth.
+        let storage = NSTextStorage(string: text)
+        let layoutManager = MatchHighlightLayoutManager()
+        storage.addLayoutManager(layoutManager)
+        let container = NSTextContainer(
+            size: NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude))
+        container.widthTracksTextView = true
+        container.lineFragmentPadding = 6
+        layoutManager.addTextContainer(container)
+
+        let initial = scroll.contentSize
+        let view = RegexSampleTextView(
+            frame: NSRect(x: 0, y: 0,
+                          width: max(initial.width, 1),
+                          height: max(initial.height, 1)),
+            textContainer: container)
+        view.autoresizingMask = [.width]
+        view.isVerticallyResizable = true
+        view.isHorizontallyResizable = false
         view.font = NSFont.monospacedSystemFont(ofSize: 13, weight: .regular)
         view.drawsBackground = false
         view.isRichText = false
@@ -115,27 +172,15 @@ struct SampleTextView: NSViewRepresentable {
         view.isAutomaticDashSubstitutionEnabled = false
         view.isAutomaticTextReplacementEnabled = false
         view.isContinuousSpellCheckingEnabled = false
-        view.textContainer?.lineFragmentPadding = 6
-        // Force the default layout manager to exist, then swap in the one
-        // that paints highlights as rounded pills.
-        _ = view.layoutManager
-        let rounded = MatchHighlightLayoutManager()
-        rounded.highlightColor = highlightColor
-        rounded.owner = view
-        view.textContainer?.replaceLayoutManager(rounded)
-        view.string = text
+        layoutManager.highlightColor = highlightColor
+        layoutManager.owner = view
         view.onEdit = { [weak view] in
             text = view?.string ?? ""
             onEdit()
         }
         context.coordinator.applied = nil
 
-        let scroll = NSScrollView()
         scroll.documentView = view
-        scroll.hasVerticalScroller = true
-        scroll.autohidesScrollers = true
-        scroll.drawsBackground = false
-        scroll.borderType = .noBorder
         return scroll
     }
 
