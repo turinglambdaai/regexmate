@@ -14,6 +14,8 @@
 
 从[官方 Releases](https://github.com/turinglambdaai/regexmate/releases)选择明确标注系统和架构的附件，阅读该版本说明并核对附带校验文件。未列出的附件或平台不视为已交付。预览构建可能没有系统发行者签名或公证；不要为安装而关闭系统安全保护。
 
+Windows ZIP 中 CLI 的执行路径随版本而异：已发布的 **v0.8.0** 便携版在压缩包根目录使用 `regexmate.exe`；包含[目录修复（#13）](https://github.com/turinglambdaai/regexmate/issues/13) 的后续构建改用 `bin/regexmate.exe`（macOS/Linux：`bin/regexmate`）。请完整解压，保留 Racket 各平台对应的运行库及独立的 `gui/` 目录。对已安装的旧版 Windows ZIP，经签名验证的 CLI 更新会保留原可执行文件路径，并同步替换旁边的运行库，不会悄悄改变安装位置。单独发布的 Windows 单文件 EXE 是另一种安装与更新模式。
+
 ## 第一次使用
 
 1. 先用 regexmate validate 验证模式，再匹配一条合成正例。
