@@ -245,11 +245,12 @@
      (delete-directory/files tmp))
 
    ;; ---- staged layout + swap mechanics ---------------------------------------
-   ;; unix distribute nests the exe under bin/ with lib/ and gui/ at the
-   ;; root; windows distribute is flat. Both layouts swap whole: exe, lib
-   ;; and gui all move; leftovers are cleaned up.
-   (test-case "staged-pieces and install-update! swap bin-layout installs"
-     (define tmp (make-temporary-file "rmswap~a" 'directory))
+   ;; POSIX distribute nests the CLI under bin/ while lib/ and gui/ stay at
+   ;; the archive root. Windows native libraries are exe-relative, so the
+   ;; separate Windows fixtures below prove bin/lib and legacy root/lib.
+   (test-case "Unix staged-pieces and install-update! swap bin-layout installs"
+     (unless (eq? (platform-symbol) 'windows)
+       (define tmp (make-temporary-file "rmswap~a" 'directory))
      (define install (build-path tmp "install"))
      (define stage (build-path tmp "stage"))
      (make-directory* (build-path install "bin"))
@@ -289,7 +290,7 @@
        (check-false (file-exists? (build-path install "bin" "regexmate.old")))
        (check-false (directory-exists? (build-path install "lib.old")))
        (check-false (directory-exists? (build-path install "gui.old"))))
-     (delete-directory/files tmp))
+       (delete-directory/files tmp)))
 
    ;; A Windows ZIP created by `raco distribute stage/bin` keeps its
    ;; patched runtime DLLs in bin/lib, not the Unix root/lib location.
@@ -316,7 +317,10 @@
            (lambda (out) (display (cdr entry) out))
            #:exists 'truncate))
        (parameterize ([current-exe-path (build-path root "bin" "regexmate.exe")])
-         (check-equal? (install-root) root)
+         (check-equal?
+          (simplify-path (build-path (install-root) "layout-probe"))
+          (simplify-path (build-path root "layout-probe"))
+          "installation root must resolve to the same directory without relying on trailing-separator text")
          (check-false (standalone-install?))
          (define update-offer
            (update-manifest regexmate-identifier "9.9.8" 42 'stable
@@ -358,7 +362,10 @@
            (lambda (out) (display (cdr entry) out))
            #:exists 'truncate))
        (parameterize ([current-exe-path (build-path root "regexmate.exe")])
-         (check-equal? (install-root) root)
+         (check-equal?
+          (simplify-path (build-path (install-root) "layout-probe"))
+          (simplify-path (build-path root "layout-probe"))
+          "installation root must resolve to the same directory without relying on trailing-separator text")
          (check-false (standalone-install?))
          (define-values (new-exe new-lib _new-gui) (staged-pieces staged))
          (check-equal? new-lib (build-path staged "bin" "lib"))
