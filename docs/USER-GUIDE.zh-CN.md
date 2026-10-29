@@ -12,9 +12,9 @@
 
 提供 macOS、Windows、Linux 桌面与 CLI 发布附件。引擎使用 Racket pregexp，不能据此认定 JavaScript、PCRE 或其他生产引擎语义相同。
 
-从[官方 Releases](https://github.com/turinglambdaai/regexmate/releases)选择明确标注系统和架构的附件，阅读该版本说明并核对附带校验文件。未列出的附件或平台不视为已交付。预览构建可能没有系统发行者签名或公证；不要为安装而关闭系统安全保护。
+从[官方 Releases](https://github.com/turlamai/regexmate/releases)选择明确标注系统和架构的附件，阅读该版本说明并核对附带校验文件。未列出的附件或平台不视为已交付。预览构建可能没有系统发行者签名或公证；不要为安装而关闭系统安全保护。
 
-Windows ZIP 中 CLI 的执行路径随版本而异：已发布的 **v0.8.0** 便携版在压缩包根目录使用 `regexmate.exe`；包含[目录修复（#13）](https://github.com/turinglambdaai/regexmate/issues/13) 的后续构建改用 `bin/regexmate.exe`（macOS/Linux：`bin/regexmate`）。请完整解压，保留 Racket 各平台对应的运行库及独立的 `gui/` 目录。对已安装的旧版 Windows ZIP，经签名验证的 CLI 更新会保留原可执行文件路径，并同步替换旁边的运行库，不会悄悄改变安装位置。单独发布的 Windows 单文件 EXE 是另一种安装与更新模式。
+Windows ZIP 中 CLI 的执行路径随版本而异：已发布的 **v0.8.0** 便携版在压缩包根目录使用 `regexmate.exe`；包含[目录修复（#13）](https://github.com/turlamai/regexmate/issues/13) 的后续构建改用 `bin/regexmate.exe`（macOS/Linux：`bin/regexmate`）。请完整解压，保留 Racket 各平台对应的运行库及独立的 `gui/` 目录。对已安装的旧版 Windows ZIP，经签名验证的 CLI 更新会保留原可执行文件路径，并同步替换旁边的运行库，不会悄悄改变安装位置。单独发布的 Windows 单文件 EXE 是另一种安装与更新模式。
 
 ## 第一次使用
 
@@ -40,7 +40,7 @@ GUI 只读检查更新，实际安装由 CLI 执行。更新后退出并重启 G
 
 ## 获得帮助
 
-在 [GitHub Issues](https://github.com/turinglambdaai/regexmate/issues) 反馈，中文或英文均可。提供版本、系统与架构、安装渠道、复现步骤、预期和实际结果。先用合成样本复现；不要附上密钥、授权文件、数据库、原始私密文档或完整日志。公开支持不承诺响应时限。
+在 [GitHub Issues](https://github.com/turlamai/regexmate/issues) 反馈，中文或英文均可。提供版本、系统与架构、安装渠道、复现步骤、预期和实际结果。先用合成样本复现；不要附上密钥、授权文件、数据库、原始私密文档或完整日志。公开支持不承诺响应时限。
 
 ## 深入阅读
 

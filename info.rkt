@@ -10,6 +10,6 @@
 
 (define pkg-desc "Agent-friendly regex CLI: validate, match, explain, replace and graph regular expressions")
 
-(define pkg-authors '(turinglambdaai))
+(define pkg-authors '(turlamai))
 
 (define license '(BUSL-1.1))

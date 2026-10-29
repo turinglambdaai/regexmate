@@ -3,7 +3,7 @@
 **The regex workbench for the agent era — validate, match, explain, replace, graph, batch-test and lint regular expressions from one cross-platform CLI.**
 Versioned JSON contract, a native MCP server, exit codes that never lie, and online self-update. Standalone binaries for Windows, Linux and macOS — no runtime to install. Racket underneath.
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-037A55)
+[![CI](https://github.com/turlamai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turlamai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-037A55)
 
 **English** · [中文](README.zh-CN.md)
 
@@ -33,7 +33,7 @@ Everything ships as a standalone binary — no Racket installation required on t
 
 New to the tool? The bilingual [user manual](https://regexmate.jrtx.site/guide.html) walks through every command with real output — source at [docs/guide.html](docs/guide.html).
 
-Download from [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) — a human installer and a portable archive per platform, the archive carrying the CLI and the native desktop app:
+Download from [Releases](https://github.com/turlamai/regexmate/releases/latest) — a human installer and a portable archive per platform, the archive carrying the CLI and the native desktop app:
 
 | Platform | Installers | Portable archive (CLI + GUI) |
 |---|---|---|
@@ -50,13 +50,13 @@ Every release carries per-file `.sha256` checksums and a `SHA256SUMS` manifest. 
 **Racket package:**
 
 ```bash
-raco pkg install https://github.com/turinglambdaai/regexmate.git
+raco pkg install https://github.com/turlamai/regexmate.git
 ```
 
 **From source** (Racket 9.x):
 
 ```bash
-git clone https://github.com/turinglambdaai/regexmate
+git clone https://github.com/turlamai/regexmate
 cd regexmate
 raco make main.rkt
 racket run-tests.rkt          # test suite
@@ -94,7 +94,7 @@ SVG saved to: diagram.svg
 
 ## Desktop GUI
 
-Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 / GTK4) on the same Racket core, embedded via [Rivet](https://github.com/turinglambdaai/rivet). No WebView, no Electron. The pattern lives in the toolbar and re-evaluates as you type: matches are highlighted inside your sample text, and the match list, explanation, lint findings and the railroad diagram update live:
+Every release archive ships `regexmate-gui` — a native app (SwiftUI / WinUI 3 / GTK4) on the same Racket core, embedded via [Rivet](https://github.com/turlamai/rivet). No WebView, no Electron. The pattern lives in the toolbar and re-evaluates as you type: matches are highlighted inside your sample text, and the match list, explanation, lint findings and the railroad diagram update live:
 
 ![RegexMate desktop GUI on macOS](docs/assets/gui-macos.png)
 
