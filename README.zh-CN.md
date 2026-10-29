@@ -3,7 +3,7 @@
 **为 agent 时代打造的正则工作台——用一条跨平台 CLI 完成正则的校验、匹配、解释、替换、绘图、批量测试与风险分析。**
 版本化 JSON 契约、原生 MCP server、永不撒谎的退出码、在线自更新。三平台独立二进制，免装运行时，Racket 实现。
 
-[![CI](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turinglambdaai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-037A55)
+[![CI](https://github.com/turlamai/regexmate/actions/workflows/ci.yml/badge.svg)](https://github.com/turlamai/regexmate/actions/workflows/ci.yml) ![macOS](https://img.shields.io/badge/macOS-SwiftUI-000000?logo=apple&logoColor=white) ![Windows](https://img.shields.io/badge/Windows-WinUI_3-0078D4?logo=windows11&logoColor=white) ![Linux](https://img.shields.io/badge/Linux-GTK4-F9A03C?logo=linux&logoColor=white) [![License](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE) ![Version](https://img.shields.io/badge/version-0.8.0-037A55)
 
 [English](README.md) · **中文**
 
@@ -33,7 +33,7 @@
 
 第一次接触？双语[用户手册](https://regexmate.jrtx.site/guide.html)用真实输出逐个讲每个命令——源文件在 [docs/guide.html](docs/guide.html)。
 
-从 [Releases](https://github.com/turinglambdaai/regexmate/releases/latest) 下载——每个平台都有人类安装器与便携压缩包，压缩包带 CLI 和原生桌面应用：
+从 [Releases](https://github.com/turlamai/regexmate/releases/latest) 下载——每个平台都有人类安装器与便携压缩包，压缩包带 CLI 和原生桌面应用：
 
 | 平台 | 安装器 | 便携压缩包（CLI + GUI） |
 |---|---|---|
@@ -50,13 +50,13 @@
 **Racket 包：**
 
 ```bash
-raco pkg install https://github.com/turinglambdaai/regexmate.git
+raco pkg install https://github.com/turlamai/regexmate.git
 ```
 
 **从源码构建**（Racket 9.x）：
 
 ```bash
-git clone https://github.com/turinglambdaai/regexmate
+git clone https://github.com/turlamai/regexmate
 cd regexmate
 raco make main.rkt
 racket run-tests.rkt          # 测试套件
@@ -108,7 +108,7 @@ Updated to v0.8.0. Run `regexmate --version` to confirm; restart the RegexMate a
 
 ## 桌面 GUI
 
-每个平台的发布包都带 `regexmate-gui`——原生应用（SwiftUI / WinUI 3 / GTK4），跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turinglambdaai/rivet) 嵌入，无 WebView、无 Electron）。pattern 常驻工具栏，边打边算：匹配直接高亮在样本文字里，匹配列表、人话解释、lint 发现与铁路图实时更新：
+每个平台的发布包都带 `regexmate-gui`——原生应用（SwiftUI / WinUI 3 / GTK4），跑在同一套 Racket 核心上（经 [Rivet](https://github.com/turlamai/rivet) 嵌入，无 WebView、无 Electron）。pattern 常驻工具栏，边打边算：匹配直接高亮在样本文字里，匹配列表、人话解释、lint 发现与铁路图实时更新：
 
 ![RegexMate 桌面 GUI（macOS）](docs/assets/gui-macos.png)
 

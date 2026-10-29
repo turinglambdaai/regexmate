@@ -12,9 +12,9 @@ Free developer and agent tool under the existing BUSL-1.1 terms, including the r
 
 Desktop/CLI release assets for macOS, Windows and Linux. The engine uses Racket pregexp; it is not a proof of matching JavaScript, PCRE or another production engine.
 
-Use [official Releases](https://github.com/turinglambdaai/regexmate/releases), select an explicitly listed OS/architecture asset, read its release notes and check supplied checksums. An absent asset/platform is not a delivery promise. Preview builds may lack publisher signing or notarization; do not disable system-wide security protections to install them.
+Use [official Releases](https://github.com/turlamai/regexmate/releases), select an explicitly listed OS/architecture asset, read its release notes and check supplied checksums. An absent asset/platform is not a delivery promise. Preview builds may lack publisher signing or notarization; do not disable system-wide security protections to install them.
 
-Windows ZIP CLI entry points are version-specific: the published **v0.8.0** portable ZIP uses `regexmate.exe` at archive root; archives built with the [layout fix (#13)](https://github.com/turinglambdaai/regexmate/issues/13) use `bin/regexmate.exe` (macOS/Linux: `bin/regexmate`). Extract the entire archive, including Racket's platform-specific runtime libraries and the separate `gui/` tree. For an already-installed legacy Windows ZIP, the verified CLI updater retains its original executable location and swaps the libraries alongside it; it does not silently change the install path. The separately published single-file Windows EXE remains a different installation/update mode.
+Windows ZIP CLI entry points are version-specific: the published **v0.8.0** portable ZIP uses `regexmate.exe` at archive root; archives built with the [layout fix (#13)](https://github.com/turlamai/regexmate/issues/13) use `bin/regexmate.exe` (macOS/Linux: `bin/regexmate`). Extract the entire archive, including Racket's platform-specific runtime libraries and the separate `gui/` tree. For an already-installed legacy Windows ZIP, the verified CLI updater retains its original executable location and swaps the libraries alongside it; it does not silently change the install path. The separately published single-file Windows EXE remains a different installation/update mode.
 
 ## Your first successful session
 
@@ -40,7 +40,7 @@ Back up data and read the destination release notes first. An in-app update chec
 
 ## Get help
 
-Report problems in [GitHub Issues](https://github.com/turinglambdaai/regexmate/issues), in English or Chinese. Include the version, OS/architecture, installation channel, steps, expected result and actual result. Reproduce with synthetic input first; do not attach keys, credentials, databases, private source documents or complete logs. Public support has no guaranteed response time.
+Report problems in [GitHub Issues](https://github.com/turlamai/regexmate/issues), in English or Chinese. Include the version, OS/architecture, installation channel, steps, expected result and actual result. Reproduce with synthetic input first; do not attach keys, credentials, databases, private source documents or complete logs. Public support has no guaranteed response time.
 
 ## Further reading
 
