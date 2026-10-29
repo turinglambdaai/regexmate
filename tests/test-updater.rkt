@@ -323,10 +323,10 @@
                             "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
                             (list (update-artifact 'windows (architecture-symbol)
                                                    "https://example.com/solo.exe"
-                                                   (make-string 64 #\\a) 1 'exe '() #f)
+                                                   (make-string 64 #\a) 1 'exe '() #f)
                                   (update-artifact 'windows (architecture-symbol)
                                                    "https://example.com/full.zip"
-                                                   (make-string 64 #\\b) 2 'zip '() #f))))
+                                                   (make-string 64 #\b) 2 'zip '() #f))))
          (check-equal? (update-artifact-installer (pick-artifact update-offer))
                        'zip
                        "Windows bin/lib install must select signed ZIP, never standalone EXE")
