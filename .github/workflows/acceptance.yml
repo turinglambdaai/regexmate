@@ -27,7 +27,7 @@ jobs:
           variant: CS
       - name: Install pinned Rivet and dependencies
         shell: pwsh
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Run executable product acceptance
         run: raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -61,7 +61,7 @@ jobs:
           distribution: full
           variant: CS
       - name: Install pinned Rivet and dependencies
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Run executable product acceptance
         run: raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -92,11 +92,11 @@ jobs:
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev \
             liblz4-dev zlib1g-dev libncurses-dev weston at-spi2-core python3-pyatspi
       - name: Install pinned Rivet and dependencies
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Remember full Racket command path
         run: echo "FULL_RACKET_BIN=$(dirname "$(command -v raco)")" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
+        uses: turlamai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
       - name: Run executable product acceptance
         run: PATH="$FULL_RACKET_BIN:$PATH" dbus-run-session -- raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -132,7 +132,7 @@ jobs:
           distribution: full
           variant: CS
       - name: Install pinned Rivet
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Strip non-JSON prefixes from the reports
         # The Linux suite's AT-SPI daemon occasionally logs one line onto the
         # captured stdout before the report; keep only the JSON document.
