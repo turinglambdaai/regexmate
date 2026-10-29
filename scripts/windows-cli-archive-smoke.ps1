@@ -51,6 +51,18 @@ try {
         if ($LASTEXITCODE -ne 3) {
             throw "No-match exit status must remain 3, got $LASTEXITCODE"
         }
+
+        # Simulate upgrading a v0.8.0 flat Windows ZIP: its existing EXE stays
+        # at the install root and its runtime stays in root/lib. The updater's
+        # layout-preserving swap must leave the new binary runnable there.
+        $legacy = Join-Path $install 'legacy-flat'
+        New-Item -ItemType Directory -Force -Path $legacy | Out-Null
+        Copy-Item -LiteralPath $exe -Destination (Join-Path $legacy 'regexmate.exe')
+        Copy-Item -LiteralPath (Join-Path $install 'bin/lib') -Destination (Join-Path $legacy 'lib') -Recurse
+        & (Join-Path $legacy 'regexmate.exe') --version
+        if ($LASTEXITCODE -ne 0) {
+            throw "Legacy-root update compatibility smoke failed: $LASTEXITCODE"
+        }
     } finally {
         Pop-Location
     }
