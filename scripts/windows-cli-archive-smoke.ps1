@@ -1,0 +1,61 @@
+param(
+    [Parameter(Mandatory = $true)][string]$Archive,
+    [switch]$RequireGui
+)
+
+$ErrorActionPreference = 'Stop'
+Set-StrictMode -Version Latest
+
+$archivePath = (Resolve-Path -LiteralPath $Archive).Path
+$install = Join-Path ([System.IO.Path]::GetTempPath()) ("regexmate-archive-smoke-" + [guid]::NewGuid().ToString('N'))
+
+try {
+    # Do not accept a CLI that runs only because build/racket is installed
+    # next to the source tree: exercise the release ZIP in a fresh directory.
+    Expand-Archive -LiteralPath $archivePath -DestinationPath $install -Force
+    $exe = Join-Path $install 'bin/regexmate.exe'
+    if (-not (Test-Path -LiteralPath $exe -PathType Leaf)) {
+        throw "ZIP must contain bin/regexmate.exe"
+    }
+    if (Test-Path -LiteralPath (Join-Path $install 'regexmate.exe')) {
+        throw "ZIP still contains an unexpected root-level regexmate.exe"
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $install 'bin/lib') -PathType Container)) {
+        throw "Windows Racket runtime libraries must accompany the bin/ executable"
+    }
+
+    if ($RequireGui) {
+        $gui = Join-Path $install 'gui'
+        if (-not (Test-Path -LiteralPath (Join-Path $gui 'regexmate-gui.exe') -PathType Leaf)) {
+            throw "The signed-feed ZIP lost its native GUI executable"
+        }
+        if (-not (Test-Path -LiteralPath (Join-Path $gui 'runtime/racket.boot') -PathType Leaf)) {
+            throw "The signed-feed ZIP lost its embedded GUI Racket runtime"
+        }
+    }
+
+    Push-Location ([System.IO.Path]::GetTempPath())
+    try {
+        & $exe --version
+        if ($LASTEXITCODE -ne 0) { throw "--version returned $LASTEXITCODE" }
+        & $exe validate '^\d{3}-\d{4}$'
+        if ($LASTEXITCODE -ne 0) { throw "validate returned $LASTEXITCODE" }
+        & $exe match '\d+' 'abc 123' --json
+        if ($LASTEXITCODE -ne 0) { throw "JSON match returned $LASTEXITCODE" }
+        $graph = Join-Path $install 'graph.svg'
+        & $exe graph 'ab(c|d)*[0-9]+' -o $graph
+        if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $graph -PathType Leaf)) {
+            throw "graph failed to create an SVG in the extracted install"
+        }
+        & $exe match 'nomatchpattern' 'text' >$null
+        if ($LASTEXITCODE -ne 3) {
+            throw "No-match exit status must remain 3, got $LASTEXITCODE"
+        }
+    } finally {
+        Pop-Location
+    }
+} finally {
+    if (Test-Path -LiteralPath $install) {
+        Remove-Item -LiteralPath $install -Recurse -Force
+    }
+}
