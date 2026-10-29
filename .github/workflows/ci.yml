@@ -115,6 +115,7 @@ jobs:
           set -euo pipefail
           mkdir -p build
           raco exe -o build/regexmate.exe main.rkt
+          mkdir -p stage
           raco distribute stage/bin build/regexmate.exe
           test -f stage/bin/regexmate.exe
           test ! -f stage/regexmate.exe
