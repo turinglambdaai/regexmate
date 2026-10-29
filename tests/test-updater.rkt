@@ -291,6 +291,75 @@
        (check-false (directory-exists? (build-path install "gui.old"))))
      (delete-directory/files tmp))
 
+   ;; A Windows ZIP created by `raco distribute stage/bin` keeps its
+   ;; patched runtime DLLs in bin/lib, not the Unix root/lib location.
+   ;; Verify both fresh bin installs and upgrades of the legacy root layout;
+   ;; a wrong standalone classification would select a signed .exe payload
+   ;; instead of the signed .zip and silently lose the GUI/runtime.
+   (test-case "Windows bin-layout ZIP keeps signed archive update selection and runtime"
+     (when (eq? (platform-symbol) 'windows)
+       (define tmp (make-temporary-file "rmwinbin~a" 'directory))
+       (define root (build-path tmp "installed"))
+       (define staged (build-path tmp "unpacked"))
+       (make-directory* (build-path root "bin" "lib"))
+       (make-directory* (build-path root "gui"))
+       (make-directory* (build-path staged "bin" "lib"))
+       (make-directory* (build-path staged "gui"))
+       (for ([entry (in-list
+                     (list (cons (build-path root "bin" "regexmate.exe") "old-exe")
+                           (cons (build-path root "bin" "lib" "runtime.dll") "old-lib")
+                           (cons (build-path root "gui" "RivetHost.exe") "old-gui")
+                           (cons (build-path staged "bin" "regexmate.exe") "new-exe")
+                           (cons (build-path staged "bin" "lib" "runtime.dll") "new-lib")
+                           (cons (build-path staged "gui" "RivetHost.exe") "new-gui")))])
+         (call-with-output-file (car entry)
+           (lambda (out) (display (cdr entry) out))
+           #:exists 'truncate))
+       (parameterize ([current-exe-path (build-path root "bin" "regexmate.exe")])
+         (check-equal? (install-root) root)
+         (check-false (standalone-install?))
+         (define-values (new-exe new-lib new-gui) (staged-pieces staged))
+         (check-equal? new-exe (build-path staged "bin" "regexmate.exe"))
+         (check-equal? new-lib (build-path staged "bin" "lib"))
+         (install-update! new-exe new-lib new-gui)
+         (check-equal? (file->string (build-path root "bin" "regexmate.exe")) "new-exe")
+         (check-equal? (file->string (build-path root "bin" "lib" "runtime.dll")) "new-lib")
+         (check-equal? (file->string (build-path root "gui" "RivetHost.exe")) "new-gui")
+         (check-false (directory-exists? (build-path root "lib")))
+         (cleanup-stale-updates)
+         (check-false (directory-exists? (build-path root "bin" "lib.old"))))
+       (delete-directory/files tmp)))
+
+   (test-case "legacy Windows flat ZIP upgrades from a staged bin-layout ZIP"
+     (when (eq? (platform-symbol) 'windows)
+       (define tmp (make-temporary-file "rmwinlegacy~a" 'directory))
+       (define root (build-path tmp "installed"))
+       (define staged (build-path tmp "unpacked"))
+       (make-directory* (build-path root "lib"))
+       (make-directory* (build-path staged "bin" "lib"))
+       (for ([entry (in-list
+                     (list (cons (build-path root "regexmate.exe") "old-exe")
+                           (cons (build-path root "lib" "runtime.dll") "old-lib")
+                           (cons (build-path staged "bin" "regexmate.exe") "new-exe")
+                           (cons (build-path staged "bin" "lib" "runtime.dll") "new-lib")))])
+         (call-with-output-file (car entry)
+           (lambda (out) (display (cdr entry) out))
+           #:exists 'truncate))
+       (parameterize ([current-exe-path (build-path root "regexmate.exe")])
+         (check-equal? (install-root) root)
+         (check-false (standalone-install?))
+         (define-values (new-exe new-lib _new-gui) (staged-pieces staged))
+         (check-equal? new-lib (build-path staged "bin" "lib"))
+         (install-update! new-exe new-lib #f)
+         ;; Keep the existing executable's location instead of relocating a
+         ;; live Windows process; the Racket DLL path remains exe-relative.
+         (check-equal? (file->string (build-path root "regexmate.exe")) "new-exe")
+         (check-equal? (file->string (build-path root "lib" "runtime.dll")) "new-lib")
+         (check-false (directory-exists? (build-path root "bin")))
+         (cleanup-stale-updates)
+         (check-false (directory-exists? (build-path root "lib.old"))))
+       (delete-directory/files tmp)))
+
    (test-case "install-update! swaps flat layouts and bare standalone exes"
      (define tmp (make-temporary-file "rmswap~a" 'directory))
      (define install (build-path tmp "install"))
