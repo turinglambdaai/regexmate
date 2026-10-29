@@ -318,6 +318,18 @@
        (parameterize ([current-exe-path (build-path root "bin" "regexmate.exe")])
          (check-equal? (install-root) root)
          (check-false (standalone-install?))
+         (define update-offer
+           (update-manifest regexmate-identifier "9.9.8" 42 'stable
+                            "2026-10-09T00:00:00Z" "0.0.0" #f #t 100
+                            (list (update-artifact 'windows (architecture-symbol)
+                                                   "https://example.com/solo.exe"
+                                                   (make-string 64 #\\a) 1 'exe '() #f)
+                                  (update-artifact 'windows (architecture-symbol)
+                                                   "https://example.com/full.zip"
+                                                   (make-string 64 #\\b) 2 'zip '() #f))))
+         (check-equal? (update-artifact-installer (pick-artifact update-offer))
+                       'zip
+                       "Windows bin/lib install must select signed ZIP, never standalone EXE")
          (define-values (new-exe new-lib new-gui) (staged-pieces staged))
          (check-equal? new-exe (build-path staged "bin" "regexmate.exe"))
          (check-equal? new-lib (build-path staged "bin" "lib"))
