@@ -57,6 +57,13 @@ struct MainWindow : MainWindowT<MainWindow> {
   std::vector<std::pair<int, int>> match_spans_utf16_;
   std::vector<std::vector<std::string>> match_rows_;
   bool updating_match_list_ = false;
+  // The match-formatting repaint raises RichEditBox TextChanged (formatting
+  // is a document change there); the flag keeps that presentation pass from
+  // queuing a refresh, and the two snapshots let the timer's auto path skip
+  // runs whose pattern and text are already what the last refresh consumed.
+  bool suppress_auto_refresh_ = false;
+  winrt::hstring last_refreshed_pattern_;
+  std::wstring last_refreshed_text_;
 };
 
 }  // namespace winrt::RivetHost::implementation
