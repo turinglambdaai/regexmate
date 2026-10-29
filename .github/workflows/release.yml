@@ -133,7 +133,7 @@ jobs:
         run: |
           set -x
           case '${{ runner.os }}' in
-            Windows) raco distribute stage build/regexmate.exe ;;
+            Windows) raco distribute stage/bin build/regexmate.exe ;;
             *)       raco distribute stage build/regexmate ;;
           esac
 
@@ -199,9 +199,10 @@ jobs:
       - name: Smoke the bundled binary
         shell: bash
         run: |
-          # unix distribute uses bin/ layout; windows stays flat
+          # Both CLI entry points live under bin/; Windows runtime DLLs
+          # remain beneath bin/lib as patched by raco distribute.
           EXE=stage/bin/regexmate
-          [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/regexmate.exe
+          [ '${{ runner.os }}' = 'Windows' ] && EXE=stage/bin/regexmate.exe
           "$EXE" --version
           "$EXE" validate '^\d{3}-\d{4}$'
           "$EXE" match '\d+' 'abc 123' --json
@@ -254,6 +255,13 @@ jobs:
         run: |
           $version = $env:GITHUB_REF_NAME.Substring(1)
           Compress-Archive -Path stage/* -DestinationPath "regexmate-$version-windows-x86_64.zip"
+
+      - name: Exercise the extracted Windows CLI+GUI feed ZIP
+        if: matrix.asset == 'windows-x86_64'
+        shell: pwsh
+        run: |
+          $version = $env:GITHUB_REF_NAME.Substring(1)
+          & scripts/windows-cli-archive-smoke.ps1 -Archive "regexmate-$version-windows-x86_64.zip" -RequireGui
 
       - name: Checksum the feed archive
         shell: bash
