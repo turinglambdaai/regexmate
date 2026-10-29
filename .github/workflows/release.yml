@@ -132,6 +132,8 @@ jobs:
         shell: bash
         run: |
           set -x
+          # Windows requires the stage parent before distributing into bin/.
+          mkdir -p stage
           case '${{ runner.os }}' in
             Windows) raco distribute stage/bin build/regexmate.exe ;;
             *)       raco distribute stage build/regexmate ;;
