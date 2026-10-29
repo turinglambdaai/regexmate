@@ -47,6 +47,9 @@ try {
         if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $graph -PathType Leaf)) {
             throw "graph failed to create an SVG in the extracted install"
         }
+        # A no-match exit is the expected CLI contract, not a PowerShell
+        # pipeline failure; inspect the native code explicitly.
+        $PSNativeCommandUseErrorActionPreference = $false
         & $exe match 'nomatchpattern' 'text' >$null
         if ($LASTEXITCODE -ne 3) {
             throw "No-match exit status must remain 3, got $LASTEXITCODE"
@@ -66,6 +69,10 @@ try {
     } finally {
         Pop-Location
     }
+    # The native negative-case command intentionally returned a nonzero code.
+    # Do not allow the GitHub PowerShell wrapper to mistake that verified
+    # expected result for the script's own exit status.
+    $global:LASTEXITCODE = 0
 } finally {
     if (Test-Path -LiteralPath $install) {
         Remove-Item -LiteralPath $install -Recurse -Force
