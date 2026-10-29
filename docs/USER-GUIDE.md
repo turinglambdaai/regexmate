@@ -14,6 +14,8 @@ Desktop/CLI release assets for macOS, Windows and Linux. The engine uses Racket 
 
 Use [official Releases](https://github.com/turinglambdaai/regexmate/releases), select an explicitly listed OS/architecture asset, read its release notes and check supplied checksums. An absent asset/platform is not a delivery promise. Preview builds may lack publisher signing or notarization; do not disable system-wide security protections to install them.
 
+Windows ZIP CLI entry points are version-specific: the published **v0.8.0** portable ZIP uses `regexmate.exe` at archive root; archives built with the [layout fix (#13)](https://github.com/turinglambdaai/regexmate/issues/13) use `bin/regexmate.exe` (macOS/Linux: `bin/regexmate`). Extract the entire archive, including Racket's platform-specific runtime libraries and the separate `gui/` tree. For an already-installed legacy Windows ZIP, the verified CLI updater retains its original executable location and swaps the libraries alongside it; it does not silently change the install path. The separately published single-file Windows EXE remains a different installation/update mode.
+
 ## Your first successful session
 
 1. Run regexmate validate on your pattern, then match a synthetic positive sample.
