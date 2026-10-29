@@ -91,6 +91,20 @@ MainWindow::MainWindow() {
   refresh_timer_.IsRepeating(false);
   refresh_timer_.Tick([weak = get_weak()](auto&, auto&) {
     if (auto window = weak.get()) {
+      // The auto path is a content-change service, so skip the run when the
+      // pattern and sample text are exactly what the last refresh already
+      // consumed. RepaintMatchRanges raises TextChanged on RichEditBox
+      // (formatting counts as a document change there, unlike TextKit or
+      // GTK), and without this compare that event re-queued the refresh
+      // every 300ms — the button forever cycling between busy and idle.
+      auto const pattern = window->PatternBox().Text();
+      winrt::hstring text_h;
+      window->TextBox().Document().GetText(
+          winrt::Microsoft::UI::Text::TextGetOptions::None, text_h);
+      if (pattern == window->last_refreshed_pattern_ &&
+          std::wstring{text_h} == window->last_refreshed_text_) {
+        return;
+      }
       window->RefreshAsync();
     }
   });
@@ -102,7 +116,11 @@ MainWindow::MainWindow() {
   });
   TextBox().TextChanged([weak = get_weak()](auto const&, auto const&) {
     if (auto window = weak.get()) {
-      window->QueueRefresh();
+      // Set while ApplyResults repaints the match formatting below; that
+      // repaint is presentation, not a user edit.
+      if (!window->suppress_auto_refresh_) {
+        window->QueueRefresh();
+      }
     }
   });
 
@@ -323,6 +341,10 @@ winrt::fire_and_forget MainWindow::RefreshAsync() {
   TextBox().Document().GetText(winrt::Microsoft::UI::Text::TextGetOptions::None, text_h);
   std::wstring text_w{text_h};
   auto const text = winrt::to_string(text_w);
+  // Remember what this run consumed so the timer's auto path can tell a
+  // presentation repaint (no content change) from a real edit.
+  last_refreshed_pattern_ = PatternBox().Text();
+  last_refreshed_text_ = text_w;
 
   co_await winrt::resume_background();
   std::string error;
@@ -540,36 +562,47 @@ void MainWindow::RepaintMatchRanges(
   if (length <= 0) {
     return;
   }
-  auto all = doc.GetRange(0, length);
-  auto format = all.CharacterFormat();
-  format.Bold(winrt::Microsoft::UI::Text::FormatEffect::Off);
-  format.BackgroundColor(winrt::Windows::UI::Colors::Transparent());
-  format.ForegroundColor(winrt::Windows::UI::Colors::Black());
-  all.CharacterFormat(format);
-  for (int i = 0; i < static_cast<int>(match_spans_utf16_.size()); ++i) {
-    auto const [start, end] = match_spans_utf16_[static_cast<std::size_t>(i)];
-    if (start < 0 || end <= start) {
-      continue;
+  // Every mutation below raises TextChanged on the RichEditBox; the flag
+  // keeps that presentation pass from queuing another refresh. Reset on
+  // every path so a thrown WinRT call cannot latch it on.
+  suppress_auto_refresh_ = true;
+  try {
+    auto all = doc.GetRange(0, length);
+    auto format = all.CharacterFormat();
+    format.Bold(winrt::Microsoft::UI::Text::FormatEffect::Off);
+    format.BackgroundColor(winrt::Windows::UI::Colors::Transparent());
+    format.ForegroundColor(winrt::Windows::UI::Colors::Black());
+    all.CharacterFormat(format);
+    for (int i = 0; i < static_cast<int>(match_spans_utf16_.size()); ++i) {
+      auto const [start, end] =
+          match_spans_utf16_[static_cast<std::size_t>(i)];
+      if (start < 0 || end <= start) {
+        continue;
+      }
+      // ITextDocument.GetRange takes (start, end) positions, not a length.
+      // Passing a length made RichEdit normalize every reversed range by
+      // swapping its bounds, so the five per-match highlights merged into one
+      // contiguous band across the middle of the sample (verified on
+      // Windows 11 25H2: `Order 12345 shipped on 2026-09-28 to zip` painted,
+      // `Or` and ` 10115.` did not — exactly the union of the swapped spans).
+      auto range = doc.GetRange(start, end);
+      auto matchFormat = range.CharacterFormat();
+      matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
+      if (i == inspected) {
+        matchFormat.BackgroundColor(
+            winrt::Windows::UI::Color{0xFF, 0x03, 0x7A, 0x55});
+        matchFormat.ForegroundColor(winrt::Windows::UI::Colors::White());
+      } else {
+        matchFormat.BackgroundColor(
+            winrt::Windows::UI::Color{0xFF, 0x90, 0xEE, 0xAE});
+      }
+      range.CharacterFormat(matchFormat);
     }
-    // ITextDocument.GetRange takes (start, end) positions, not a length.
-    // Passing a length made RichEdit normalize every reversed range by
-    // swapping its bounds, so the five per-match highlights merged into one
-    // contiguous band across the middle of the sample (verified on
-    // Windows 11 25H2: `Order 12345 shipped on 2026-09-28 to zip` painted,
-    // `Or` and ` 10115.` did not — exactly the union of the swapped spans).
-    auto range = doc.GetRange(start, end);
-    auto matchFormat = range.CharacterFormat();
-    matchFormat.Bold(winrt::Microsoft::UI::Text::FormatEffect::On);
-    if (i == inspected) {
-      matchFormat.BackgroundColor(
-          winrt::Windows::UI::Color{0xFF, 0x03, 0x7A, 0x55});
-      matchFormat.ForegroundColor(winrt::Windows::UI::Colors::White());
-    } else {
-      matchFormat.BackgroundColor(
-          winrt::Windows::UI::Color{0xFF, 0x90, 0xEE, 0xAE});
-    }
-    range.CharacterFormat(matchFormat);
+  } catch (...) {
+    suppress_auto_refresh_ = false;
+    throw;
   }
+  suppress_auto_refresh_ = false;
 }
 
 // Activating a row inspects the match: the editor selection moves to the
