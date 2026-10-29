@@ -93,3 +93,35 @@ jobs:
             -I "$racket_include" \
             $(pkg-config --cflags gtk4) \
             linux/src/main.cpp
+
+  portable-windows-zip:
+    name: Windows extracted CLI ZIP and runtime
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Racket
+        uses: Bogdanp/setup-racket@v1.15
+        with:
+          version: '9.3'
+          architecture: x64
+          distribution: full
+          variant: CS
+      - name: Install pinned Rivet and crypto
+        run: raco pkg install --auto --no-docs 'https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c' crypto
+      - name: Build the native Windows CLI distribution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build
+          raco exe -o build/regexmate.exe main.rkt
+          mkdir -p stage
+          raco distribute stage/bin build/regexmate.exe
+          test -f stage/bin/regexmate.exe
+          test ! -f stage/regexmate.exe
+      - name: Archive the same Windows bin layout as the release
+        shell: pwsh
+        run: Compress-Archive -Path stage/* -DestinationPath regexmate-ci-windows-x86_64.zip
+      - name: Exercise extracted Windows CLI with real Racket DLLs
+        shell: pwsh
+        run: '& scripts/windows-cli-archive-smoke.ps1 -Archive regexmate-ci-windows-x86_64.zip'

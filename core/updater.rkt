@@ -88,8 +88,10 @@
     (split-path (simplify-path (path-only full))))
   (simplify-path (build-path base name)))
 
-;; distribution root: unix distribute nests the exe under bin/, flat
-;; Windows layouts keep everything next to the exe
+;; Distribution root is the parent of bin/ for POSIX and newer Windows ZIPs.
+;; Legacy Windows ZIPs have the executable directly at the root. Preserve
+;; both install shapes so signed updates never silently migrate the running
+;; executable's expected path.
 (define (install-root)
   (define dir (install-dir))
   (define name
@@ -102,16 +104,24 @@
 (define (installed-mode?)
   (and (member (exe-name) '("regexmate" "regexmate.exe")) #t))
 
-;; distributed CLI archives carry a shared runtime in lib/ at the root;
-;; the standalone single-file exe embeds its runtime and has none
+;; Racket's Unix distribute puts lib/ next to bin/ at the install root.
+;; Windows distributes lib/ next to the EXE: root/lib for legacy ZIPs,
+;; bin/lib for newer ZIPs. Check the actual executable's layout so Windows
+;; bin/ installs are not mistaken for standalone EXEs and offered the wrong
+;; signed update artifact.
+(define (runtime-lib-path)
+  (if (eq? (platform-symbol) 'windows)
+      (build-path (install-dir) "lib")
+      (build-path (install-root) "lib")))
+
 (define (standalone-install?)
-  (not (directory-exists? (build-path (install-root) "lib"))))
+  (not (directory-exists? (runtime-lib-path))))
 
 ;; backup locations for pieces parked during a swap
 (define (old-exe-path)
   (path-replace-suffix (build-path (install-dir) (exe-name)) ".old"))
 (define (old-lib-path)
-  (build-path (install-root) "lib.old"))
+  (build-path (path-only (runtime-lib-path)) "lib.old"))
 (define (old-gui-path)
   (build-path (install-root) "gui.old"))
 
@@ -372,9 +382,10 @@
   (with-handlers ([exn:fail? (lambda (e) (void))])
     (delete-directory/files path #:must-exist? #f)))
 
-;; locate the staged pieces inside an extracted archive. Unix distribute
-;; nests the exe under bin/; Windows distribute is flat. The GUI always
-;; sits in gui/ at the archive root.
+;; Locate the staged pieces inside an extracted archive. Unix distribute
+;; puts bin/regexmate and root/lib together. Racket's Windows distribute
+;; keeps lib/ next to its exe: the legacy root layout or new bin/lib layout.
+;; The GUI always remains at archive-root gui/.
 (define (staged-pieces extract-dir)
   (define exe (exe-name))
   (define flat (build-path extract-dir exe))
@@ -384,10 +395,18 @@
       [(file-exists? flat) flat]
       [(file-exists? nested) nested]
       [else (error 'update "unexpected archive layout")]))
-  (define lib (build-path extract-dir "lib"))
+  (define lib-candidates
+    (if (eq? (platform-symbol) 'windows)
+        (list (build-path (path-only new-exe) "lib")
+              (build-path extract-dir "lib"))
+        (list (build-path extract-dir "lib"))))
+  (define lib
+    (for/first ([path (in-list lib-candidates)]
+                #:when (directory-exists? path))
+      path))
   (define gui (build-path extract-dir "gui"))
   (values new-exe
-          (and (directory-exists? lib) lib)
+          lib
           (and (directory-exists? gui) gui)))
 
 ;; remove leftovers from a previous update; safe to call at any startup
@@ -411,7 +430,7 @@
 (define (install-update! new-exe new-lib new-gui)
   (define root (install-root))
   (define target-exe (build-path (install-dir) (exe-name)))
-  (define target-lib (build-path root "lib"))
+  (define target-lib (runtime-lib-path))
   (define target-gui (build-path root "gui"))
   (when (and new-gui (directory-exists? target-gui))
     (rmtree (old-gui-path))

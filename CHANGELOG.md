@@ -6,6 +6,14 @@ All notable changes to RegexMate are documented here. Format based on
 ## [Unreleased]
 
 ### Fixed
+- Windows portable ZIP archives built after issue #13 now provide
+  `bin/regexmate.exe` rather than a root-level EXE, with the Racket Windows
+  runtime libraries kept under `bin/lib` and the existing `gui/` payload
+  retained. The signed updater recognizes both the new bin layout and old
+  flat Windows installs, preserves the original executable location on
+  upgrade, and swaps the matching runtime libraries without misclassifying
+  a distributed ZIP as a standalone single-file EXE. The published v0.8.0
+  archive is unchanged.
 - The Linux error state now matches the shared interaction contract: the
   explanation panel keeps the previous pattern's explanation until the
   pattern is fixed (it collapsed to "—" and lost the retention the macOS
