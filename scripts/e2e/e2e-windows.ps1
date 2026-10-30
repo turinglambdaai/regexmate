@@ -141,8 +141,23 @@ try {
         if ($candidate -and $candidate.Current.IsEnabled) { return $candidate }
         return $null
     }
-    $invoke = $refresh.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
-    ([System.Windows.Automation.InvokePattern]$invoke).Invoke()
+    # UI Automation may expose an enabled WinUI button before its provider
+    # is ready to accept Invoke. A transient COM "Unrecognized error" is
+    # recoverable; retry only this idempotent refresh action with a deadline.
+    # Subsequent backend/result assertions remain mandatory.
+    [void](Wait-Until 'successful RefreshButton invocation' {
+        try {
+            $candidate = Find-ById $window 'RefreshButton'
+            if (-not $candidate -or -not $candidate.Current.IsEnabled) { return $null }
+            $pattern = $candidate.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
+            ([System.Windows.Automation.InvokePattern]$pattern).Invoke()
+            return $true
+        } catch {
+            Write-Host "RefreshButton UI Automation provider not ready: $($_.Exception.Message)"
+            Start-Sleep -Milliseconds 400
+            return $null
+        }
+    } -TimeoutSeconds 15 -Diagnostics { Get-StatusMessage $window })
     [void](Wait-Until 'match result from embedded backend' {
         $result = Find-ById $window 'MatchResults'
         if (-not $result) { return $false }
