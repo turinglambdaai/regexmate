@@ -155,7 +155,7 @@ jobs:
         run: echo "FULL_RACKET_RACO=$(command -v raco)" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS (Linux GUI needs the static runtime)
         if: runner.os == 'Linux'
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
+        uses: turlamai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
 
       # One command builds the native GUI package, every human installer for
       # this platform (dmg / msi / deb + rpm + AppImage), the SBOM and the

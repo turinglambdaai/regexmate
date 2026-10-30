@@ -27,7 +27,7 @@ jobs:
           variant: CS
       - name: Install pinned Rivet and dependencies
         shell: pwsh
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Run executable product acceptance
         run: raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -61,7 +61,7 @@ jobs:
           distribution: full
           variant: CS
       - name: Install pinned Rivet and dependencies
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Run executable product acceptance
         run: raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -92,11 +92,11 @@ jobs:
           sudo apt-get install -y cmake libgtk-4-dev libglib2.0-dev libsecret-1-dev \
             liblz4-dev zlib1g-dev libncurses-dev weston at-spi2-core python3-pyatspi
       - name: Install pinned Rivet and dependencies
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
       - name: Remember full Racket command path
         run: echo "FULL_RACKET_BIN=$(dirname "$(command -v raco)")" >> "$GITHUB_ENV"
       - name: Set up embeddable Racket CS
-        uses: turinglambdaai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
+        uses: turlamai/rivet/.github/actions/setup-embed-racket@9d766b4acab672844093204cb4845ef4ef933d2c
       - name: Run executable product acceptance
         run: PATH="$FULL_RACKET_BIN:$PATH" dbus-run-session -- raco rivet acceptance --json > acceptance-report.json
       - uses: actions/upload-artifact@v4
@@ -122,9 +122,10 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: reports
-          # Pin the run attempt: a cancelled attempt's stale, possibly empty
-          # artifact must never shadow the fresh one on a re-run.
-          pattern: regexmate-acceptance-*-${{ github.run_attempt }}
+          # Single-job reruns create a new attempt only for that platform.
+          # Fetch every attempt, then explicitly select the newest artifact
+          # for each platform; never mix in a stale failed attempt.
+          pattern: regexmate-acceptance-*
       - uses: Bogdanp/setup-racket@v1.15
         with:
           version: '9.3'
@@ -132,21 +133,47 @@ jobs:
           distribution: full
           variant: CS
       - name: Install pinned Rivet
-        run: raco pkg install --auto --no-docs "https://github.com/turinglambdaai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
-      - name: Strip non-JSON prefixes from the reports
-        # The Linux suite's AT-SPI daemon occasionally logs one line onto the
-        # captured stdout before the report; keep only the JSON document.
+        run: raco pkg install --auto --no-docs "https://github.com/turlamai/rivet.git#9d766b4acab672844093204cb4845ef4ef933d2c" crypto
+      - name: Select latest passing-attempt artifacts per platform
+        # A one-job rerun must preserve the successful reports from earlier
+        # attempts, while selecting the newest result for the retried platform.
+        # The Linux AT-SPI daemon can prefix stdout before its JSON report.
         run: |
           python3 - <<'PY'
-          import glob, sys
-          for path in glob.glob('reports/*/acceptance-report.json'):
-              raw = open(path, errors='ignore').read()
-              start, end = raw.find('{'), raw.rfind('}') + 1
-              if start == -1 or end == 0:
-                  sys.exit(f"empty or non-JSON acceptance report: {path}")
-              stripped = raw[start:end]
-              if stripped != raw:
-                  open(path, 'w').write(stripped)
+          from pathlib import Path
+          import re
+          import sys
+
+          platforms = ("windows", "macos-arm64", "macos-x64", "linux")
+          latest = {}
+          for report in Path("reports").glob("*/acceptance-report.json"):
+              match = re.fullmatch(
+                  r"regexmate-acceptance-(windows|macos-arm64|macos-x64|linux)-(\d+)",
+                  report.parent.name,
+              )
+              if not match:
+                  continue
+              platform, attempt = match.group(1), int(match.group(2))
+              if platform not in latest or attempt > latest[platform][0]:
+                  latest[platform] = (attempt, report)
+
+          missing = set(platforms) - set(latest)
+          if missing:
+              sys.exit(f"missing acceptance artifacts for: {', '.join(sorted(missing))}")
+
+          with open("selected-reports.txt", "w") as selected:
+              for platform in platforms:
+                  attempt, report = latest[platform]
+                  raw = report.read_text(errors="ignore")
+                  start, end = raw.find("{"), raw.rfind("}") + 1
+                  if start == -1 or end == 0:
+                      sys.exit(f"empty or non-JSON acceptance report: {report}")
+                  if raw != raw[start:end]:
+                      report.write_text(raw[start:end])
+                  selected.write(str(report) + "\n")
+                  print(f"{platform}: attempt {attempt}, {report}")
           PY
       - name: Aggregate per-platform acceptance reports
-        run: raco rivet matrix reports/*/acceptance-report.json
+        run: |
+          mapfile -t reports < selected-reports.txt
+          raco rivet matrix "${reports[@]}"
