@@ -6,6 +6,16 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+# Cancel superseded checks for the same PR, never a main or manual run.
+# Unique run IDs for non-PR events prevent pending main builds from replacing
+# one another while GitHub Hosted runners are backlogged.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   test:
     name: test (${{ matrix.os }}, racket ${{ matrix.racket }})
