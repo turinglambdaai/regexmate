@@ -10,6 +10,13 @@ on:
 permissions:
   contents: read
 
+# Cancel superseded checks for the same PR, never a main or manual run.
+# Unique run IDs for non-PR events prevent pending main builds from replacing
+# one another while GitHub Hosted runners are backlogged.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 # Every rivet install below names the pinned commit literally so
 # `raco rivet doctor --release` sees a non-empty pin in the text it scans.
 jobs:
